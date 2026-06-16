@@ -1,1 +1,1 @@
-# PG-CPAC-Project
+# Festora - Smart Event Booking System
