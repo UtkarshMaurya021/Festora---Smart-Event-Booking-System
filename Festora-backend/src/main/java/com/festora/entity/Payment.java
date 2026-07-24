@@ -1,0 +1,28 @@
+package com.festora.entity;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.*;
+
+@Entity
+public class Payment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long paymentId;
+
+    @Column(unique = true)
+    private String transactionId;
+
+    private Double amount;
+
+    private String paymentMethod;
+
+    private String paymentStatus;
+
+    private LocalDateTime paymentDate;
+
+    @OneToOne
+    private Booking booking;
+
+}

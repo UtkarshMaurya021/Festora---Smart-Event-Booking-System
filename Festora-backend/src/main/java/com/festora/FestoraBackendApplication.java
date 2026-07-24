@@ -1,0 +1,13 @@
+package com.festora;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class FestoraBackendApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(FestoraBackendApplication.class, args);
+	}
+
+}
