@@ -1,0 +1,5 @@
+package com.festorabackend.entity;
+
+public class Category {
+
+}

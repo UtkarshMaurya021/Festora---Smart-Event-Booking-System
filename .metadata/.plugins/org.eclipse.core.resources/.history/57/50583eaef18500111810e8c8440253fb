@@ -1,0 +1,5 @@
+package com.festora.config;
+
+public class SecurityConfig {
+
+}

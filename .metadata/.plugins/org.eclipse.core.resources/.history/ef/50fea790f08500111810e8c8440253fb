@@ -1,0 +1,5 @@
+package com.festora.jwt;
+
+public class JwtUtil {
+
+}

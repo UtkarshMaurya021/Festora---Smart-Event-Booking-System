@@ -1,0 +1,44 @@
+package com.festora.controller;
+
+import com.festora.entity.Event;
+import com.festora.repository.EventRepository;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/user/events")
+@CrossOrigin("*")
+public class EventController {
+
+    private final EventRepository repository;
+
+    public EventController(EventRepository repository) {
+
+        this.repository = repository;
+
+    }
+
+    @GetMapping
+    public List<Event> getAllEvents() {
+
+        return repository.findAll();
+
+    }
+    @DeleteMapping("/events/{id}")
+    public void deleteEvent(
+
+            @PathVariable Long id,
+
+            Authentication authentication){
+
+        eventService.deleteEvent(
+
+                id,
+
+                authentication.getName()
+
+        );
+
+    }
+}

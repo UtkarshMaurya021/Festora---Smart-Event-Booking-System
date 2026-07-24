@@ -1,0 +1,19 @@
+import jakarta.persistence.*;
+
+@Entity
+public class Organizer {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long organizerId;
+
+    private String companyName;
+
+    private String contact;
+
+    private String description;
+
+    @OneToOne
+    private User user;
+
+}

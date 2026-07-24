@@ -1,0 +1,5 @@
+package com.festora.repository;
+
+public interface EventRepository {
+
+}

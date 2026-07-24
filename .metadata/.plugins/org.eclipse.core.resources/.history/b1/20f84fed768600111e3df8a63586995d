@@ -1,0 +1,5 @@
+package com.festora.dto;
+
+public class UserDashboardResponse {
+
+}

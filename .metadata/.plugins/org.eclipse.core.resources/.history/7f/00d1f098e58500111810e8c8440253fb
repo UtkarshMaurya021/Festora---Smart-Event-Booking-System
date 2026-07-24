@@ -1,0 +1,5 @@
+package com.festora.entity;
+
+public class EventImage {
+
+}

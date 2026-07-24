@@ -1,0 +1,65 @@
+package com.festora.controller;
+
+import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
+
+@RestController
+
+@RequestMapping("/api")
+
+@CrossOrigin("*")
+
+public class DashboardController {
+
+    @GetMapping("/user/dashboard")
+
+    public Map<String,Object> userDashboard(){
+
+        Map<String,Object> map=new HashMap<>();
+
+        map.put("upcoming",5);
+
+        map.put("bookings",2);
+
+        map.put("tickets",2);
+
+        return map;
+
+    }
+
+    @GetMapping("/organizer/dashboard")
+
+    public Map<String,Object> organizerDashboard(){
+
+        Map<String,Object> map=new HashMap<>();
+
+        map.put("events",12);
+
+        map.put("bookings",220);
+
+        map.put("revenue",85000);
+
+        return map;
+
+    }
+
+    @GetMapping("/admin/dashboard")
+
+    public Map<String,Object> adminDashboard(){
+
+        Map<String,Object> map=new HashMap<>();
+
+        map.put("users",350);
+
+        map.put("organizers",25);
+
+        map.put("events",55);
+
+        map.put("revenue",540000);
+
+        return map;
+
+    }
+
+}

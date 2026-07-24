@@ -1,0 +1,28 @@
+package com.festora.entity;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.*;
+
+@Entity
+public class Ticket {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long ticketId;
+
+    @Column(unique = true)
+    private String ticketNumber;
+
+    private String qrCode;
+
+    private String status;
+
+    private LocalDateTime issuedAt;
+
+    private LocalDateTime verifiedAt;
+
+    @ManyToOne
+    private Booking booking;
+
+}

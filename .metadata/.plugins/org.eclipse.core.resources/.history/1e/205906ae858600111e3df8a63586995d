@@ -1,0 +1,50 @@
+package com.festora.service;
+
+import java.time.LocalDateTime;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.festora.entity.Role;
+import com.festora.entity.Status;
+import com.festora.entity.User;
+import com.festora.repository.UserRepository;
+
+@Service
+public class UserService {
+
+    private final UserRepository repo;
+
+    private final PasswordEncoder encoder;
+
+    public UserService(UserRepository repo,
+                       PasswordEncoder encoder){
+
+        this.repo=repo;
+
+        this.encoder=encoder;
+
+    }
+
+    public User register(User user, String role){
+
+        user.setPassword(
+                encoder.encode(user.getPassword())
+        );
+
+        if("ROLE_ORGANIZER".equals(role)){
+            user.setRole(Role.ROLE_ORGANIZER);
+        }
+        else{
+            user.setRole(Role.ROLE_USER);
+        }
+
+        user.setStatus(Status.ACTIVE);
+
+        user.setCreatedAt(LocalDateTime.now());
+
+        return repo.save(user);
+
+    }
+
+}

@@ -1,0 +1,42 @@
+package com.festora.service;
+
+import com.festora.entity.Event;
+import com.festora.repository.EventRepository;
+import com.festora.service.EventService;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/user/events")
+@CrossOrigin("*")
+public class EventService {
+
+    private final EventRepository repository;
+    private final EventService service;   
+
+    public EventService(EventRepository repository, EventService service) {
+        this.repository = repository;
+        this.service = service;
+    }
+
+    @GetMapping
+    public List<Event> getAllEvents() {
+        return repository.findAll();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteEvent(@PathVariable Long id, Authentication authentication) {
+        // Safety check to prevent NullPointerException
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User is not authenticated");
+        }
+        
+        service.deleteEvent(id, authentication.getName());
+        return ResponseEntity.ok("Event deleted successfully");
+    }
+}

@@ -1,0 +1,5 @@
+package com.festorabackend.controller;
+
+public class EventController {
+
+}

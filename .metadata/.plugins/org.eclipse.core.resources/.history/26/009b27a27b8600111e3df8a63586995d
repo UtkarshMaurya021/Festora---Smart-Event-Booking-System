@@ -1,0 +1,55 @@
+package com.festora.controller;
+
+import com.festora.entity.Organizer;
+import com.festora.entity.User;
+import com.festora.repository.*;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/organizer")
+@CrossOrigin("*")
+public class OrganizerController {
+
+    private final UserRepository userRepository;
+    private final OrganizerRepository organizerRepository;
+    private final EventRepository eventRepository;
+
+    public OrganizerController(UserRepository userRepository,
+                               OrganizerRepository organizerRepository,
+                               EventRepository eventRepository) {
+
+        this.userRepository=userRepository;
+        this.organizerRepository=organizerRepository;
+        this.eventRepository=eventRepository;
+
+    }
+
+    @GetMapping("/dashboard")
+    public Map<String,Object> dashboard(Authentication authentication){
+
+        User user=userRepository
+                .findByEmail(authentication.getName())
+                .orElseThrow();
+
+        Organizer organizer=organizerRepository
+                .findByUser(user)
+                .orElseThrow();
+
+        Map<String,Object> map=new HashMap<>();
+
+        map.put("events",
+                eventRepository.countByOrganizer(organizer));
+
+        map.put("myEvents",
+                eventRepository.findByOrganizer(organizer));
+
+        return map;
+
+    }
+
+}

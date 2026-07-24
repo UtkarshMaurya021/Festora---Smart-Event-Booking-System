@@ -1,0 +1,16 @@
+@RestController
+@RequestMapping("/api/user")
+public class UserController {
+
+    @GetMapping("/dashboard")
+    public Map<String,Object> dashboard(){
+
+        Map<String,Object> map = new HashMap<>();
+
+        map.put("upcoming",5);
+        map.put("bookings",2);
+        map.put("tickets",2);
+
+        return map;
+    }
+}

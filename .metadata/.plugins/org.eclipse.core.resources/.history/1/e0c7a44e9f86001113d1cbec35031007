@@ -1,0 +1,5 @@
+package com.festora.service;
+
+public class CategoryService {
+
+}

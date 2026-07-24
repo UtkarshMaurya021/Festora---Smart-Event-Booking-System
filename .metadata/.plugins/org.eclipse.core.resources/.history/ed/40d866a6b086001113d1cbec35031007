@@ -1,0 +1,37 @@
+package com.festora.controller;
+
+import com.festora.entity.Event;
+import com.festora.repository.EventRepository;
+import com.festora.service.EventService;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/user/events")
+@CrossOrigin("*")
+public class EventController {
+
+    private final EventRepository repository;
+    private final EventService service;   // inject EventService
+
+    // Constructor injection for both repository and service
+    public EventController(EventRepository repository, EventService service) {
+        this.repository = repository;
+        this.service = service;
+    }
+
+    @GetMapping
+    public List<Event> getAllEvents() {
+        return repository.findAll();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteEvent(@PathVariable Long id, Authentication authentication) {
+        service.deleteEvent(id, authentication.getName());  // call via injected service
+        return ResponseEntity.ok("Event deleted successfully");
+    }
+}
