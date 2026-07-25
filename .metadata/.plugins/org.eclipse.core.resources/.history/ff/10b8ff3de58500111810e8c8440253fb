@@ -1,5 +1,0 @@
-package com.festora.repository;
-
-public interface VenueRepository {
-
-}

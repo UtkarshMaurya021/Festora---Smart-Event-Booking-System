@@ -1,5 +1,0 @@
-package com.festorabackend.repository;
-
-public interface UserRepository {
-
-}
