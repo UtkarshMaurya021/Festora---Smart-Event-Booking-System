@@ -1,5 +1,0 @@
-package com.festora.dto;
-
-public class LoginRequest {
-
-}
