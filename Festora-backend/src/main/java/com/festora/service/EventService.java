@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.festora.dto.EventRequest;
+import com.festora.dto.OrganizerDashboardResponse;
 import com.festora.entity.Category;
 import com.festora.entity.Event;
 import com.festora.entity.Organizer;
@@ -183,5 +184,43 @@ public class EventService {
         }
 
         eventRepository.delete(event);
+    }
+    
+    public OrganizerDashboardResponse getDashboard(String email){
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow();
+
+        Organizer organizer = organizerRepository
+                .findByUser(user)
+                .orElseThrow();
+
+        Long totalEvents =
+                eventRepository.countByOrganizer(organizer);
+
+        Long activeEvents =
+                eventRepository.countByOrganizerAndStatus(
+                        organizer,
+                        Status.ACTIVE
+                );
+
+        return new OrganizerDashboardResponse(
+
+                totalEvents,
+
+                activeEvents,
+
+                0L,
+
+                0.0
+
+        );
+
+    }
+    
+    public List<Event> getAllActiveEvents() {
+
+        return eventRepository.findByStatus(Status.ACTIVE);
+
     }
 }

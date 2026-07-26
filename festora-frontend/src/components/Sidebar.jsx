@@ -27,8 +27,6 @@ function Sidebar() {
         <>
           <Link to="/organizer/dashboard">Dashboard</Link>
 
-          <Link to="/organizer/events">My Events</Link>
-
           <Link to="/organizer/events/create">Create Event</Link>
         </>
       )}

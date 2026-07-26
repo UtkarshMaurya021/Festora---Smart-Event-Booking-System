@@ -1,6 +1,7 @@
 package com.festora.controller;
 
 import com.festora.dto.EventRequest;
+import com.festora.dto.OrganizerDashboardResponse;
 import com.festora.entity.Event;
 import com.festora.service.EventService;
 
@@ -47,5 +48,14 @@ public class OrganizerController {
                              @RequestBody EventRequest request,
                              Authentication authentication) {
         return eventService.updateEvent(id, request, authentication.getName());
+    }
+    @GetMapping("/dashboard")
+    public OrganizerDashboardResponse dashboard(
+            Authentication authentication){
+
+        return eventService.getDashboard(
+                authentication.getName()
+        );
+
     }
 }

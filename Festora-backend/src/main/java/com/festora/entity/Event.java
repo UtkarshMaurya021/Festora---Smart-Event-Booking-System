@@ -13,7 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "events")
+@Table(name = "event")
 public class Event {
 
     @Id
@@ -43,11 +43,14 @@ public class Event {
     private LocalDateTime updatedAt;
 
     @ManyToOne
+    @JoinColumn(name = "organizer_id")
     private Organizer organizer;
 
     @ManyToOne
+    @JoinColumn(name = "category_id")
     private Category category;
 
     @ManyToOne
+    @JoinColumn(name = "venue_id")
     private Venue venue;
 }

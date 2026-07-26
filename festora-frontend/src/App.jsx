@@ -5,7 +5,6 @@ import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import CreateEvent from "./pages/organizer/CreateEvent";
-import MyEvents from "./pages/organizer/MyEvents";
 import EditEvent from "./pages/organizer/EditEvent.jsx";
 import UserDashboard from "./pages/UserDashboard";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
@@ -47,15 +46,6 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route
-          path="/organizer/events"
-          element={
-            <PrivateRoute role="ROLE_ORGANIZER">
-              <MyEvents />
-            </PrivateRoute>
-          }
-        />
-
         <Route
           path="/organizer/events/create"
           element={

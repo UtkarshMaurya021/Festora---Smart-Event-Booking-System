@@ -7,9 +7,11 @@ import lombok.Data;
 @AllArgsConstructor
 public class OrganizerDashboardResponse {
 
-    private Long events;
+    private Long totalEvents;
 
-    private Long bookings;
+    private Long activeEvents;
+
+    private Long totalBookings;
 
     private Double revenue;
 

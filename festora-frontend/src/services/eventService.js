@@ -29,3 +29,13 @@ export const deleteEvent = (id) => {
     return api.delete(`/organizer/events/${id}`);
 
 };
+export const getDashboard = () => {
+
+    return api.get("/organizer/dashboard");
+
+}
+export const getAllEvents = () => {
+
+    return api.get("/user/active-events");
+
+};
