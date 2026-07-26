@@ -8,9 +8,9 @@ function UserDashboard() {
     upcoming: 0,
     bookings: 0,
     tickets: 0,
-    "active-events": [], 
+    "active-events": [],
   });
-  
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -76,31 +76,34 @@ function UserDashboard() {
 
         {/* Dynamic Event Grid Section */}
         <h4 className="mt-5 mb-4">Available Events</h4>
-        
+
         <div className="row">
           {activeEvents.length > 0 ? (
             /* FIXED: Use index parameter to avoid Math.random impure error */
             activeEvents.map((event, index) => (
-              <div className="col-md-4 mb-4" key={event.event_id || event.eventId || index}>
+              <div
+                className="col-md-4 mb-4"
+                key={event.event_id || event.eventId || index}
+              >
                 <div className="card shadow h-100">
                   <div className="card-body">
                     <h4 className="card-title">{event.title}</h4>
                     <p className="card-text text-muted">{event.description}</p>
                     <p className="mb-1">
-                      <b>Category ID:</b> {event.category_category_id || event.category_id || "N/A"}
+                      <b>Category:</b> {event.category?.categoryName || "N/A"}
                     </p>
+
                     <p className="mb-1">
-                      <b>Venue ID:</b> {event.venue_venue_id || event.venue_id || "N/A"}
+                      <b>Venue:</b> {event.venue?.venueName || "N/A"}
                     </p>
                     <p className="mb-1">
                       <b>Price:</b> ₹ {event.price}
                     </p>
                     <p className="mb-3">
-                      <b>Seats:</b> {event.available_seats || event.availableSeats}
+                      <b>Seats:</b>{" "}
+                      {event.available_seats || event.availableSeats}
                     </p>
-                    <button className="btn btn-primary w-100">
-                      Book Now
-                    </button>
+                    <button className="btn btn-primary w-100">Book Now</button>
                   </div>
                 </div>
               </div>

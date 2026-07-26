@@ -12,82 +12,71 @@ import java.util.List;
 @Service
 public class OrganizerService {
 
-    private final EventRepository eventRepository;
-    private final OrganizerRepository organizerRepository;
-    private final CategoryRepository categoryRepository;
-    private final VenueRepository venueRepository;
+	private final EventRepository eventRepository;
+	private final OrganizerRepository organizerRepository;
+	private final CategoryRepository categoryRepository;
+	private final VenueRepository venueRepository;
 
-    public OrganizerService(
-            EventRepository eventRepository,
-            OrganizerRepository organizerRepository,
-            CategoryRepository categoryRepository,
-            VenueRepository venueRepository){
+	public OrganizerService(EventRepository eventRepository, OrganizerRepository organizerRepository,
+			CategoryRepository categoryRepository, VenueRepository venueRepository) {
 
-        this.eventRepository = eventRepository;
-        this.organizerRepository = organizerRepository;
-        this.categoryRepository = categoryRepository;
-        this.venueRepository = venueRepository;
+		this.eventRepository = eventRepository;
+		this.organizerRepository = organizerRepository;
+		this.categoryRepository = categoryRepository;
+		this.venueRepository = venueRepository;
 
-    }
+	}
 
-    public Event createEvent(
-            EventRequest request,
-            Organizer organizer){
+	public Event createEvent(EventRequest request, Organizer organizer) {
 
-        Event event = new Event();
+		Event event = new Event();
 
-        event.setTitle(request.getTitle());
+		event.setTitle(request.getTitle());
 
-        event.setDescription(request.getDescription());
+		event.setDescription(request.getDescription());
 
-        event.setPrice(request.getPrice());
+		event.setPrice(request.getPrice());
 
-        event.setTotalSeats(request.getTotalSeats());
+		event.setTotalSeats(request.getTotalSeats());
 
-        event.setAvailableSeats(request.getTotalSeats());
+		event.setAvailableSeats(request.getTotalSeats());
 
-        event.setEventStartDatetime(
-                request.getEventStartDatetime());
+		event.setEventStartDatetime(request.getEventStartDatetime());
 
-        event.setEventEndDatetime(
-                request.getEventEndDatetime());
+		event.setEventEndDatetime(request.getEventEndDatetime());
 
-        event.setCreatedAt(LocalDateTime.now());
+		event.setCreatedAt(LocalDateTime.now());
 
-        event.setUpdatedAt(LocalDateTime.now());
+		event.setUpdatedAt(LocalDateTime.now());
 
-        event.setOrganizer(organizer);
+		event.setOrganizer(organizer);
 
-        event.setCategory(
+		event.setCategory(
 
-                categoryRepository.findById(
-                        request.getCategoryId())
+				categoryRepository.findById(request.getCategoryId())
 
-                        .orElseThrow()
+						.orElseThrow()
 
-        );
+		);
 
-        event.setVenue(
+		event.setVenue(
 
-                venueRepository.findById(
-                        request.getVenueId())
+				venueRepository.findById(request.getVenueId())
 
-                        .orElseThrow()
+						.orElseThrow()
 
-        );
+		);
 
-        event.setStatus(Status.ACTIVE);
+		event.setStatus(Status.ACTIVE);
 
-        return eventRepository.save(event);
+		return eventRepository.save(event);
 
-    }
+	}
 
-    public List<Event> getEvents(
-            Organizer organizer){
+	public List<Event> getEvents(Organizer organizer) {
 
-        return eventRepository.findByOrganizer(
-                organizer);
+		return eventRepository.findByOrganizer(organizer);
 
-    }
+	}
 
 }

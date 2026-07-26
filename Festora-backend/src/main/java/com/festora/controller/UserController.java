@@ -52,7 +52,6 @@ public class UserController {
 		return map;
 	}
 
-	// Keep this here if you still need it as a standalone route elsewhere
 	@GetMapping("/active-events")
 	public List<Event> getAllEvents() {
 		return eventService.getAllActiveEvents();

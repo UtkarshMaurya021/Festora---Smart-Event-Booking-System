@@ -1,6 +1,8 @@
 package com.festora.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -53,4 +55,8 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "venue_id")
     private Venue venue;
+    @OneToMany(mappedBy = "event",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+ private List<EventImage> images = new ArrayList<>();
 }
