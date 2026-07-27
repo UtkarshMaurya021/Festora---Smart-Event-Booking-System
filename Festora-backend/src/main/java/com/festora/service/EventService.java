@@ -1,13 +1,16 @@
 package com.festora.service;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.festora.dto.EventRequest;
 import com.festora.dto.OrganizerDashboardResponse;
+import com.festora.entity.Booking;
 import com.festora.entity.Category;
 import com.festora.entity.Event;
 import com.festora.entity.EventImage;
@@ -15,21 +18,26 @@ import com.festora.entity.Organizer;
 import com.festora.entity.Status;
 import com.festora.entity.User;
 import com.festora.entity.Venue;
+import com.festora.repository.BookingRepository;
 import com.festora.repository.CategoryRepository;
 import com.festora.repository.EventImageRepository;
 import com.festora.repository.EventRepository;
 import com.festora.repository.OrganizerRepository;
 import com.festora.repository.UserRepository;
 import com.festora.repository.VenueRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @Service
 public class EventService {
+	@Autowired
+	private BookingRepository bookingRepository;
 
 	private final EventRepository eventRepository;
 	private final OrganizerRepository organizerRepository;
 	private final UserRepository userRepository;
 	private final CategoryRepository categoryRepository;
 	private final VenueRepository venueRepository;
+
 	public EventService(EventRepository eventRepository, OrganizerRepository organizerRepository,
 			UserRepository userRepository, CategoryRepository categoryRepository, VenueRepository venueRepository) {
 
@@ -43,7 +51,7 @@ public class EventService {
 	// ===========================
 	// CREATE EVENT
 	// ===========================
-	public Event create(EventRequest request,String email) {
+	public Event create(EventRequest request, String email) {
 
 		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -81,7 +89,7 @@ public class EventService {
 		event.setCategory(category);
 		event.setVenue(venue);
 
-		return  eventRepository.save(event);
+		return eventRepository.save(event);
 	}
 
 	// ===========================
@@ -168,9 +176,9 @@ public class EventService {
 		if (!event.getOrganizer().getOrganizerId().equals(organizer.getOrganizerId())) {
 			throw new RuntimeException("Unauthorized");
 		}
-		event.setStatus(Status.INACTIVE);   // or Status.CANCELLED
-	    event.setUpdatedAt(LocalDateTime.now());
-	    eventRepository.save(event);
+		event.setStatus(Status.INACTIVE); // or Status.CANCELLED
+		event.setUpdatedAt(LocalDateTime.now());
+		eventRepository.save(event);
 	}
 
 	public OrganizerDashboardResponse getDashboard(String email) {
@@ -179,19 +187,37 @@ public class EventService {
 
 		Organizer organizer = organizerRepository.findByUser(user).orElseThrow();
 
-		Long totalEvents = eventRepository.countByOrganizer(organizer);
+		List<Booking> bookings = bookingRepository.findByEventOrganizer(organizer);
 
-		Long activeEvents = eventRepository.countByOrganizerAndStatus(organizer, Status.ACTIVE);
+		long totalTickets = 0;
+
+		double revenue = 0;
+
+		for (Booking booking : bookings) {
+
+			totalTickets += booking.getQuantity();
+
+			revenue += booking.getTotalAmount();
+
+		}
 
 		return new OrganizerDashboardResponse(
 
-				totalEvents,
+				eventRepository.countByOrganizer(organizer),
 
-				activeEvents,
+				eventRepository.countByOrganizerAndStatus(organizer, Status.ACTIVE),
 
-				0L,
+				eventRepository.countByOrganizerAndStatus(organizer, Status.FULL),
 
-				0.0
+				eventRepository.countByOrganizerAndStatus(organizer, Status.STARTED),
+
+				eventRepository.countByOrganizerAndStatus(organizer, Status.COMPLETED),
+
+				eventRepository.countByOrganizerAndStatus(organizer, Status.INACTIVE),
+
+				totalTickets,
+
+				revenue
 
 		);
 
@@ -200,5 +226,63 @@ public class EventService {
 	public List<Event> getAllActiveEvents() {
 
 		return eventRepository.findByStatus(Status.ACTIVE);
+	}
+
+	// ===========================
+	// GET AND UPDATE ALL MY EVENTS
+	// ===========================
+	public List<Event> getAndUpdateOrganizerEvents(String email) {
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+		Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+			Organizer newOrganizer = new Organizer();
+			newOrganizer.setUser(user);
+			return organizerRepository.save(newOrganizer);
+		});
+
+		List<Event> events = eventRepository.findByOrganizer(organizer);
+
+		for (Event event : events) {
+			updateEventStatus(event);
+		}
+
+		eventRepository.saveAll(events);
+
+		return events;
+	}
+
+	// FIX: Added the missing helper method signature so the code compiles.
+	private void updateEventStatus(Event event) {
+		if (event.getEventEndDatetime() != null && event.getEventEndDatetime().isBefore(LocalDateTime.now())) {
+			event.setStatus(Status.INACTIVE);
+			event.setUpdatedAt(LocalDateTime.now());
+		}
+	}
+
+	@Scheduled(fixedRate = 60000) // Every 1 minute
+	public void updateExpiredEvents() {
+
+		List<Event> events = eventRepository.findByStatus(Status.ACTIVE);
+
+		LocalDateTime now = LocalDateTime.now();
+
+		for (Event event : events) {
+
+			if (!now.isBefore(event.getEventStartDatetime())) {
+
+				event.setStatus(Status.INACTIVE);
+
+			}
+
+			if (event.getAvailableSeats() == 0) {
+
+				event.setStatus(Status.STARTED);
+
+			}
+
+		}
+
+		eventRepository.saveAll(events);
+
 	}
 }

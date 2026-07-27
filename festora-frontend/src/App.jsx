@@ -9,7 +9,8 @@ import EditEvent from "./pages/organizer/EditEvent.jsx";
 import UserDashboard from "./pages/UserDashboard";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-
+import EventDetails from "./pages/EventDetails";
+import MyBookings from "./pages/MyBookings.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -54,7 +55,14 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
 
+path="/my-bookings"
+
+element={<MyBookings/>}
+
+/>
+        <Route path="/event/:id" element={<EventDetails />} />
         <Route
           path="/organizer/events/edit/:id"
           element={

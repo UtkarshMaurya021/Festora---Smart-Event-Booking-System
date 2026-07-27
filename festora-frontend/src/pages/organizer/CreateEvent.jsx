@@ -1,32 +1,24 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import Sidebar from "../../components/Sidebar";
 import DashboardNavbar from "../../components/DashboardNavbar";
-
-import { createEvent } from "../../services/eventService";
 
 import axios from "axios";
 
 function CreateEvent() {
   const [title, setTitle] = useState("");
-
   const [description, setDescription] = useState("");
-
   const [price, setPrice] = useState("");
-
   const [totalSeats, setTotalSeats] = useState("");
-
   const [start, setStart] = useState("");
-
   const [end, setEnd] = useState("");
-
   const [categoryId, setCategoryId] = useState("");
-
   const [venueId, setVenueId] = useState("");
-
   const [categories, setCategories] = useState([]);
-
   const [venues, setVenues] = useState([]);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadData = async () => {
@@ -58,25 +50,36 @@ function CreateEvent() {
   }, []);
 
   const save = async () => {
-    await createEvent({
-      title,
+    try {
+      const token = localStorage.getItem("token");
+      
+      // Direct axios POST request handling authorization as per Step 102
+      await axios.post(
+        "http://localhost:8080/api/organizer/events",
+        {
+          title,
+          description,
+          price,
+          totalSeats,
+          eventStartDatetime: start,
+          eventEndDatetime: end,
+          categoryId,
+          venueId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      description,
-
-      price,
-
-      totalSeats,
-
-      eventStartDatetime: start,
-
-      eventEndDatetime: end,
-
-      categoryId,
-
-      venueId,
-    });
-
-    alert("Event Created");
+      // Smooth state redirection omitting default browser alert popups
+      navigate("/organizer/dashboard", {
+        state: { message: "Event created successfully." },
+      });
+    } catch (error) {
+      console.error("Error creating event:", error);
+    }
   };
 
   return (
@@ -92,6 +95,7 @@ function CreateEvent() {
           <input
             className="form-control mb-3"
             placeholder="Title"
+            value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
 
@@ -99,6 +103,7 @@ function CreateEvent() {
             className="form-control mb-3"
             placeholder="Description"
             rows="4"
+            value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
 
@@ -106,6 +111,7 @@ function CreateEvent() {
             type="number"
             className="form-control mb-3"
             placeholder="Price"
+            value={price}
             onChange={(e) => setPrice(e.target.value)}
           />
 
@@ -113,27 +119,30 @@ function CreateEvent() {
             type="number"
             className="form-control mb-3"
             placeholder="Seats"
+            value={totalSeats}
             onChange={(e) => setTotalSeats(e.target.value)}
           />
 
           <input
             type="datetime-local"
             className="form-control mb-3"
+            value={start}
             onChange={(e) => setStart(e.target.value)}
           />
 
           <input
             type="datetime-local"
             className="form-control mb-3"
+            value={end}
             onChange={(e) => setEnd(e.target.value)}
           />
 
           <select
             className="form-select mb-3"
+            value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
           >
-            <option>Select Category</option>
-
+            <option value="">Select Category</option>
             {categories.map((c) => (
               <option key={c.categoryId} value={c.categoryId}>
                 {c.categoryName}
@@ -143,10 +152,10 @@ function CreateEvent() {
 
           <select
             className="form-select mb-3"
+            value={venueId}
             onChange={(e) => setVenueId(e.target.value)}
           >
-            <option>Select Venue</option>
-
+            <option value="">Select Venue</option>
             {venues.map((v) => (
               <option key={v.venueId} value={v.venueId}>
                 {v.venueName}

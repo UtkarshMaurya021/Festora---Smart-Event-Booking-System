@@ -10,7 +10,6 @@ function UserDashboard() {
     tickets: 0,
     "active-events": [],
   });
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +26,6 @@ function UserDashboard() {
         setLoading(false);
       }
     };
-
     loadDashboard();
   }, []);
 
@@ -46,26 +44,23 @@ function UserDashboard() {
   return (
     <>
       <Sidebar />
-
       <div className="dashboard-main">
         <DashboardNavbar />
 
         {/* Counter Cards */}
-        <div className="row">
+        <div className="row mt-4">
           <div className="col-md-4">
             <div className="dashboard-card text-center p-3 border rounded shadow-sm">
               <h6 className="text-muted">Upcoming Events</h6>
               <h2>{dashboard.upcoming}</h2>
             </div>
           </div>
-
           <div className="col-md-4">
             <div className="dashboard-card text-center p-3 border rounded shadow-sm">
               <h6 className="text-muted">Bookings</h6>
               <h2>{dashboard.bookings}</h2>
             </div>
           </div>
-
           <div className="col-md-4">
             <div className="dashboard-card text-center p-3 border rounded shadow-sm">
               <h6 className="text-muted">Tickets</h6>
@@ -74,42 +69,46 @@ function UserDashboard() {
           </div>
         </div>
 
-        {/* Dynamic Event Grid Section */}
+        {/* Structured Events Table Section */}
         <h4 className="mt-5 mb-4">Available Events</h4>
-
-        <div className="row">
+        <div className="container-fluid px-0">
           {activeEvents.length > 0 ? (
-            /* FIXED: Use index parameter to avoid Math.random impure error */
-            activeEvents.map((event, index) => (
-              <div
-                className="col-md-4 mb-4"
-                key={event.event_id || event.eventId || index}
-              >
-                <div className="card shadow h-100">
-                  <div className="card-body">
-                    <h4 className="card-title">{event.title}</h4>
-                    <p className="card-text text-muted">{event.description}</p>
-                    <p className="mb-1">
-                      <b>Category:</b> {event.category?.categoryName || "N/A"}
-                    </p>
-
-                    <p className="mb-1">
-                      <b>Venue:</b> {event.venue?.venueName || "N/A"}
-                    </p>
-                    <p className="mb-1">
-                      <b>Price:</b> ₹ {event.price}
-                    </p>
-                    <p className="mb-3">
-                      <b>Seats:</b>{" "}
-                      {event.available_seats || event.availableSeats}
-                    </p>
-                    <button className="btn btn-primary w-100">Book Now</button>
-                  </div>
-                </div>
-              </div>
-            ))
+            <table className="table table-bordered shadow-sm bg-white">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Venue</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Seats</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeEvents.map((event, index) => {
+                  const eventId = event.event_id || event.eventId || index;
+                  return (
+                    <tr key={eventId}>
+                      <td>{event.title}</td>
+                      <td>{event.venue?.venueName || "N/A"}</td>
+                      <td>{event.category?.categoryName || "N/A"}</td>
+                      <td>₹ {event.price}</td>
+                      <td>{event.available_seats || event.availableSeats}</td>
+                      <td>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => window.location.href = "/event/" + eventId}
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           ) : (
-            <div className="col-12 text-center py-5 border rounded bg-light">
+            <div className="text-center py-5 border rounded bg-light">
               <p className="text-muted mb-0">No upcoming events available</p>
             </div>
           )}

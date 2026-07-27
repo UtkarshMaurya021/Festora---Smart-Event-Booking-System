@@ -2,11 +2,17 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import DashboardNavbar from "../components/DashboardNavbar";
 import { getOrganizerDashboard } from "../services/dashboardService";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getMyEvents, deleteEvent } from "../services/eventService";
 
 function OrganizerDashboard() {
-  // Step 107: State configuration
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [success, setSuccess] = useState(() => {
+    return location.state?.message || "";
+  });
+
   const [dashboard, setDashboard] = useState({
     totalEvents: 0,
     activeEvents: 0,
@@ -16,6 +22,18 @@ function OrganizerDashboard() {
 
   const [events, setEvents] = useState([]);
 
+  useEffect(() => {
+    if (location.state?.message) {
+     
+      navigate(location.pathname, { replace: true, state: {} });
+
+      const timer = setTimeout(() => {
+        setSuccess("");
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname, navigate]); 
   const loadDashboard = async () => {
     try {
       const res = await getOrganizerDashboard();
@@ -34,7 +52,6 @@ function OrganizerDashboard() {
     }
   };
 
-  // Step 107: Using an explicit async wrapper block to stop cascading render alerts
   useEffect(() => {
     const initializeDashboardData = async () => {
       await loadDashboard();
@@ -57,7 +74,13 @@ function OrganizerDashboard() {
       <div className="dashboard-main">
         <DashboardNavbar />
 
-        {/* Step 108: Dynamic Metric Cards with <h3> tags */}
+        {/* Vanishing Bootstrap success banner hook */}
+        {success && (
+          <div className="alert alert-success alert-dismissible fade show" role="alert">
+            {success}
+          </div>
+        )}
+
         <div className="row">
           <div className="col-md-3">
             <div className="dashboard-card">
@@ -85,7 +108,6 @@ function OrganizerDashboard() {
           </div>
         </div>
 
-        {/* Table layout remains completely untouched */}
         <div className="card mt-4 p-4">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4>My Events</h4>

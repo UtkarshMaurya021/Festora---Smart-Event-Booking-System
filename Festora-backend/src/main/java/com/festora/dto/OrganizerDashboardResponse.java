@@ -1,9 +1,9 @@
 package com.festora.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 public class OrganizerDashboardResponse {
 
@@ -11,8 +11,16 @@ public class OrganizerDashboardResponse {
 
     private Long activeEvents;
 
-    private Long totalBookings;
+    private Long fullEvents;
 
-    private Double revenue;
+    private Long startedEvents;
+
+    private Long completedEvents;
+
+    private Long cancelledEvents;
+
+    private Long totalTicketsBooked;
+
+    private Double totalRevenue;
 
 }
