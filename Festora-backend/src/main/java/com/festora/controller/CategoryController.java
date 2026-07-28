@@ -1,15 +1,12 @@
 package com.festora.controller;
 
+import java.util.List;
+import org.springframework.web.bind.annotation.*;
 import com.festora.entity.Category;
 import com.festora.service.CategoryService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
-@RequestMapping("/api/categories")
+@CrossOrigin("*")
 public class CategoryController {
 
     private final CategoryService service;
@@ -18,25 +15,25 @@ public class CategoryController {
         this.service = service;
     }
 
-    @GetMapping
-    public ResponseEntity<List<Category>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    // Accessible to all users for dropdown lists
+    @GetMapping("/api/categories")
+    public List<Category> getAll() {
+        return service.getAll();
     }
 
-    @PostMapping
-    public ResponseEntity<Category> create(@RequestBody Category category) {
-        Category createdCategory = service.create(category);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
+    // Administrative modification routes remain restricted
+    @PostMapping("/api/admin/categories")
+    public Category save(@RequestBody Category category) {
+        return service.save(category);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Category> update(@PathVariable Long id, @RequestBody Category category) {
-        return ResponseEntity.ok(service.update(id, category));
+    @PutMapping("/api/admin/categories/{id}")
+    public Category update(@PathVariable Long id, @RequestBody Category category) {
+        return service.update(id, category);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @DeleteMapping("/api/admin/categories/{id}")
+    public void delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }

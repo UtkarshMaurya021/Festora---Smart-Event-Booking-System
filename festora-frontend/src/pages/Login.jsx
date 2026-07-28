@@ -9,7 +9,6 @@ function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  // ✅ renamed to avoid conflict
   const handleLogin = async () => {
     try {
       const res = await axios.post("http://localhost:8080/api/auth/login", {

@@ -1,26 +1,39 @@
 package com.festora.controller;
 
 import java.util.List;
-
 import org.springframework.web.bind.annotation.*;
-
 import com.festora.entity.Venue;
-import com.festora.repository.VenueRepository;
+import com.festora.service.VenueService;
 
 @RestController
-@RequestMapping("/api/venues")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin("*")
 public class VenueController {
 
-    private final VenueRepository venueRepository;
+    private final VenueService service;
 
-    public VenueController(VenueRepository venueRepository) {
-        this.venueRepository = venueRepository;
+    public VenueController(VenueService service) {
+        this.service = service;
     }
 
-    @GetMapping
-    public List<Venue> getAllVenues() {
-        return venueRepository.findAll();
+    // Accessible to all users for dropdown lists
+    @GetMapping("/api/venues")
+    public List<Venue> getAll() {
+        return service.getAll();
     }
 
+    // Administrative modification routes remain restricted
+    @PostMapping("/api/admin/venues")
+    public Venue save(@RequestBody Venue venue) {
+        return service.save(venue);
+    }
+
+    @PutMapping("/api/admin/venues/{id}")
+    public Venue update(@PathVariable Long id, @RequestBody Venue venue) {
+        return service.update(id, venue);
+    }
+
+    @DeleteMapping("/api/admin/venues/{id}")
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
+    }
 }

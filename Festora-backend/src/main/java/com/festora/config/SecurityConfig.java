@@ -1,4 +1,5 @@
 package com.festora.config;
+
 import java.util.List;
 
 import org.springframework.web.cors.*;
@@ -24,91 +25,91 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtFilter;
+	private final JwtAuthenticationFilter jwtFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter){
+	public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
 
-        this.jwtFilter = jwtFilter;
+		this.jwtFilter = jwtFilter;
 
-    }
+	}
 
-    @Bean
-    PasswordEncoder passwordEncoder(){
+	@Bean
+	PasswordEncoder passwordEncoder() {
 
-        return new BCryptPasswordEncoder();
+		return new BCryptPasswordEncoder();
 
-    }
+	}
 
-    @Bean
-    AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration)
-            throws Exception{
+	@Bean
+	AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
 
-        return configuration.getAuthenticationManager();
+		return configuration.getAuthenticationManager();
 
-    }
+	}
 
-    @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
+	@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
+		http
 
-                .csrf(csrf -> csrf.disable())
+				.csrf(csrf -> csrf.disable())
 
-                .cors(cors -> {})
+				.cors(cors -> {
+				})
 
-                .sessionManagement(session ->
+				.sessionManagement(session ->
 
-                        session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS))
+				session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                .authorizeHttpRequests(auth -> auth
+				.authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers("/api/auth/**").permitAll()
+				        // Public APIs
+				        .requestMatchers(
+				                "/api/auth/**",
+				                "/api/events/**"
+				        ).permitAll()
 
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
+				        // Admin only
+				        .requestMatchers("/api/admin/**")
+				        .hasRole("ADMIN")
 
-                        .requestMatchers("/api/organizer/**")
-                        .hasRole("ORGANIZER")
+				        // Organizer only
+				        .requestMatchers("/api/organizer/**")
+				        .hasRole("ORGANIZER")
 
-                        .requestMatchers("/api/user/**")
-                        .hasAnyRole("USER","ADMIN","ORGANIZER")
+				        // User only
+				        .requestMatchers("/api/bookings/**")
+				        .hasRole("USER")
 
-                        .anyRequest()
+				        // Common authenticated APIs
+				        .requestMatchers("/api/user/**")
+				        .hasAnyRole("USER", "ADMIN", "ORGANIZER")
 
-                        .authenticated()
+				        .anyRequest()
+				        .authenticated()
+				)
+				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-                )
+		return http.build();
 
-                .addFilterBefore(jwtFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+	}
 
-        return http.build();
+	@Bean
+	CorsConfigurationSource corsConfigurationSource() {
 
-    }
-    @Bean
-    CorsConfigurationSource corsConfigurationSource(){
+		CorsConfiguration configuration = new CorsConfiguration();
 
-        CorsConfiguration configuration =
-                new CorsConfiguration();
+		configuration.setAllowedOrigins(List.of("http://localhost:5173"));
 
-        configuration.setAllowedOrigins(
-                List.of("http://localhost:5173"));
+		configuration.setAllowedMethods(List.of("*"));
 
-        configuration.setAllowedMethods(
-                List.of("*"));
+		configuration.setAllowedHeaders(List.of("*"));
 
-        configuration.setAllowedHeaders(
-                List.of("*"));
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
 
-        source.registerCorsConfiguration("/**",configuration);
+		return source;
 
-        return source;
-
-    }
+	}
 }

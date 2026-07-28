@@ -25,7 +25,6 @@ function AdminDashboard() {
     };
     loadAdminDashboard();
   }, []);
-
   return (
     <>
       <Sidebar />

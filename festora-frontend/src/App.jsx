@@ -11,6 +11,8 @@ import OrganizerDashboard from "./pages/OrganizerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import EventDetails from "./pages/EventDetails";
 import MyBookings from "./pages/MyBookings.jsx";
+import VenueManagement from "./pages/admin/VenueManagement.jsx";
+import CategoryManagement from "./pages/admin/CategoryManagement.jsx"
 function App() {
   return (
     <BrowserRouter>
@@ -29,7 +31,23 @@ function App() {
             </PrivateRoute>
           }
         />
+<Route
+path="/admin/categories"
+element={
+<PrivateRoute role="ROLE_ADMIN">
+<CategoryManagement/>
+</PrivateRoute>
+}
+/>
 
+<Route
+path="/admin/venues"
+element={
+<PrivateRoute role="ROLE_ADMIN">
+<VenueManagement/>
+</PrivateRoute>
+}
+/>
         <Route
           path="/admin/dashboard"
           element={
@@ -55,13 +73,7 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route
-
-path="/my-bookings"
-
-element={<MyBookings/>}
-
-/>
+        <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/event/:id" element={<EventDetails />} />
         <Route
           path="/organizer/events/edit/:id"

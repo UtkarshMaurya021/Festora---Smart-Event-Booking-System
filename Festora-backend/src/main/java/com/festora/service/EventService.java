@@ -106,8 +106,9 @@ public class EventService {
 			return organizerRepository.save(newOrganizer);
 		});
 
-		// Fetch only ACTIVE events for this organizer
-		return eventRepository.findByOrganizerAndStatus(organizer, Status.ACTIVE);
+		// Fetch all events for this organizer, regardless of status,
+		// so deleted/expired/completed events remain visible and manageable.
+		return eventRepository.findByOrganizer(organizer);
 	}
 
 	// ===========================
@@ -144,12 +145,24 @@ public class EventService {
 		Venue venue = venueRepository.findById(request.getVenueId())
 				.orElseThrow(() -> new RuntimeException("Venue not found"));
 
+		// Work out how many seats are already booked so we can carry that
+		// number forward when totalSeats changes, instead of leaving
+		// availableSeats stuck at its old value.
+		int bookedSeats = event.getTotalSeats() - event.getAvailableSeats();
+
+		Integer newTotalSeats = request.getTotalSeats();
+		if (newTotalSeats < bookedSeats) {
+			throw new RuntimeException(
+					"Total seats cannot be less than the " + bookedSeats + " seats already booked");
+		}
+
 		event.setTitle(request.getTitle());
 		event.setDescription(request.getDescription());
 		event.setEventStartDatetime(request.getEventStartDatetime());
 		event.setEventEndDatetime(request.getEventEndDatetime());
 		event.setPrice(request.getPrice());
-		event.setTotalSeats(request.getTotalSeats());
+		event.setTotalSeats(newTotalSeats);
+		event.setAvailableSeats(newTotalSeats - bookedSeats);
 		event.setCategory(category);
 		event.setVenue(venue);
 		event.setUpdatedAt(LocalDateTime.now());

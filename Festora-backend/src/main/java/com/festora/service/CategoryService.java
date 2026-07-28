@@ -1,10 +1,11 @@
 package com.festora.service;
 
-import com.festora.entity.Category;
-import com.festora.repository.CategoryRepository;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.festora.entity.Category;
+import com.festora.repository.CategoryRepository;
 
 @Service
 public class CategoryService {
@@ -19,21 +20,21 @@ public class CategoryService {
         return repository.findAll();
     }
 
-    public Category create(Category category) {
+    public Category save(Category category) {
         return repository.save(category);
     }
 
     public Category update(Long id, Category category) {
 
-        Category db = repository.findById(id).orElseThrow();
+        Category c = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        db.setCategoryName(category.getCategoryName());
+        c.setCategoryName(category.getCategoryName());
 
-        return repository.save(db);
+        return repository.save(c);
     }
 
     public void delete(Long id) {
         repository.deleteById(id);
     }
-
 }
