@@ -14,6 +14,7 @@ import EventDetails from "./pages/EventDetails";
 import MyBookings from "./pages/MyBookings.jsx";
 import VenueManagement from "./pages/admin/VenueManagement.jsx";
 import CategoryManagement from "./pages/admin/CategoryManagement.jsx";
+import Payment from "./pages/Payment.jsx"
 function App() {
   return (
     <BrowserRouter>
@@ -80,6 +81,14 @@ function App() {
           element={
             <PrivateRoute role="ROLE_ORGANIZER">
               <CreateEvent />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/payment/:bookingId"
+          element={
+            <PrivateRoute role="ROLE_USER">
+              <Payment />
             </PrivateRoute>
           }
         />

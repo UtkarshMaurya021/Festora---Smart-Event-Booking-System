@@ -64,4 +64,8 @@ public class OrganizerController {
                 authentication.getName());
 
     }
+    @GetMapping("/events/active")
+    public List<Event> myActiveEvents(Authentication authentication) {
+        return eventService.getMyActiveEvents(authentication.getName());
+    }
 }

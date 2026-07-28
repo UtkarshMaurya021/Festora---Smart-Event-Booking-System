@@ -81,6 +81,9 @@ public class SecurityConfig {
 				        .requestMatchers("/api/bookings/**")
 				        .hasRole("USER")
 
+				        .requestMatchers("/api/payments/**")
+				        .hasRole("USER")
+				        
 				        // Common authenticated APIs
 				        .requestMatchers("/api/user/**")
 				        .hasAnyRole("USER", "ADMIN", "ORGANIZER")

@@ -3,26 +3,32 @@ package com.festora.entity;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long paymentId;
-
-    @Column(unique = true)
-    private String transactionId;
-
+    private String razorpayOrderId;
+    private String razorpayPaymentId;
     private Double amount;
-
-    private String paymentMethod;
-
-    private String paymentStatus;
 
     private LocalDateTime paymentDate;
 
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status;
+
     @OneToOne
+    @JoinColumn(name="booking_id")
     private Booking booking;
 
 }

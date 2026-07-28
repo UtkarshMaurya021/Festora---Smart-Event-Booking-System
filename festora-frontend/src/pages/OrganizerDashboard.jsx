@@ -3,7 +3,7 @@ import Sidebar from "../components/Sidebar";
 import DashboardNavbar from "../components/DashboardNavbar";
 import { getOrganizerDashboard } from "../services/dashboardService";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { getMyEvents, deleteEvent } from "../services/eventService";
+import { getMyActiveEvents, deleteEvent } from "../services/eventService";
 
 function OrganizerDashboard() {
   const location = useLocation();
@@ -17,14 +17,13 @@ function OrganizerDashboard() {
     totalEvents: 0,
     activeEvents: 0,
     totalBookings: 0,
-    revenue: 0
+    revenue: 0,
   });
 
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
     if (location.state?.message) {
-     
       navigate(location.pathname, { replace: true, state: {} });
 
       const timer = setTimeout(() => {
@@ -33,7 +32,7 @@ function OrganizerDashboard() {
 
       return () => clearTimeout(timer);
     }
-  }, [location.pathname, navigate]); 
+  }, [location.pathname, navigate]);
   const loadDashboard = async () => {
     try {
       const res = await getOrganizerDashboard();
@@ -45,7 +44,7 @@ function OrganizerDashboard() {
 
   const loadEvents = async () => {
     try {
-      const res = await getMyEvents();
+      const res = await getMyActiveEvents();
       setEvents(res.data);
     } catch (error) {
       console.log(error);
@@ -57,7 +56,7 @@ function OrganizerDashboard() {
       await loadDashboard();
       await loadEvents();
     };
-    
+
     initializeDashboardData();
   }, []);
 
@@ -76,7 +75,10 @@ function OrganizerDashboard() {
 
         {/* Vanishing Bootstrap success banner hook */}
         {success && (
-          <div className="alert alert-success alert-dismissible fade show" role="alert">
+          <div
+            className="alert alert-success alert-dismissible fade show"
+            role="alert"
+          >
             {success}
           </div>
         )}

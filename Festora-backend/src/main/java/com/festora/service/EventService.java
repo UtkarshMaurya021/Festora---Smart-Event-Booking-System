@@ -152,8 +152,7 @@ public class EventService {
 
 		Integer newTotalSeats = request.getTotalSeats();
 		if (newTotalSeats < bookedSeats) {
-			throw new RuntimeException(
-					"Total seats cannot be less than the " + bookedSeats + " seats already booked");
+			throw new RuntimeException("Total seats cannot be less than the " + bookedSeats + " seats already booked");
 		}
 
 		event.setTitle(request.getTitle());
@@ -271,40 +270,33 @@ public class EventService {
 			event.setUpdatedAt(LocalDateTime.now());
 		}
 	}
-public List<EventSummaryResponse> getMyEventsSummary(String email) {
 
-    User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+	public List<EventSummaryResponse> getMyEventsSummary(String email) {
 
-    Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
-        Organizer newOrganizer = new Organizer();
-        newOrganizer.setUser(user);
-        return organizerRepository.save(newOrganizer);
-    });
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-    List<Event> events = eventRepository.findByOrganizer(organizer);
+		Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+			Organizer newOrganizer = new Organizer();
+			newOrganizer.setUser(user);
+			return organizerRepository.save(newOrganizer);
+		});
 
-    return events.stream().map(event -> {
+		List<Event> events = eventRepository.findByOrganizer(organizer);
 
-    	int bookedSeats = bookingRepository.sumQuantityByEvent(event);
-        Long totalBookings = bookingRepository.countByEvent(event);
-        Double revenue = bookingRepository.sumAmountByEvent(event);
+		return events.stream().map(event -> {
 
-        return new EventSummaryResponse(
-                event.getEventId(),
-                event.getTitle(),
-                event.getCategory() != null ? event.getCategory().getCategoryName() : null,
-                event.getVenue() != null ? event.getVenue().getVenueName() : null,
-                event.getTotalSeats(),
-                event.getAvailableSeats(),
-                bookedSeats,
-                totalBookings,
-                java.math.BigDecimal.valueOf(revenue),
-                event.getStatus()
-        );
+			int bookedSeats = bookingRepository.sumQuantityByEvent(event);
+			Long totalBookings = bookingRepository.countByEvent(event);
+			Double revenue = bookingRepository.sumAmountByEvent(event);
 
-    }).toList();
-}
+			return new EventSummaryResponse(event.getEventId(), event.getTitle(),
+					event.getCategory() != null ? event.getCategory().getCategoryName() : null,
+					event.getVenue() != null ? event.getVenue().getVenueName() : null, event.getTotalSeats(),
+					event.getAvailableSeats(), bookedSeats, totalBookings, java.math.BigDecimal.valueOf(revenue),
+					event.getStatus());
+
+		}).toList();
+	}
 
 	@Scheduled(fixedRate = 60000) // Every 1 minute
 	public void updateExpiredEvents() {
@@ -331,5 +323,19 @@ public List<EventSummaryResponse> getMyEventsSummary(String email) {
 
 		eventRepository.saveAll(events);
 
+	}
+
+	public List<Event> getMyActiveEvents(String email) {
+
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+		Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+			Organizer newOrganizer = new Organizer();
+			newOrganizer.setUser(user);
+			return organizerRepository.save(newOrganizer);
+		});
+
+		// Dashboard should only show currently active events
+		return eventRepository.findByOrganizerAndStatus(organizer, Status.ACTIVE);
 	}
 }

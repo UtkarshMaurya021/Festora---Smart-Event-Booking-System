@@ -11,10 +11,13 @@ import com.festora.dto.BookingResponse;
 import com.festora.dto.EventSummaryResponse;
 import com.festora.entity.Booking;
 import com.festora.entity.Event;
+import com.festora.entity.Payment;
+import com.festora.entity.PaymentStatus;
 import com.festora.entity.Status;
 import com.festora.entity.User;
 import com.festora.repository.BookingRepository;
 import com.festora.repository.EventRepository;
+import com.festora.repository.PaymentRepository;
 import com.festora.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -25,15 +28,18 @@ public class BookingService {
 	private final BookingRepository bookingRepository;
 	private final EventRepository eventRepository;
 	private final UserRepository userRepository;
+	private final PaymentRepository paymentRepository;
 
 	public BookingService(BookingRepository bookingRepository, EventRepository eventRepository,
-			UserRepository userRepository) {
+			UserRepository userRepository, PaymentRepository paymentRepository) {
 
 		this.bookingRepository = bookingRepository;
 		this.eventRepository = eventRepository;
 		this.userRepository = userRepository;
+		this.paymentRepository = paymentRepository;
 	}
 
+	@Transactional
 	public BookingResponse bookEvent(BookingRequest request, String email) {
 
 		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
@@ -71,6 +77,13 @@ public class BookingService {
 
 		Booking saved = bookingRepository.save(booking);
 
+		Payment payment = new Payment();
+		payment.setBooking(saved);
+		payment.setAmount(saved.getTotalAmount());
+		payment.setPaymentDate(LocalDateTime.now());
+		payment.setStatus(PaymentStatus.PENDING);
+		paymentRepository.save(payment);
+
 		return new BookingResponse(
 
 				saved.getBookingId(),
@@ -91,7 +104,7 @@ public class BookingService {
 
 	public List<BookingResponse> myBookings(String email) {
 
-		User user = userRepository.findByEmail(email).orElseThrow();
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
 		return bookingRepository.findByUser(user)
 
