@@ -4,7 +4,7 @@ import com.festora.dto.EventRequest;
 import com.festora.dto.OrganizerDashboardResponse;
 import com.festora.entity.Event;
 import com.festora.service.EventService;
-
+import com.festora.dto.EventSummaryResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +23,7 @@ public class OrganizerController {
 
     @PostMapping("/events")
     public Event createEvent(@RequestBody EventRequest request,
-                             Authentication authentication) {
+            Authentication authentication) {
         return eventService.create(request, authentication.getName());
     }
 
@@ -39,23 +39,29 @@ public class OrganizerController {
 
     @DeleteMapping("/events/{id}")
     public void deleteEvent(@PathVariable Long id,
-                            Authentication authentication) {
+            Authentication authentication) {
         eventService.deleteEvent(id, authentication.getName());
+    }
+
+    // NEW ENDPOINT
+    @GetMapping("/events/summary")
+    public List<EventSummaryResponse> myEventsSummary(Authentication authentication) {
+        return eventService.getMyEventsSummary(authentication.getName());
     }
 
     @PutMapping("/events/{id}")
     public Event updateEvent(@PathVariable Long id,
-                             @RequestBody EventRequest request,
-                             Authentication authentication) {
+            @RequestBody EventRequest request,
+            Authentication authentication) {
         return eventService.updateEvent(id, request, authentication.getName());
     }
+
     @GetMapping("/dashboard")
     public OrganizerDashboardResponse dashboard(
-            Authentication authentication){
+            Authentication authentication) {
 
         return eventService.getDashboard(
-                authentication.getName()
-        );
+                authentication.getName());
 
     }
 }

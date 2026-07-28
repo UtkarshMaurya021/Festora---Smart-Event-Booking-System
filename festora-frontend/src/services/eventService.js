@@ -39,3 +39,8 @@ export const getAllEvents = () => {
     return api.get("/user/active-events");
 
 };
+export const getEventsSummary = () => {
+
+    return api.get("/organizer/events/summary");
+
+}

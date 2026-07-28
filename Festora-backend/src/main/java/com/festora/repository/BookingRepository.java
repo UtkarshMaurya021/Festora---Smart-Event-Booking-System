@@ -13,18 +13,25 @@ import org.springframework.data.repository.query.Param;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-	 long countByUser(User user);
+	long countByUser(User user);
 
-	    List<Booking> findByUser(User user);
+	List<Booking> findByUser(User user);
 
-	    List<Booking> findByEventOrganizer(Organizer organizer);
+	List<Booking> findByEventOrganizer(Organizer organizer);
 
-	    Long countByEvent(Event event);
+	Long countByEvent(Event event);
 
-	    @Query("""
-	        SELECT COALESCE(SUM(b.totalAmount),0)
-	        FROM Booking b
-	        WHERE b.event = :event
-	        """)
-	    Double sumAmountByEvent(@Param("event") Event event);
+	@Query("""
+			SELECT COALESCE(SUM(b.totalAmount),0)
+			FROM Booking b
+			WHERE b.event = :event
+			""")
+	Double sumAmountByEvent(@Param("event") Event event);
+
+	@Query("""
+			SELECT COALESCE(SUM(b.quantity),0)
+			FROM Booking b
+			WHERE b.event = :event
+			""")
+	Integer sumQuantityByEvent(@Param("event") Event event);
 }

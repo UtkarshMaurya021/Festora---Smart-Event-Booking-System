@@ -3,7 +3,7 @@ package com.festora.service;
 import org.springframework.scheduling.annotation.Scheduled;
 import java.time.LocalDateTime;
 import java.util.List;
-
+import com.festora.dto.EventSummaryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -271,6 +271,40 @@ public class EventService {
 			event.setUpdatedAt(LocalDateTime.now());
 		}
 	}
+public List<EventSummaryResponse> getMyEventsSummary(String email) {
+
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+        Organizer newOrganizer = new Organizer();
+        newOrganizer.setUser(user);
+        return organizerRepository.save(newOrganizer);
+    });
+
+    List<Event> events = eventRepository.findByOrganizer(organizer);
+
+    return events.stream().map(event -> {
+
+    	int bookedSeats = bookingRepository.sumQuantityByEvent(event);
+        Long totalBookings = bookingRepository.countByEvent(event);
+        Double revenue = bookingRepository.sumAmountByEvent(event);
+
+        return new EventSummaryResponse(
+                event.getEventId(),
+                event.getTitle(),
+                event.getCategory() != null ? event.getCategory().getCategoryName() : null,
+                event.getVenue() != null ? event.getVenue().getVenueName() : null,
+                event.getTotalSeats(),
+                event.getAvailableSeats(),
+                bookedSeats,
+                totalBookings,
+                java.math.BigDecimal.valueOf(revenue),
+                event.getStatus()
+        );
+
+    }).toList();
+}
 
 	@Scheduled(fixedRate = 60000) // Every 1 minute
 	public void updateExpiredEvents() {

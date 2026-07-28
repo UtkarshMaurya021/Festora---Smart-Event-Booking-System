@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 
+import AllEvents from "./pages/organizer/AllEvents.jsx";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -12,7 +13,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import EventDetails from "./pages/EventDetails";
 import MyBookings from "./pages/MyBookings.jsx";
 import VenueManagement from "./pages/admin/VenueManagement.jsx";
-import CategoryManagement from "./pages/admin/CategoryManagement.jsx"
+import CategoryManagement from "./pages/admin/CategoryManagement.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -31,23 +32,32 @@ function App() {
             </PrivateRoute>
           }
         />
-<Route
-path="/admin/categories"
-element={
-<PrivateRoute role="ROLE_ADMIN">
-<CategoryManagement/>
-</PrivateRoute>
-}
-/>
 
-<Route
-path="/admin/venues"
-element={
-<PrivateRoute role="ROLE_ADMIN">
-<VenueManagement/>
-</PrivateRoute>
-}
-/>
+        <Route
+          path="/organizer/events"
+          element={
+            <PrivateRoute role="ROLE_ORGANIZER">
+              <AllEvents />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/categories"
+          element={
+            <PrivateRoute role="ROLE_ADMIN">
+              <CategoryManagement />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/admin/venues"
+          element={
+            <PrivateRoute role="ROLE_ADMIN">
+              <VenueManagement />
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/admin/dashboard"
           element={

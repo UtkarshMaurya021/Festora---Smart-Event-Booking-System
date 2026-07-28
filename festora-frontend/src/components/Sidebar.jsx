@@ -29,6 +29,7 @@ function Sidebar() {
       {role === "ROLE_ORGANIZER" && (
         <>
           <Link to="/organizer/dashboard">Dashboard</Link>
+          <Link to="/organizer/events">All Events</Link>
           <Link to="/organizer/events/create">Create Event</Link>
         </>
       )}
