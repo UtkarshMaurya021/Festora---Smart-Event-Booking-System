@@ -1,57 +1,110 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { getMyBookings } from "../services/bookingService";
 
-function MyBookings() {
-  const [bookings, setBookings] = useState([]);
+function MyBookings(){
+ const load=()=>{
 
-  useEffect(() => {
-    axios
-      .get(
-        "http://localhost:8080/api/bookings/my",
+        getMyBookings()
 
-        {
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token"),
-          },
-        },
-      )
+        .then(res=>{
 
-      .then((res) => setBookings(res.data));
-  }, []);
+            setBookings(res.data);
 
-  return (
-    <div className="container">
-      <h2>My Bookings</h2>
+        });
 
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Event</th>
+    }
 
-            <th>Seats</th>
+    const [bookings,setBookings]=useState([]);
 
-            <th>Total</th>
+    useEffect(()=>{
 
-            <th>Status</th>
-          </tr>
-        </thead>
+        load();
 
-        <tbody>
-          {bookings.map((b) => (
-            <tr key={b.bookingId}>
-              <td>{b.eventTitle}</td>
+    },[]);
 
-              <td>{b.quantity}</td>
+   
+    return(
 
-              <td>₹ {b.totalAmount}</td>
+        <div className="container mt-5">
 
-              <td>{b.status}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+            <h2 className="mb-4">
+
+                My Bookings
+
+            </h2>
+
+            <table className="table table-bordered">
+
+                <thead>
+
+                <tr>
+
+                    <th>Event</th>
+
+                    <th>Quantity</th>
+
+                    <th>Total</th>
+
+                    <th>Date</th>
+
+                    <th>Status</th>
+
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                {
+
+                bookings.map(b=>
+
+                    <tr key={b.bookingId}>
+
+                        <td>
+
+                            {b.event.title}
+
+                        </td>
+
+                        <td>
+
+                            {b.quantity}
+
+                        </td>
+
+                        <td>
+
+                            ₹{b.totalAmount}
+
+                        </td>
+
+                        <td>
+
+                            {b.bookingDate}
+
+                        </td>
+
+                        <td>
+
+                            {b.status}
+
+                        </td>
+
+                    </tr>
+
+                )
+
+                }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    )
+
 }
 
 export default MyBookings;

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+// Imported Link component from react-router-dom
+import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import DashboardNavbar from "../components/DashboardNavbar";
 import { getUserDashboard } from "../services/dashboardService";
@@ -81,26 +83,27 @@ function UserDashboard() {
                   <th>Category</th>
                   <th>Price</th>
                   <th>Seats</th>
-                  <th></th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {activeEvents.map((event, index) => {
-                  const eventId = event.event_id || event.eventId || index;
+                  const eventId = event.eventId || event.event_id || index;
                   return (
                     <tr key={eventId}>
                       <td>{event.title}</td>
                       <td>{event.venue?.venueName || "N/A"}</td>
                       <td>{event.category?.categoryName || "N/A"}</td>
                       <td>₹ {event.price}</td>
-                      <td>{event.available_seats || event.availableSeats}</td>
+                      <td>{event.availableSeats || event.available_seats}</td>
                       <td>
-                        <button
+                        {/* Swapped window.location button for react-router Link */}
+                        <Link
+                          to={`/events/${eventId}`}
                           className="btn btn-primary btn-sm"
-                          onClick={() => window.location.href = "/event/" + eventId}
                         >
-                          View
-                        </button>
+                          View Details
+                        </Link>
                       </td>
                     </tr>
                   );

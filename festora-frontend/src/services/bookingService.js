@@ -1,19 +1,9 @@
-import axios from "axios";
+import api from "./api";
 
-const API = "http://localhost:8080/api/bookings";
+export const bookEvent = (data) => {
+    return api.post("/bookings", data);
+};
 
-const token = () => localStorage.getItem("token");
-
-export const bookEvent = (booking) =>
-    axios.post(API, booking, {
-        headers: {
-            Authorization: `Bearer ${token()}`
-        }
-    });
-
-export const myBookings = () =>
-    axios.get(`${API}/my`, {
-        headers: {
-            Authorization: `Bearer ${token()}`
-        }
-    });
+export const getMyBookings = () => {
+    return api.get("/bookings/my");
+};

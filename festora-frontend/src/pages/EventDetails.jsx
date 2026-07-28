@@ -1,89 +1,114 @@
-import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
+import api from "../services/api";
+import { bookEvent } from "../services/bookingService";
 
-function EventDetails() {
-  const { id } = useParams();
+function EventDetails(){
 
-  const [event, setEvent] = useState(null);
+    const {id}=useParams();
 
-  const [quantity, setQuantity] = useState(1);
+    const navigate=useNavigate();
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/events/" + id)
+    const [event,setEvent]=useState({});
 
-      .then((res) => setEvent(res.data));
-  }, []);
+    const [quantity,setQuantity]=useState(1);
 
-  if (!event) {
-    return <h3>Loading...</h3>;
-  }
+    useEffect(()=>{
 
-  const book = () => {
-    axios
-      .post(
-        "http://localhost:8080/api/bookings",
+        api.get(`/events/${id}`)
 
-        {
-          eventId: event.eventId,
+        .then(res=>{
 
-          quantity: quantity,
-        },
+            setEvent(res.data);
 
-        {
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token"),
-          },
-        },
-      )
+        });
 
-      .then(() => {
-        alert("Booking Successful");
-      })
+    },[]);
 
-      .catch((err) => {
-        alert(err.response.data);
-      });
-  };
+    const book=async()=>{
 
-  return (
-    <div className="container mt-5">
-      <h2>{event.title}</h2>
+        try{
 
-      <p>{event.description}</p>
+            await bookEvent({
 
-      <p>
-        <b>Venue :</b> {event.venue.venueName}
-      </p>
+                eventId:event.eventId,
 
-      <p>
-        <b>Category :</b> {event.category.categoryName}
-      </p>
+                quantity
 
-      <p>
-        <b>Price :</b> ₹ {event.price}
-      </p>
+            });
 
-      <p>
-        <b>Seats :</b> {event.availableSeats}
-      </p>
+            navigate("/my-bookings");
 
-      <input
-        type="number"
-        min="1"
-        className="form-control"
-        value={quantity}
-        onChange={(e) => setQuantity(e.target.value)}
-      />
+        }
 
-      <br />
+        catch(e){
 
-      <button className="btn btn-success" onClick={book}>
-        Book Now
-      </button>
-    </div>
-  );
+            alert(e.response?.data || "Booking Failed");
+
+        }
+
+    }
+
+    return(
+
+        <div className="container mt-5">
+
+            <div className="card p-4">
+
+                <h2>{event.title}</h2>
+
+                <p>{event.description}</p>
+
+                <h5>Price : ₹{event.price}</h5>
+
+                <h6>
+
+                    Available Seats :
+
+                    {event.availableSeats}
+
+                </h6>
+
+                <input
+
+                    type="number"
+
+                    min="1"
+
+                    max={event.availableSeats}
+
+                    value={quantity}
+
+                    onChange={(e)=>
+
+                    setQuantity(
+
+                    Number(e.target.value)
+
+                    )}
+
+                    className="form-control mb-3"
+
+                />
+
+                <button
+
+                    className="btn btn-success"
+
+                    onClick={book}
+
+                >
+
+                    Book Ticket
+
+                </button>
+
+            </div>
+
+        </div>
+
+    )
+
 }
 
 export default EventDetails;
