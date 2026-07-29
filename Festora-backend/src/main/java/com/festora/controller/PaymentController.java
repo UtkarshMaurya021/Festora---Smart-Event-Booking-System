@@ -1,9 +1,10 @@
 package com.festora.controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.json.JSONObject;
 import org.springframework.web.bind.annotation.*;
-import com.festora.entity.Payment;
+
+import com.festora.dto.PaymentRequest;
+import com.festora.dto.PaymentVerificationRequest;
 import com.festora.service.PaymentService;
 
 @RestController
@@ -11,17 +12,30 @@ import com.festora.service.PaymentService;
 @CrossOrigin("*")
 public class PaymentController {
 
-    private final PaymentService paymentService;
+	private final PaymentService paymentService;
 
-    public PaymentController(PaymentService paymentService) {
-        this.paymentService = paymentService;
-    }
+	public PaymentController(PaymentService paymentService) {
 
-    // Changed from @PutMapping to @PostMapping to match Step 121
-    @PostMapping("/create-order/{bookingId}")
-    public ResponseEntity<Payment> createRazorpayOrder(@PathVariable Long bookingId) {
-        // Calls the service layer to read booking, calculate amount, talk to Razorpay, and save PENDING payment
-        Payment pendingPayment = paymentService.createOrder(bookingId);
-        return new ResponseEntity<>(pendingPayment, HttpStatus.CREATED);
-    }
+		this.paymentService = paymentService;
+
+	}
+
+	@PostMapping("/create-order")
+	public String createOrder(@RequestBody PaymentRequest request) throws Exception {
+
+		JSONObject object = paymentService.createOrder(request);
+
+		return object.toString();
+
+	}
+
+	@PostMapping("/verify")
+	public String verify(@RequestBody PaymentVerificationRequest request) throws Exception {
+
+		paymentService.verify(request);
+
+		return "Payment Successful";
+
+	}
+
 }

@@ -1,7 +1,11 @@
 import api from "./api";
 
-export const pay = (bookingId) => {
+export const createOrder = (bookingId) => {
+    return api.post("/payments/create-order", {
+        bookingId
+    });
+};
 
-    return api.put(`/payments/${bookingId}`);
-
-}
+export const verifyPayment = (data) => {
+    return api.post("/payments/verify", data);
+};

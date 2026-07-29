@@ -4,7 +4,7 @@ import PrivateRoute from "./components/PrivateRoute.jsx";
 import AllEvents from "./pages/organizer/AllEvents.jsx";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import Signup from "./pages/signup";
 import CreateEvent from "./pages/organizer/CreateEvent";
 import EditEvent from "./pages/organizer/EditEvent.jsx";
 import UserDashboard from "./pages/UserDashboard";
@@ -14,7 +14,7 @@ import EventDetails from "./pages/EventDetails";
 import MyBookings from "./pages/MyBookings.jsx";
 import VenueManagement from "./pages/admin/VenueManagement.jsx";
 import CategoryManagement from "./pages/admin/CategoryManagement.jsx";
-import Payment from "./pages/Payment.jsx"
+import Payment from "./pages/PaymentPage.jsx"
 function App() {
   return (
     <BrowserRouter>

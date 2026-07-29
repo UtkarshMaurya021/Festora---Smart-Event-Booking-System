@@ -68,7 +68,8 @@ public class SecurityConfig {
 				                "/api/auth/**",
 				                "/api/events/**"
 				        ).permitAll()
-
+				        .requestMatchers("/api/payments/**")
+				        .hasRole("USER")
 				        // Admin only
 				        .requestMatchers("/api/admin/**")
 				        .hasRole("ADMIN")

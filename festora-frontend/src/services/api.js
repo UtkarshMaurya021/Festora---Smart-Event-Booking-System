@@ -19,5 +19,8 @@ api.interceptors.request.use((config)=>{
     return config;
 
 });
+export const getTickets=()=>{
 
+    return api.get("/tickets/my");
+}
 export default api;

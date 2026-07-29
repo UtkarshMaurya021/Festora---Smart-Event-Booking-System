@@ -20,6 +20,7 @@ public class Payment {
     private Long paymentId;
     private String razorpayOrderId;
     private String razorpayPaymentId;
+    private String razorpaySignature;
     private Double amount;
 
     private LocalDateTime paymentDate;

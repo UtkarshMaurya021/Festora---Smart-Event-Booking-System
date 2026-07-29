@@ -99,7 +99,7 @@ function UserDashboard() {
                       <td>
                         {/* Swapped window.location button for react-router Link */}
                         <Link
-                          to={`/events/${eventId}`}
+                          to={`/event/${eventId}`}
                           className="btn btn-primary btn-sm"
                         >
                           View Details
