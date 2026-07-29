@@ -129,5 +129,23 @@ public class BookingService {
 				.toList();
 
 	}
+	public BookingResponse getBooking(Long id, String email) {
 
+	    User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+	    Booking booking = bookingRepository.findById(id).orElseThrow(() -> new RuntimeException("Booking not found"));
+
+	    if (!booking.getUser().getUserId().equals(user.getUserId())) {
+	        throw new RuntimeException("Unauthorized");
+	    }
+
+	    return new BookingResponse(
+	            booking.getBookingId(),
+	            booking.getEvent().getTitle(),
+	            booking.getQuantity(),
+	            booking.getTotalAmount(),
+	            booking.getBookingDate(),
+	            booking.getStatus().name()
+	    );
+	}
 }

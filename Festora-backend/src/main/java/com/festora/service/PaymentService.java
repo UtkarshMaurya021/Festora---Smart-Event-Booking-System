@@ -61,13 +61,10 @@ public class PaymentService {
         String currency = order.get("currency");
         int amount = order.get("amount");
 
-        Payment payment = new Payment();
-        payment.setBooking(booking);
-        payment.setAmount(booking.getTotalAmount());
-        payment.setStatus(PaymentStatus.PENDING);
+        Payment payment = paymentRepository.findByBooking(booking)
+                .orElseThrow(() -> new IllegalStateException("Payment record not found for this booking"));
         payment.setRazorpayOrderId(orderId);
         paymentRepository.save(payment);
-
         JSONObject response = new JSONObject();
         response.put("orderId", orderId);
         response.put("amount", amount);

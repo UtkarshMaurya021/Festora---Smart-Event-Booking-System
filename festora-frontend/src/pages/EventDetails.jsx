@@ -10,7 +10,7 @@ function EventDetails() {
   const [quantity, setQuantity] = useState(1);
   useEffect(() => {
     api
-      .get(`/events/${id}`)
+      .get(`/user/events/${id}`)
       .then((res) => {
         setEvent(res.data);
       });
@@ -24,11 +24,7 @@ function EventDetails() {
         quantity,
       });
 
-      navigate("/payment", {
-        state: {
-          bookingId: res.data.bookingId,
-        },
-      });
+     navigate(`/payment/${res.data.bookingId}`);
     } catch (e) {
       alert(e.response?.data || "Booking Failed");
     }

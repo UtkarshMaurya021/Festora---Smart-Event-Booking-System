@@ -24,6 +24,10 @@ public class EventController {
         this.service = service;
     }
 
+    @GetMapping("/{id}")
+    public Event getEvent(@PathVariable Long id) {
+        return service.getEvent(id);
+    }
     @GetMapping
     public List<Event> getAllEvents() {
         return repository.findAll();

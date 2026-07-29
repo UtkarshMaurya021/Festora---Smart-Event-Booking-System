@@ -22,7 +22,15 @@ public class BookingController {
         this.bookingService=bookingService;
 
     }
-
+    @GetMapping("/{id}")
+    public BookingResponse getBooking(
+            @PathVariable Long id,
+            Authentication authentication){
+        return bookingService.getBooking(
+                id,
+                authentication.getName()
+        );
+    }
     @PostMapping
 
     public BookingResponse book(
