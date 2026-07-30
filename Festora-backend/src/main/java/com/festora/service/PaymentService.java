@@ -1,77 +1,82 @@
 package com.festora.service;
 
 import java.time.LocalDateTime;
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.Random;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.festora.dto.PaymentConfirmRequest;
+import com.festora.dto.PaymentInitResponse;
 import com.festora.dto.PaymentRequest;
-import com.festora.dto.PaymentVerificationRequest;
-import com.festora.dto.RazorpayOrderResponse;
+import com.festora.dto.PaymentResult;
 import com.festora.entity.Booking;
 import com.festora.entity.Payment;
 import com.festora.entity.PaymentStatus;
+import com.festora.entity.Ticket;
 import com.festora.repository.BookingRepository;
 import com.festora.repository.PaymentRepository;
-import com.razorpay.Order;
-import com.razorpay.RazorpayClient;
-import com.razorpay.Utils;
-import jakarta.annotation.PostConstruct;
 
+/**
+ * FestoraPay -- an in-house, zero-dependency mock payment gateway.
+ *
+ * It follows the exact same shape as a real gateway (Razorpay/Stripe/etc.)
+ * so the flow is easy to explain and easy to later swap for a real one:
+ *
+ *   1. createOrder()   -> mints a transactionId for this booking, PENDING
+ *   2. confirmPayment() -> the "checkout" step; decides SUCCESS/FAILED using
+ *                          magic test values (exactly how real sandboxes work)
+ *   3. markFailed()     -> called if the user abandons checkout without
+ *                          submitting (closes the tab, hits back, etc.)
+ *
+ * Simulated outcome rules (documented so it's trivial to demo/explain):
+ *   - CARD: a number ending in "0000"      -> declined
+ *   - UPI:  the id "fail@festora"          -> declined
+ *   - NETBANKING / WALLET: always succeed
+ *   - everything else                       -> succeeds
+ */
 @Service
 public class PaymentService {
 
-    @Value("${razorpay.key-id}")
-    private String keyId;
-
-    @Value("${razorpay.key-secret}")
-    private String keySecret;
+    private static final String FAILING_UPI_ID = "fail@festora";
+    private static final String FAILING_CARD_SUFFIX = "0000";
 
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
     private final TicketService ticketService;
-    private RazorpayClient razorpayClient;
+    private final Random random = new Random();
 
     public PaymentService(
-            BookingRepository bookingRepository, 
-            PaymentRepository paymentRepository, 
+            BookingRepository bookingRepository,
+            PaymentRepository paymentRepository,
             TicketService ticketService) {
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
         this.ticketService = ticketService;
     }
 
-    @PostConstruct
-    public void init() throws Exception {
-        this.razorpayClient = new RazorpayClient(keyId, keySecret);
-    }
-
     @Transactional
-    public RazorpayOrderResponse createOrder(PaymentRequest request) throws Exception {
+    public PaymentInitResponse createOrder(PaymentRequest request) {
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + request.getBookingId()));
 
-        JSONObject orderRequest = new JSONObject();
-        orderRequest.put("amount", (int) (booking.getTotalAmount() * 100));
-        orderRequest.put("currency", "INR");
-        orderRequest.put("receipt", "BOOK_" + booking.getBookingId());
-
-        Order order = razorpayClient.orders.create(orderRequest);
-
-        String orderId = order.get("id");
-        String currency = order.get("currency");
-        int amount = order.get("amount");
-
         Payment payment = paymentRepository.findByBooking(booking)
                 .orElseThrow(() -> new IllegalStateException("Payment record not found for this booking"));
-        payment.setRazorpayOrderId(orderId);
-        paymentRepository.save(payment);
 
-        return new RazorpayOrderResponse(
-                orderId,
-                keyId,
-                amount,
-                currency,
+        // Already paid -- don't mint a new transaction, just reuse it
+        if (payment.getStatus() != PaymentStatus.SUCCESS) {
+            payment.setTransactionId(generateTransactionId());
+            payment.setStatus(PaymentStatus.PENDING);
+            paymentRepository.save(payment);
+        }
+
+        return new PaymentInitResponse(
+                payment.getTransactionId(),
+                booking.getTotalAmount(),
+                "INR",
+                booking.getBookingId(),
+                booking.getEvent().getTitle(),
+                booking.getQuantity(),
                 booking.getUser().getName(),
                 booking.getUser().getEmail(),
                 booking.getUser().getPhone()
@@ -79,30 +84,43 @@ public class PaymentService {
     }
 
     @Transactional
-    public void verify(PaymentVerificationRequest request) throws Exception {
+    public PaymentResult confirmPayment(PaymentConfirmRequest request) throws Exception {
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + request.getBookingId()));
 
         Payment payment = paymentRepository.findByBooking(booking)
                 .orElseThrow(() -> new IllegalArgumentException("Payment record not found for this booking"));
 
-        JSONObject options = new JSONObject();
-        options.put("razorpay_order_id", request.getRazorpayOrderId());
-        options.put("razorpay_payment_id", request.getRazorpayPaymentId());
-        options.put("razorpay_signature", request.getRazorpaySignature());
-
-        boolean valid = Utils.verifyPaymentSignature(options, keySecret);
-        if (!valid) {
-            throw new SecurityException("Invalid Razorpay signature verification failed");
+        if (payment.getTransactionId() == null
+                || !payment.getTransactionId().equals(request.getTransactionId())) {
+            throw new IllegalArgumentException("Transaction ID does not match this booking");
         }
 
-        payment.setRazorpayPaymentId(request.getRazorpayPaymentId());
-        payment.setRazorpaySignature(request.getRazorpaySignature());
-        payment.setStatus(PaymentStatus.SUCCESS);
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            // Already confirmed earlier (e.g. duplicate click). generateTicket()
+            // is idempotent, so this just fetches the ticket that was already
+            // issued instead of silently returning a null ticket number.
+            Ticket existingTicket = ticketService.generateTicket(booking);
+            return new PaymentResult("SUCCESS", "Payment already completed", existingTicket.getTicketNumber());
+        }
+
+        boolean declined = isDeclined(request);
+
+        payment.setPaymentMethod(request.getPaymentMethod());
         payment.setPaymentDate(LocalDateTime.now());
+
+        if (declined) {
+            payment.setStatus(PaymentStatus.FAILED);
+            paymentRepository.save(payment);
+            return new PaymentResult("FAILED", declineReason(request), null);
+        }
+
+        payment.setStatus(PaymentStatus.SUCCESS);
         paymentRepository.save(payment);
 
-        ticketService.generateTicket(payment.getBooking());
+        Ticket ticket = ticketService.generateTicket(booking);
+
+        return new PaymentResult("SUCCESS", "Payment successful", ticket.getTicketNumber());
     }
 
     @Transactional
@@ -118,5 +136,35 @@ public class PaymentService {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
         }
+    }
+
+    private boolean isDeclined(PaymentConfirmRequest request) {
+        switch (request.getPaymentMethod()) {
+            case CARD:
+                String card = request.getCardNumber() == null ? "" : request.getCardNumber().replaceAll("\\s", "");
+                return card.endsWith(FAILING_CARD_SUFFIX);
+            case UPI:
+                return FAILING_UPI_ID.equalsIgnoreCase(request.getUpiId());
+            case NETBANKING:
+            case WALLET:
+            default:
+                return false;
+        }
+    }
+
+    private String declineReason(PaymentConfirmRequest request) {
+        switch (request.getPaymentMethod()) {
+            case CARD:
+                return "Card declined by issuing bank (insufficient funds)";
+            case UPI:
+                return "UPI payment declined by the payer's bank";
+            default:
+                return "Payment declined";
+        }
+    }
+
+    private String generateTransactionId() {
+        String digits = String.format("%06d", random.nextInt(1_000_000));
+        return "FPAY" + System.currentTimeMillis() + digits;
     }
 }

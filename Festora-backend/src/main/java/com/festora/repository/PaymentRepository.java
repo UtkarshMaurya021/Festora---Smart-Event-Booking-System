@@ -12,4 +12,6 @@ public interface PaymentRepository
 
     Optional<Payment> findByBooking(Booking booking);
 
+    Optional<Payment> findByTransactionId(String transactionId);
+
 }

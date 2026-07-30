@@ -9,7 +9,7 @@ import lombok.Data;
  * (see PaymentService) -- nothing is ever charged for real.
  */
 @Data
-public class PaymentRequest {
+public class PaymentConfirmRequest {
 
     private Long bookingId;
 

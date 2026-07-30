@@ -2,9 +2,10 @@ package com.festora.controller;
 
 import org.springframework.web.bind.annotation.*;
 
+import com.festora.dto.PaymentConfirmRequest;
+import com.festora.dto.PaymentInitResponse;
 import com.festora.dto.PaymentRequest;
-import com.festora.dto.PaymentVerificationRequest;
-import com.festora.dto.RazorpayOrderResponse;
+import com.festora.dto.PaymentResult;
 import com.festora.service.PaymentService;
 
 @RestController
@@ -21,18 +22,16 @@ public class PaymentController {
 	}
 
 	@PostMapping("/create-order")
-	public RazorpayOrderResponse createOrder(@RequestBody PaymentRequest request) throws Exception {
+	public PaymentInitResponse createOrder(@RequestBody PaymentRequest request) {
 
 		return paymentService.createOrder(request);
 
 	}
 
-	@PostMapping("/verify")
-	public String verify(@RequestBody PaymentVerificationRequest request) throws Exception {
+	@PostMapping("/confirm")
+	public PaymentResult confirm(@RequestBody PaymentConfirmRequest request) throws Exception {
 
-		paymentService.verify(request);
-
-		return "Payment Successful";
+		return paymentService.confirmPayment(request);
 
 	}
 
