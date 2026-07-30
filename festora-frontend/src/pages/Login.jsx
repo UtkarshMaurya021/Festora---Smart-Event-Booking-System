@@ -1,15 +1,21 @@
 import { useState } from "react";
 import axios from "axios";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
+import AuthLayout from "../components/AuthLayout";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
     try {
       const res = await axios.post("http://localhost:8080/api/auth/login", {
         email,
@@ -29,43 +35,69 @@ function Login() {
       } else {
         navigate("/user/dashboard");
       }
-    } catch (error) {
-      console.error(error);
-      alert("Invalid Email or Password");
+    } catch (err) {
+      console.error(err);
+      setError("Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <Navbar />
-      <div className="container py-5">
-        <div className="row justify-content-center">
-          <div className="col-md-5">
-            <div className="card auth-card p-4">
-              <h2 className="mb-4 text-center">Welcome Back</h2>
-              <input
-                className="form-control mb-3"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <input
-                type="password"
-                className="form-control mb-3"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button className="btn btn-primary w-100" onClick={handleLogin}>
-                Login
-              </button>
-              <p className="text-center mt-3">Don't have an account?</p>
-            </div>
+    <AuthLayout>
+      <form className="auth-form" onSubmit={handleLogin}>
+        <h2 className="auth-title">Welcome back</h2>
+        <p className="auth-desc">Log in to book tickets or manage your events.</p>
+
+        {error && <div className="auth-server-error">{error}</div>}
+
+        <div className="auth-field">
+          <label htmlFor="login-email">Email</label>
+          <div className="auth-input-wrap">
+            <FiMail className="auth-input-icon" />
+            <input
+              id="login-email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
         </div>
-      </div>
-      <Footer />
-    </>
+
+        <div className="auth-field">
+          <label htmlFor="login-password">Password</label>
+          <div className="auth-input-wrap">
+            <FiLock className="auth-input-icon" />
+            <input
+              id="login-password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              className="auth-eye-btn"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </button>
+          </div>
+        </div>
+
+        <button className="auth-submit-btn" type="submit" disabled={loading}>
+          {loading ? "Logging in..." : "Log in"}
+        </button>
+
+        <p className="auth-switch">
+          New here? <Link to="/signup">Create an account</Link>
+        </p>
+      </form>
+    </AuthLayout>
   );
 }
 

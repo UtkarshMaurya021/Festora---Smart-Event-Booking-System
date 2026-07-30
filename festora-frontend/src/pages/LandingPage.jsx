@@ -1,147 +1,308 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { getAllEvents } from "../services/eventService";
+import {
+  FiZap,
+  FiLock,
+  FiCheckCircle,
+  FiBell,
+  FiDollarSign,
+  FiHeadphones,
+  FiSearch,
+  FiShoppingCart,
+  FiLogIn,
+  FiCalendar,
+  FiStar,
+} from "react-icons/fi";
+import { MdConfirmationNumber } from "react-icons/md";
+import "../pages/styles/landing.css";
 
 function LandingPage() {
-  const [events, setEvents] = useState([]);
-
-  useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        const res = await getAllEvents();
-        setEvents(res.data);
-      } catch (error) {
-        console.error("Failed to load events:", error);
-      }
-    };
-    loadEvents();
-  }, []);
-
   return (
     <>
       <Navbar />
 
       {/* Hero Section */}
-      <section className="hero py-5 bg-light">
-        <div className="container">
-          <div className="row align-items-center">
-            <div className="col-md-6">
-              <h1 className="display-4 fw-bold">Find Amazing Events</h1>
-              <p className="lead text-muted">
-                Music Festivals, Workshops, Hackathons, Sports, College Fests
-                and much more.
+      <section className="landing-hero">
+        <div className="landing-hero-texture" />
+
+        <div className="container position-relative d-flex flex-column h-100">
+          <div className="row flex-grow-1 align-items-center">
+            <div className="col-lg-7">
+              <div className="landing-hero-logo">
+                <MdConfirmationNumber className="landing-hero-logo-icon" />
+                <span>Festora</span>
+              </div>
+
+              <span className="landing-eyebrow">
+                <FiZap className="landing-eyebrow-icon" /> Live events, real
+                seats
+              </span>
+
+              <h1 className="landing-headline">
+                Find events
+                <br />
+                worth clearing
+                <br />
+                your calendar for.
+              </h1>
+
+              <p className="landing-subtext">
+                Music festivals, workshops, hackathons, sports and college
+                fests — discovered in minutes, booked in seconds.
               </p>
-              <button className="btn btn-primary btn-lg px-4 me-md-2">Explore Events</button>
             </div>
-            <div className="col-md-6">
-              <img
-                src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30"
-                className="img-fluid rounded shadow"
-                alt="Event"
-              />
+          </div>
+
+          <p className="landing-hero-caption">
+            <MdConfirmationNumber className="landing-hero-caption-icon" />
+            Festora — Smart Event Booking
+          </p>
+        </div>
+      </section>
+
+      {/* Trust Strip */}
+      <section className="landing-stats-strip">
+        <div className="container">
+          <div className="row text-center g-4">
+            <div className="col-6 col-md-3">
+              <span className="landing-stat-icon">
+                <FiCalendar />
+              </span>
+              <p className="landing-stat-label">Live Events</p>
+            </div>
+
+            <div className="col-6 col-md-3">
+              <span className="landing-stat-icon">
+                <FiZap />
+              </span>
+              <p className="landing-stat-label">Instant Tickets</p>
+            </div>
+
+            <div className="col-6 col-md-3">
+              <span className="landing-stat-icon">
+                <FiCheckCircle />
+              </span>
+              <p className="landing-stat-label">Verified Organizers</p>
+            </div>
+
+            <div className="col-6 col-md-3">
+              <span className="landing-stat-icon">
+                <FiStar />
+              </span>
+              <p className="landing-stat-label">Highly Rated</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Events Grid Section */}
-      <section className="container my-5">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="fw-bold">Featured Events</h2>
-          <span className="badge bg-secondary px-3 py-2">Showing Top Picks</span>
-        </div>
+      {/* Why Choose Festora */}
+      <section className="landing-why-section">
+        <div className="container">
+          <div className="text-center mb-5">
+            <span className="landing-eyebrow landing-eyebrow-dark">
+              Why Festora
+            </span>
 
-        <div className="row g-4">
-          {events && events.length > 0 ? (
-            // Slice limits array items to 6 (max 2 rows of 3 columns)
-            events.slice(0, 6).map((event) => (
-              <div className="col-md-4" key={event.eventId}>
-                <EventCard event={event} />
-              </div>
-            ))
-          ) : (
-            <>
-              <div className="col-md-4">
-                <div className="card p-4 text-center h-100 shadow-sm border-0 bg-light">
-                  <h4 className="fw-semibold">100+ Events</h4>
-                  <p className="text-muted mb-0">Discover trending events.</p>
-                </div>
-              </div>
-              <div className="col-md-4">
-                <div className="card p-4 text-center h-100 shadow-sm border-0 bg-light">
-                  <h4 className="fw-semibold">Secure Booking</h4>
-                  <p className="text-muted mb-0">Book tickets securely.</p>
-                </div>
-              </div>
-              <div className="col-md-4">
-                <div className="card p-4 text-center h-100 shadow-sm border-0 bg-light">
-                  <h4 className="fw-semibold">Verified Organizers</h4>
-                  <p className="text-muted mb-0">Only trusted organizers.</p>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+            <h2 className="landing-section-title mt-2">
+              Built for people who don't want to miss out
+            </h2>
 
-        {/* Professional Promotion CTA Section */}
-        {events && events.length > 6 && (
-          <div className="row mt-5">
-            <div className="col-12">
-              <div className="card text-center p-5 border-0 shadow-sm bg-dark text-white rounded-4 position-relative overflow-hidden">
-                <div className="position-relative z-index-1">
-                  <h3 className="fw-bold mb-2">Want to discover more personalized events?</h3>
-                  <p className="text-white-50 mb-4 max-width-md mx-auto">
-                    Join thousands of event-goers. Sign in to unlock exclusive ticket discounts, 
-                    personalized recommendations, and custom local alerts.
-                  </p>
-                  <div className="d-sm-flex justify-content-center gap-3">
-                    <Link to="/login" className="btn btn-light btn-lg px-4 fw-semibold mb-2 mb-sm-0">
-                      Sign In / Register
-                    </Link>
-                  </div>
+            <p className="landing-why-subtext">
+              From instant QR check-ins to verified organizers, every part of
+              Festora is designed to get you from discovery to the front row,
+              without the hassle.
+            </p>
+          </div>
+
+          <div className="row g-4">
+            <div className="col-md-4">
+              <div className="landing-feature-card">
+                <div className="landing-feature-icon">
+                  <FiZap />
                 </div>
+                <h4>Instant Booking</h4>
+                <p>
+                  Reserve your seat in just a few taps and get a ticket that
+                  scans instantly at the gate.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="landing-feature-card">
+                <div className="landing-feature-icon">
+                  <FiLock />
+                </div>
+                <h4>Secure Payments</h4>
+                <p>
+                  Every transaction is encrypted end-to-end, so your money and
+                  details stay protected.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="landing-feature-card">
+                <div className="landing-feature-icon">
+                  <FiCheckCircle />
+                </div>
+                <h4>Verified Organizers</h4>
+                <p>
+                  We vet every organizer on the platform, so you always know who
+                  you're buying from.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="landing-feature-card">
+                <div className="landing-feature-icon">
+                  <FiBell />
+                </div>
+                <h4>Smart Alerts</h4>
+                <p>
+                  Get notified the moment events matching your interests go live
+                  near you.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="landing-feature-card">
+                <div className="landing-feature-icon">
+                  <FiDollarSign />
+                </div>
+                <h4>No Hidden Fees</h4>
+                <p>
+                  The price you see at checkout is the price you pay. No
+                  last-minute surprises.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="landing-feature-card">
+                <div className="landing-feature-icon">
+                  <FiHeadphones />
+                </div>
+                <h4>Always-On Support</h4>
+                <p>
+                  Questions about a booking or an event? Our support team is
+                  always a message away.
+                </p>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="landing-how-section">
+        <div className="container">
+          <div className="text-center mb-5">
+            <span className="landing-eyebrow landing-eyebrow-dark">
+              How it works
+            </span>
+
+            <h2 className="landing-section-title mt-2">
+              From browsing to the front row in three steps
+            </h2>
+          </div>
+
+          <div className="row g-4">
+            <div className="col-md-4">
+              <div className="landing-step-card">
+                <span className="landing-step-icon">
+                  <FiSearch />
+                </span>
+                <h4>Discover</h4>
+                <p>
+                  Browse festivals, workshops, and meetups curated for you.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="landing-step-card">
+                <span className="landing-step-icon">
+                  <FiShoppingCart />
+                </span>
+                <h4>Book</h4>
+                <p>
+                  Pick your seats and check out securely, right from your phone.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="landing-step-card">
+                <span className="landing-step-icon">
+                  <FiLogIn />
+                </span>
+                <h4>Walk In</h4>
+                <p>Show your QR ticket at the gate and you're straight in.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="landing-testimonial-section">
+        <div className="container">
+          <div className="text-center mb-5">
+            <span className="landing-eyebrow landing-eyebrow-dark">
+              Testimonials
+            </span>
+
+            <h2 className="landing-section-title mt-2">
+              Loved by event-goers
+            </h2>
+          </div>
+
+          <div className="row g-4">
+            <div className="col-md-4">
+              <div className="landing-testimonial-card">
+                <p className="landing-testimonial-quote">
+                  "Booked my festival pass in no time and the QR check-in at the
+                  gate was instant. No queues, no stress."
+                </p>
+                <p className="landing-testimonial-author">
+                  — Ananya R., Music Festival Attendee
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="landing-testimonial-card">
+                <p className="landing-testimonial-quote">
+                  "As an organizer, the verification process gave our event
+                  instant credibility with attendees."
+                </p>
+                <p className="landing-testimonial-author">
+                  — Rohan K., Hackathon Organizer
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="landing-testimonial-card">
+                <p className="landing-testimonial-quote">
+                  "Found a college fest happening in my city that I would've
+                  completely missed otherwise. Great alerts."
+                </p>
+                <p className="landing-testimonial-author">
+                  — Priya S., Student
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <Footer />
     </>
-  );
-}
-
-function EventCard({ event }) {
-  return (
-    <div className="card shadow-sm h-100 border-0 rounded-3 overflow-hidden">
-      <div className="card-body d-flex flex-column justify-content-between p-4">
-        <div>
-          <span className="badge bg-primary-subtle text-primary mb-2 px-2 py-1 rounded small">
-            🏷️ {event.category?.categoryName || "General"}
-          </span>
-          <h4 className="card-title h5 fw-bold mb-2">{event.title}</h4>
-          <p className="card-text text-muted small mb-4">{event.description}</p>
-          
-          <div className="mb-3 small text-secondary">
-            <p className="mb-1 text-truncate">📍 <strong>Venue:</strong> {event.venue?.venueName || "TBD"}</p>
-            <p className="mb-1">💰 <strong>Price:</strong> ₹ {event.price}</p>
-          </div>
-        </div>
-        
-        <div>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <span className="text-danger fw-semibold small">
-              🎟️ {event.availableSeats} Seats Left
-            </span>
-          </div>
-          <Link to="/login" className="btn btn-outline-primary w-100 fw-semibold">
-            Book Now
-          </Link>
-        </div>
-      </div>
-    </div>
   );
 }
 

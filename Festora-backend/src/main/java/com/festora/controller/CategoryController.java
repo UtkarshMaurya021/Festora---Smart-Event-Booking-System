@@ -14,7 +14,10 @@ public class CategoryController {
     public CategoryController(CategoryService service) {
         this.service = service;
     }
-
+    @GetMapping("/api/admin/categories")
+    public List<Category> getAllForAdmin() {
+        return service.getAll();
+    }
     // Accessible to all users for dropdown lists
     @GetMapping("/api/categories")
     public List<Category> getAll() {

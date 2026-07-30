@@ -1,10 +1,10 @@
 package com.festora.controller;
 
-import org.json.JSONObject;
 import org.springframework.web.bind.annotation.*;
 
 import com.festora.dto.PaymentRequest;
 import com.festora.dto.PaymentVerificationRequest;
+import com.festora.dto.RazorpayOrderResponse;
 import com.festora.service.PaymentService;
 
 @RestController
@@ -21,11 +21,9 @@ public class PaymentController {
 	}
 
 	@PostMapping("/create-order")
-	public String createOrder(@RequestBody PaymentRequest request) throws Exception {
+	public RazorpayOrderResponse createOrder(@RequestBody PaymentRequest request) throws Exception {
 
-		JSONObject object = paymentService.createOrder(request);
-
-		return object.toString();
+		return paymentService.createOrder(request);
 
 	}
 
@@ -35,6 +33,15 @@ public class PaymentController {
 		paymentService.verify(request);
 
 		return "Payment Successful";
+
+	}
+
+	@PostMapping("/fail")
+	public String fail(@RequestBody PaymentRequest request) {
+
+		paymentService.markFailed(request.getBookingId());
+
+		return "Payment marked as failed";
 
 	}
 

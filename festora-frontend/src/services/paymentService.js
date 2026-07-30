@@ -9,3 +9,7 @@ export const createOrder = (bookingId) => {
 export const verifyPayment = (data) => {
     return api.post("/payments/verify", data);
 };
+
+export const markPaymentFailed = (bookingId) => {
+    return api.post("/payments/fail", { bookingId });
+};

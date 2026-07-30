@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import Navbar from "../../components/Navbar";
-import Footer from "../../components/Footer";
+import Navbar from "../../components/AdminNavbar";
 import {
   getCategories,
   createCategory,
@@ -142,7 +141,6 @@ export default function CategoryManagement() {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 }

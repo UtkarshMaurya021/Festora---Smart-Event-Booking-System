@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.festora.dto.PaymentRequest;
 import com.festora.dto.PaymentVerificationRequest;
+import com.festora.dto.RazorpayOrderResponse;
 import com.festora.entity.Booking;
 import com.festora.entity.Payment;
 import com.festora.entity.PaymentStatus;
@@ -46,7 +47,7 @@ public class PaymentService {
     }
 
     @Transactional
-    public JSONObject createOrder(PaymentRequest request) throws Exception {
+    public RazorpayOrderResponse createOrder(PaymentRequest request) throws Exception {
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + request.getBookingId()));
 
@@ -65,16 +66,16 @@ public class PaymentService {
                 .orElseThrow(() -> new IllegalStateException("Payment record not found for this booking"));
         payment.setRazorpayOrderId(orderId);
         paymentRepository.save(payment);
-        JSONObject response = new JSONObject();
-        response.put("orderId", orderId);
-        response.put("amount", amount);
-        response.put("currency", currency);
-        response.put("key", keyId);
-        response.put("name", booking.getUser().getName());
-        response.put("email", booking.getUser().getEmail());
-        response.put("phone", booking.getUser().getPhone());
-        
-        return response;
+
+        return new RazorpayOrderResponse(
+                orderId,
+                keyId,
+                amount,
+                currency,
+                booking.getUser().getName(),
+                booking.getUser().getEmail(),
+                booking.getUser().getPhone()
+        );
     }
 
     @Transactional
@@ -102,5 +103,20 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         ticketService.generateTicket(payment.getBooking());
+    }
+
+    @Transactional
+    public void markFailed(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + bookingId));
+
+        Payment payment = paymentRepository.findByBooking(booking)
+                .orElseThrow(() -> new IllegalArgumentException("Payment record not found for this booking"));
+
+        // Only downgrade if it hasn't already succeeded (avoid clobbering a real success)
+        if (payment.getStatus() != PaymentStatus.SUCCESS) {
+            payment.setStatus(PaymentStatus.FAILED);
+            paymentRepository.save(payment);
+        }
     }
 }

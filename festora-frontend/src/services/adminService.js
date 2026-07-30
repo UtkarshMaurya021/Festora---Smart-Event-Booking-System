@@ -21,7 +21,7 @@ export const createCategory = (name) =>
   api.post("/admin/categories", { categoryName: name });
 export const deleteCategory = (id) => api.delete(`/admin/categories/${id}`);
 
-export const getVenues = () => api.get("/admin/venues");
+export const getVenues = () => api.get("/venues");
 
 export const createVenue = (venueData) => api.post("/admin/venues", venueData);
 
