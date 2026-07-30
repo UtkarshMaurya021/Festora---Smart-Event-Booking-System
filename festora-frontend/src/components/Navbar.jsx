@@ -1,80 +1,66 @@
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
+import { MdConfirmationNumber } from "react-icons/md";
 
-function Navbar(){
+import "../pages/styles/Navbar.css";
 
-return(
+function Navbar() {
+  return (
+    <nav className="navbar navbar-expand-lg festora-navbar">
+      <div className="container">
 
-<nav className="navbar navbar-expand-lg">
+        <Link className="navbar-brand festora-logo" to="/">
+          <MdConfirmationNumber className="me-2" />
+          Festora
+        </Link>
 
-<div className="container">
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#menu"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
 
-<Link className="navbar-brand fw-bold fs-3" to="/">
+        <div className="collapse navbar-collapse" id="menu">
+          <ul className="navbar-nav ms-auto align-items-lg-center">
 
-Festora
+            <li className="nav-item">
+              <Link className="nav-link festora-link" to="/">
+                Home
+              </Link>
+            </li>
 
-</Link>
+            <li className="nav-item">
+              <Link className="nav-link festora-link" to="#">
+                Events
+              </Link>
+            </li>
 
-<button
-className="navbar-toggler"
-data-bs-toggle="collapse"
-data-bs-target="#menu">
+            <li className="nav-item">
+              <Link className="nav-link festora-link" to="#">
+                About
+              </Link>
+            </li>
 
-<span className="navbar-toggler-icon"></span>
+            <li className="nav-item ms-lg-3">
+              <Link className="btn festora-login-btn" to="/login">
+                Login
+              </Link>
+            </li>
 
-</button>
+            <li className="nav-item ms-lg-2 mt-2 mt-lg-0">
+              <Link className="btn festora-signup-btn" to="/signup">
+                Signup
+              </Link>
+            </li>
 
-<div className="collapse navbar-collapse" id="menu">
+          </ul>
+        </div>
 
-<ul className="navbar-nav ms-auto">
-
-<li className="nav-item">
-
-<Link className="nav-link" to="/">Home</Link>
-
-</li>
-
-<li className="nav-item">
-
-<Link className="nav-link">Events</Link>
-
-</li>
-
-<li className="nav-item">
-
-<Link className="nav-link">About</Link>
-
-</li>
-
-<li className="nav-item">
-
-<Link className="btn btn-primary ms-3" to="/login">
-
-Login
-
-</Link>
-
-</li>
-
-<li className="nav-item">
-
-<Link className="btn btn-outline-primary ms-2" to="/signup">
-
-Signup
-
-</Link>
-
-</li>
-
-</ul>
-
-</div>
-
-</div>
-
-</nav>
-
-)
-
+      </div>
+    </nav>
+  );
 }
 
 export default Navbar;

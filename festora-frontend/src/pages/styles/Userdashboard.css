@@ -1,0 +1,167 @@
+.dashboard-main {
+    margin-left: 250px;
+    min-height: 100vh;
+    background: #f4f7fc;
+}
+
+.dashboard-banner {
+    background: linear-gradient(135deg, #111827 0%, #1d4ed8 60%, #3b82f6 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 45px;
+    box-shadow: 0 15px 40px rgba(0,0,0,.15);
+}
+
+.dashboard-banner h2{
+    font-weight:700;
+    font-size:2rem;
+}
+
+.dashboard-banner p{
+    opacity:.8;
+    font-size:1rem;
+}
+
+.dashboard-card{
+    border:none;
+    border-radius:20px;
+    background:#fff;
+    transition:.3s;
+    box-shadow:0 8px 24px rgba(0,0,0,.08);
+}
+
+.dashboard-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 15px 35px rgba(0,0,0,.15);
+}
+
+.dashboard-card .icon-box{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:auto;
+    font-size:28px;
+    margin-bottom:18px;
+}
+
+.blue{
+    background:#dbeafe;
+    color:#2563eb;
+}
+
+.green{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.red{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.dashboard-card h2{
+    font-size:2rem;
+    font-weight:700;
+}
+
+.dashboard-card h6{
+    color:#6b7280;
+}
+
+.events-card{
+    background:#fff;
+    border-radius:20px;
+    box-shadow:0 8px 24px rgba(0,0,0,.08);
+}
+
+.events-card .card-header{
+    background:white;
+    border:none;
+    padding:25px;
+    border-bottom:1px solid #eee;
+}
+
+.events-card h4{
+    font-weight:700;
+}
+
+.table{
+    margin-bottom:0;
+}
+
+.table thead{
+    background:#eff6ff;
+}
+
+.table thead th{
+    color:#1e3a8a;
+    border:none;
+    padding:18px;
+    font-weight:600;
+}
+
+.table tbody td{
+    vertical-align:middle;
+    padding:18px;
+}
+
+.table tbody tr:hover{
+    background:#f8fafc;
+}
+
+.event-title{
+    font-weight:600;
+}
+
+.price{
+    color:#16a34a;
+    font-weight:600;
+}
+
+.seats{
+    color:#2563eb;
+    font-weight:600;
+}
+
+.btn-view{
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    border:none;
+    color:white;
+    border-radius:30px;
+    padding:8px 22px;
+    transition:.3s;
+}
+
+.btn-view:hover{
+    background:linear-gradient(135deg,#1d4ed8,#2563eb);
+    transform:translateY(-2px);
+}
+
+.empty-box{
+    padding:80px;
+    text-align:center;
+    color:#6b7280;
+}
+
+@media(max-width:991px){
+
+.dashboard-main{
+    margin-left:0;
+}
+
+.dashboard-banner{
+    padding:30px;
+}
+
+.dashboard-banner h2{
+    font-size:1.6rem;
+}
+
+.dashboard-card{
+    margin-bottom:20px;
+}
+
+}

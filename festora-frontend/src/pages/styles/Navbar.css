@@ -1,0 +1,78 @@
+.festora-navbar{
+    background:#0f172a;
+    padding:16px 0;
+    box-shadow:0 8px 25px rgba(0,0,0,.12);
+}
+
+.festora-logo{
+    color:#fff !important;
+    font-size:30px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+}
+
+.festora-logo svg{
+    color:#3b82f6;
+    font-size:30px;
+}
+
+.festora-link{
+    color:#d1d5db !important;
+    margin-left:18px;
+    font-weight:500;
+    transition:.3s;
+}
+
+.festora-link:hover{
+    color:#60a5fa !important;
+}
+
+.festora-login-btn{
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    color:white;
+    border:none;
+    padding:9px 22px;
+    border-radius:30px;
+    font-weight:600;
+}
+
+.festora-login-btn:hover{
+    color:white;
+    background:linear-gradient(135deg,#1d4ed8,#2563eb);
+}
+
+.festora-signup-btn{
+    border:2px solid #3b82f6;
+    color:#3b82f6;
+    padding:8px 22px;
+    border-radius:30px;
+    font-weight:600;
+}
+
+.festora-signup-btn:hover{
+    background:#3b82f6;
+    color:white;
+}
+
+.navbar-toggler{
+    border:1px solid rgba(255,255,255,.3);
+}
+
+.navbar-toggler-icon{
+    filter:invert(1);
+}
+
+@media(max-width:991px){
+
+.festora-link{
+    margin:10px 0;
+}
+
+.festora-login-btn,
+.festora-signup-btn{
+    width:100%;
+    margin-top:10px;
+}
+
+}
