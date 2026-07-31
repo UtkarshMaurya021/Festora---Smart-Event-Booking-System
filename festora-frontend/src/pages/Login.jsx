@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import AuthLayout from "../components/AuthLayout";
 
@@ -11,6 +11,8 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const infoMessage = location.state?.message;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -37,7 +39,9 @@ function Login() {
       }
     } catch (err) {
       console.error(err);
-      setError("Invalid email or password. Please try again.");
+      setError(
+        err.response?.data?.message || "Invalid email or password. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -49,6 +53,7 @@ function Login() {
         <h2 className="auth-title">Welcome back</h2>
         <p className="auth-desc">Log in to book tickets or manage your events.</p>
 
+        {infoMessage && <div className="auth-server-info">{infoMessage}</div>}
         {error && <div className="auth-server-error">{error}</div>}
 
         <div className="auth-field">

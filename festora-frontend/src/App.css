@@ -283,6 +283,16 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
     margin-bottom:20px;
 }
 
+.auth-server-info{
+    background:#EFF6FF;
+    color:#1D4ED8;
+    border:1px solid #BFDBFE;
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:14px;
+    margin-bottom:20px;
+}
+
 .auth-field{
     margin-bottom:20px;
 }

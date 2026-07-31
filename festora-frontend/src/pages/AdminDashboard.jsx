@@ -1,92 +1,176 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import DashboardNavbar from "../components/DashboardNavbar";
-import { getAdminDashboard } from "../services/dashboardService"; // Make sure this service function exists
+import { getAdminDashboard } from "../services/dashboardService";
+import { approveOrganizer, rejectOrganizer } from "../services/adminService";
+
+const emptyStats = {
+  users: 0,
+  organizers: 0,
+  eventsCount: 0,
+  revenue: 0,
+};
 
 function AdminDashboard() {
-  // 1. Initialize state with default values matching your dashboard metrics and tables
-  const [adminData, setAdminData] = useState({
-    users: 0,
-    organizers: 0,
-    eventsCount: 0,
-    revenue: "₹0",
-    recentEvents: [],
-  });
+  const [stats, setStats] = useState(emptyStats);
+  const [organizerRequests, setOrganizerRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actingId, setActingId] = useState(null);
 
-  // 2. Fetch data from backend on component mount
+  const loadDashboard = () => {
+    getAdminDashboard()
+      .then((res) => {
+        const data = res.data || {};
+
+        setStats({
+          users: data.users ?? 0,
+          organizers: data.organizers ?? 0,
+          eventsCount: data.eventsCount ?? 0,
+          revenue: data.revenue ?? 0,
+        });
+
+        setOrganizerRequests(data.organizerRequests || []);
+      })
+      .catch((err) => {
+        console.error("Error fetching admin dashboard:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
   useEffect(() => {
-    const loadAdminDashboard = async () => {
-      try {
-        const response = await getAdminDashboard();
-        setAdminData(response.data);
-      } catch (error) {
-        console.log("Error fetching admin dashboard data:", error);
-      }
-    };
-    loadAdminDashboard();
+    loadDashboard();
   }, []);
+
+  const handleApprove = (id) => {
+    setActingId(id);
+
+    approveOrganizer(id)
+      .then(() => loadDashboard())
+      .catch((err) => {
+        console.error("Error approving organizer:", err);
+        alert("Error approving organizer");
+      })
+      .finally(() => {
+        setActingId(null);
+      });
+  };
+
+  const handleReject = (id) => {
+    if (!window.confirm("Reject this organizer request?")) return;
+
+    setActingId(id);
+
+    rejectOrganizer(id)
+      .then(() => loadDashboard())
+      .catch((err) => {
+        console.error("Error rejecting organizer:", err);
+        alert("Error rejecting organizer");
+      })
+      .finally(() => {
+        setActingId(null);
+      });
+  };
+
   return (
     <>
       <Sidebar />
+
       <div className="dashboard-main">
         <DashboardNavbar />
-        
-        {/* Dynamic Metric Cards */}
+
         <div className="row">
           <div className="col-md-3">
             <div className="dashboard-card">
               <h6>Users</h6>
-              <h2>{adminData.users}</h2>
+              <h2>{stats.users}</h2>
             </div>
           </div>
+
           <div className="col-md-3">
             <div className="dashboard-card">
               <h6>Organizers</h6>
-              <h2>{adminData.organizers}</h2>
+              <h2>{stats.organizers}</h2>
             </div>
           </div>
+
           <div className="col-md-3">
             <div className="dashboard-card">
               <h6>Events</h6>
-              <h2>{adminData.eventsCount}</h2>
+              <h2>{stats.eventsCount}</h2>
             </div>
           </div>
+
           <div className="col-md-3">
             <div className="dashboard-card">
               <h6>Revenue</h6>
-              <h2>{adminData.revenue}</h2>
+              <h2>₹{stats.revenue}</h2>
             </div>
           </div>
         </div>
 
-        {/* Dynamic Recent Events Table */}
         <div className="card mt-5 p-4">
-          <h4>Recent Events</h4>
-          <table className="table">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4>
+              Organizer Requests{" "}
+              {organizerRequests.length > 0 && (
+                <span className="badge bg-warning text-dark ms-2">
+                  {organizerRequests.length} Pending
+                </span>
+              )}
+            </h4>
+          </div>
+
+          <table className="table table-hover">
             <thead>
               <tr>
-                <th>Event</th>
-                <th>Organizer</th>
-                <th>Category</th>
-                <th>Status</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Action</th>
               </tr>
             </thead>
+
             <tbody>
-              {adminData.recentEvents && adminData.recentEvents.length > 0 ? (
-                adminData.recentEvents.map((event, index) => (
-                  <tr key={event.id || index}>
-                    <td>{event.title}</td>
-                    <td>{event.organizerName}</td>
-                    <td>{event.category}</td>
-                    <td>{event.status}</td>
+              {loading ? (
+                <tr>
+                  <td colSpan="4" className="text-center py-3">
+                    Loading...
+                  </td>
+                </tr>
+              ) : organizerRequests.length > 0 ? (
+                organizerRequests.map((req) => (
+                  <tr key={req.id}>
+                    <td>{req.name}</td>
+                    <td>{req.email}</td>
+                    <td>{req.phone}</td>
+                    <td>
+                      <button
+                        className="btn btn-success btn-sm me-2"
+                        disabled={actingId === req.id}
+                        onClick={() => handleApprove(req.id)}
+                      >
+                        Approve
+                      </button>
+
+                      <button
+                        className="btn btn-danger btn-sm"
+                        disabled={actingId === req.id}
+                        onClick={() => handleReject(req.id)}
+                      >
+                        Reject
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td colSpan="4" className="text-center py-3">
-                    No recent events found</td>
-                  </tr>
-                )}
+                    No pending organizer requests
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

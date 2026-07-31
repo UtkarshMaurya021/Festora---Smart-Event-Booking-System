@@ -12,6 +12,7 @@ function OrganizerDashboard() {
   const [success, setSuccess] = useState(() => {
     return location.state?.message || "";
   });
+  const [error, setError] = useState("");
 
   const [dashboard, setDashboard] = useState({
     totalEvents: 0,
@@ -21,6 +22,7 @@ function OrganizerDashboard() {
   });
 
   const [events, setEvents] = useState([]);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     if (location.state?.message) {
@@ -33,10 +35,17 @@ function OrganizerDashboard() {
       return () => clearTimeout(timer);
     }
   }, [location.pathname, navigate]);
+
   const loadDashboard = async () => {
     try {
       const res = await getOrganizerDashboard();
-      setDashboard(res.data);
+      // Map the Java DTO names (totalTicketsBooked, totalRevenue) to your local state names
+      setDashboard({
+        totalEvents: res.data.totalEvents,
+        activeEvents: res.data.activeEvents,
+        totalBookings: res.data.totalTicketsBooked,
+        revenue: res.data.totalRevenue,
+      });
     } catch (error) {
       console.log("Error loading dashboard data:", error);
     }
@@ -60,10 +69,22 @@ function OrganizerDashboard() {
     initializeDashboardData();
   }, []);
 
-  const removeEvent = async (id) => {
-    if (window.confirm("Delete this event?")) {
-      await deleteEvent(id);
-      loadEvents();
+  const removeEvent = async (event) => {
+    const confirmed = window.confirm(`Delete "${event.title}"?`);
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(event.eventId);
+      setError("");
+      await deleteEvent(event.eventId);
+      // Refresh both the event list and the summary counters so the
+      // dashboard cards stay in sync with the deletion.
+      await Promise.all([loadEvents(), loadDashboard()]);
+    } catch (err) {
+      console.error("Error deleting event:", err);
+      setError("Could not delete this event. Please try again.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -83,29 +104,38 @@ function OrganizerDashboard() {
           </div>
         )}
 
+        {error && (
+          <div
+            className="alert alert-danger alert-dismissible fade show"
+            role="alert"
+          >
+            {error}
+          </div>
+        )}
+
         <div className="row">
           <div className="col-md-3">
             <div className="dashboard-card">
               <h6>Total Events</h6>
-              <h3> {dashboard.totalEvents} </h3>
+              <h3>{dashboard.totalEvents ?? 0}</h3>
             </div>
           </div>
           <div className="col-md-3">
             <div className="dashboard-card">
               <h6>Active Events</h6>
-              <h3> {dashboard.activeEvents} </h3>
+              <h3>{dashboard.activeEvents ?? 0}</h3>
             </div>
           </div>
           <div className="col-md-3">
             <div className="dashboard-card">
               <h6>Total Bookings</h6>
-              <h3> {dashboard.totalBookings} </h3>
+              <h3>{dashboard.totalBookings ?? 0}</h3>
             </div>
           </div>
           <div className="col-md-3">
             <div className="dashboard-card">
               <h6>Revenue</h6>
-              <h3> ₹ {dashboard.revenue} </h3>
+              <h3>₹ {dashboard.revenue ?? 0}</h3>
             </div>
           </div>
         </div>
@@ -151,6 +181,12 @@ function OrganizerDashboard() {
                     </td>
                     <td>
                       <Link
+                        to={`/event/${event.eventId}`}
+                        className="btn btn-outline-secondary btn-sm me-2"
+                      >
+                        View
+                      </Link>
+                      <Link
                         to={`/organizer/events/edit/${event.eventId}`}
                         className="btn btn-warning btn-sm me-2"
                       >
@@ -158,9 +194,15 @@ function OrganizerDashboard() {
                       </Link>
                       <button
                         className="btn btn-danger btn-sm"
-                        onClick={() => removeEvent(event.eventId)}
+                        disabled={
+                          event.status === "INACTIVE" ||
+                          deletingId === event.eventId
+                        }
+                        onClick={() => removeEvent(event)}
                       >
-                        Delete
+                        {deletingId === event.eventId
+                          ? "Deleting..."
+                          : "Delete"}
                       </button>
                     </td>
                   </tr>
