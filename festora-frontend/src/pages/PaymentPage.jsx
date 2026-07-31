@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
 import { getBooking } from "../services/bookingService";
 import {
   createOrder,
@@ -13,6 +14,7 @@ import {
   FiCreditCard,
   FiSmartphone,
   FiChevronLeft,
+  FiDownload,
 } from "react-icons/fi";
 import { BsBank2, BsWallet2 } from "react-icons/bs";
 
@@ -30,6 +32,10 @@ import { BsBank2, BsWallet2 } from "react-icons/bs";
  *   - anything else                -> succeeds
  */
 
+// Where the backend serves uploaded files (QR codes) from. Kept as one
+// constant so it's obvious where to point this at deploy time.
+const API_HOST = "http://localhost:8080";
+
 const METHODS = [
   { id: "CARD", label: "Card", icon: FiCreditCard },
   { id: "UPI", label: "UPI", icon: FiSmartphone },
@@ -40,6 +46,25 @@ const METHODS = [
 function formatCardNumber(value) {
   const digits = value.replace(/\D/g, "").slice(0, 16);
   return digits.replace(/(.{4})/g, "$1 ").trim();
+}
+
+// Reads a same/known-origin image URL into a base64 PNG data URL so it can
+// be embedded straight into the generated PDF.
+function loadImageAsDataUrl(url) {
+  return fetch(url)
+    .then((res) => {
+      if (!res.ok) throw new Error("Could not fetch QR code image");
+      return res.blob();
+    })
+    .then(
+      (blob) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        })
+    );
 }
 
 function PaymentPage() {
@@ -62,6 +87,10 @@ function PaymentPage() {
   const [wallet, setWallet] = useState("FestoraWallet");
   const [result, setResult] = useState(null);
   const [starting, setStarting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
+
+  const qrImgRef = useRef(null);
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -135,6 +164,88 @@ function PaymentPage() {
   const retry = () => {
     setResult(null);
     setStep("checkout");
+  };
+
+  const downloadTicketPdf = async () => {
+    if (!result?.qrCodePath) return;
+
+    setDownloadError("");
+    setDownloading(true);
+    try {
+      const qrDataUrl = await loadImageAsDataUrl(`${API_HOST}/${result.qrCodePath}`);
+
+      const doc = new jsPDF({ unit: "pt", format: "a4" });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const marginX = 56;
+
+      // Header
+      doc.setFillColor(29, 78, 216);
+      doc.rect(0, 0, pageWidth, 90, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("FESTORA", marginX, 50);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      doc.text("E-Ticket", marginX, 68);
+
+      // Event details
+      let y = 140;
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(20);
+      doc.text(result.eventTitle || "Event", marginX, y);
+
+      y += 26;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      doc.setTextColor(100, 116, 139);
+      if (result.venueName) {
+        doc.text(result.venueName, marginX, y);
+        y += 30;
+      } else {
+        y += 10;
+      }
+
+      const detailRow = (label, value) => {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(148, 163, 184);
+        doc.text(label.toUpperCase(), marginX, y);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.setTextColor(15, 23, 42);
+        doc.text(String(value), marginX, y + 16);
+        y += 46;
+      };
+
+      detailRow("Ticket Number", result.ticketNumber);
+      detailRow("Booking ID", `#${result.bookingId}`);
+      detailRow("Quantity", result.quantity);
+
+      // QR code, centered
+      const qrSize = 180;
+      const qrX = (pageWidth - qrSize) / 2;
+      y += 10;
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(qrX - 16, y - 16, qrSize + 32, qrSize + 32, 8, 8);
+      doc.addImage(qrDataUrl, "PNG", qrX, y, qrSize, qrSize);
+
+      y += qrSize + 40;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(148, 163, 184);
+      doc.text("Present this QR code at the venue entrance for scanning.", pageWidth / 2, y, {
+        align: "center",
+      });
+
+      doc.save(`${result.ticketNumber || "festora-ticket"}.pdf`);
+    } catch (err) {
+      console.error("Failed to generate ticket PDF:", err);
+      setDownloadError("Couldn't generate the PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   if (loading) {
@@ -337,19 +448,62 @@ function PaymentPage() {
           </div>
         )}
 
-        {/* ---------------- SUCCESS ---------------- */}
+        {/* ---------------- SUCCESS: QR ticket + PDF download ---------------- */}
         {step === "success" && result && (
           <div className="payment-status-screen">
             <FiCheckCircle className="payment-status-icon payment-status-icon-success" />
             <h2 className="payment-status-title">Payment successful</h2>
-            <p className="payment-status-text">
-              {result.ticketNumber
-                ? `Your ticket ${result.ticketNumber} has been issued.`
-                : "Your booking is confirmed."}
-            </p>
-            <button className="payment-pay-btn" onClick={() => navigate("/my-bookings?status=success")}>
-              View my bookings
-            </button>
+            <p className="payment-status-text">Your ticket is ready — scan it at the venue.</p>
+
+            {result.qrCodePath && (
+              <div className="ticket-card">
+                <div className="ticket-card-header">
+                  <span className="ticket-card-brand">Festora E-Ticket</span>
+                  <span className="ticket-card-number">{result.ticketNumber}</span>
+                </div>
+
+                <p className="ticket-card-event">{result.eventTitle}</p>
+                {result.venueName && <p className="ticket-card-venue">{result.venueName}</p>}
+
+                <div className="ticket-card-qr-wrap">
+                  <img
+                    ref={qrImgRef}
+                    src={`${API_HOST}/${result.qrCodePath}`}
+                    alt={`QR code for ticket ${result.ticketNumber}`}
+                  />
+                </div>
+
+                <div className="ticket-card-details">
+                  <div className="ticket-card-detail">
+                    <span>Booking ID</span>
+                    <strong>#{result.bookingId}</strong>
+                  </div>
+                  <div className="ticket-card-detail">
+                    <span>Quantity</span>
+                    <strong>{result.quantity}</strong>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {downloadError && <div className="payment-error-banner">{downloadError}</div>}
+
+            <div className="payment-actions">
+              <button
+                className="payment-pay-btn"
+                onClick={downloadTicketPdf}
+                disabled={downloading || !result.qrCodePath}
+              >
+                <FiDownload style={{ marginRight: 8, verticalAlign: "middle" }} />
+                {downloading ? "Preparing PDF…" : "Download ticket as PDF"}
+              </button>
+              <button
+                className="payment-secondary-btn"
+                onClick={() => navigate("/my-bookings?status=success")}
+              >
+                View my bookings
+              </button>
+            </div>
           </div>
         )}
 

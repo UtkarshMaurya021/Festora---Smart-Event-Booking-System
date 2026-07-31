@@ -101,7 +101,7 @@ public class PaymentService {
             // is idempotent, so this just fetches the ticket that was already
             // issued instead of silently returning a null ticket number.
             Ticket existingTicket = ticketService.generateTicket(booking);
-            return new PaymentResult("SUCCESS", "Payment already completed", existingTicket.getTicketNumber());
+            return successResult(booking, existingTicket, "Payment already completed");
         }
 
         boolean declined = isDeclined(request);
@@ -112,7 +112,7 @@ public class PaymentService {
         if (declined) {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
-            return new PaymentResult("FAILED", declineReason(request), null);
+            return new PaymentResult("FAILED", declineReason(request), null, null, null, null, null, null);
         }
 
         payment.setStatus(PaymentStatus.SUCCESS);
@@ -120,7 +120,24 @@ public class PaymentService {
 
         Ticket ticket = ticketService.generateTicket(booking);
 
-        return new PaymentResult("SUCCESS", "Payment successful", ticket.getTicketNumber());
+        return successResult(booking, ticket, "Payment successful");
+    }
+
+    private PaymentResult successResult(Booking booking, Ticket ticket, String message) {
+        PaymentResult result = new PaymentResult();
+        result.setStatus("SUCCESS");
+        result.setMessage(message);
+        result.setTicketNumber(ticket.getTicketNumber());
+        result.setQrCodePath(ticket.getQrCodePath());
+        result.setBookingId(booking.getBookingId());
+        result.setEventTitle(booking.getEvent() != null ? booking.getEvent().getTitle() : null);
+        result.setVenueName(
+                booking.getEvent() != null && booking.getEvent().getVenue() != null
+                        ? booking.getEvent().getVenue().getVenueName()
+                        : null
+        );
+        result.setQuantity(booking.getQuantity());
+        return result;
     }
 
     @Transactional

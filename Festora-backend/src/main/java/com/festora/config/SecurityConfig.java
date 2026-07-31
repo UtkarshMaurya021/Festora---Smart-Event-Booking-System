@@ -66,7 +66,8 @@ public class SecurityConfig {
 				        // Public APIs
 				        .requestMatchers(
 				                "/api/auth/**",
-				                "/api/events/**"
+				                "/api/events/**",
+			                "/uploads/**"
 				        ).permitAll()
 				        .requestMatchers("/api/payments/**")
 				        .hasRole("USER")

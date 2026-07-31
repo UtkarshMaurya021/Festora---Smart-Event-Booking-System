@@ -1,7 +1,11 @@
 package com.festora.controller;
 
 import java.util.List;
+
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.*;
+
 import com.festora.entity.Category;
 import com.festora.service.CategoryService;
 
@@ -26,12 +30,12 @@ public class CategoryController {
 
     // Administrative modification routes remain restricted
     @PostMapping("/api/admin/categories")
-    public Category save(@RequestBody Category category) {
+    public Category save(@Valid @RequestBody Category category) {
         return service.save(category);
     }
 
     @PutMapping("/api/admin/categories/{id}")
-    public Category update(@PathVariable Long id, @RequestBody Category category) {
+    public Category update(@PathVariable Long id, @Valid @RequestBody Category category) {
         return service.update(id, category);
     }
 

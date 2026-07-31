@@ -15,4 +15,16 @@ public class PaymentResult {
 
     private String ticketNumber; // populated only on SUCCESS
 
+    // The rest are populated only on SUCCESS, so the frontend can render
+    // the QR ticket straight after payment without a second round trip.
+    private String qrCodePath;
+
+    private Long bookingId;
+
+    private String eventTitle;
+
+    private String venueName;
+
+    private Integer quantity;
+
 }

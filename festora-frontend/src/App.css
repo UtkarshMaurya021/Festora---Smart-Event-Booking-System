@@ -794,3 +794,111 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
 .payment-status-screen .payment-pay-btn{
     max-width:260px;
 }
+/* ---- QR ticket card (post-payment) ---- */
+
+.ticket-card{
+    width:100%;
+    background:#F8FAFC;
+    border:1px solid #E2E8F0;
+    border-radius:16px;
+    padding:24px;
+    margin:6px 0 22px 0;
+    text-align:left;
+}
+
+.ticket-card-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+}
+
+.ticket-card-brand{
+    font-size:13px;
+    font-weight:700;
+    color:var(--primary);
+    letter-spacing:.04em;
+    text-transform:uppercase;
+}
+
+.ticket-card-number{
+    font-size:12.5px;
+    color:#64748B;
+}
+
+.ticket-card-event{
+    font-size:19px;
+    font-weight:800;
+    color:#0F172A;
+    margin:0 0 4px 0;
+}
+
+.ticket-card-venue{
+    font-size:14px;
+    color:#64748B;
+    margin:0 0 18px 0;
+}
+
+.ticket-card-qr-wrap{
+    display:flex;
+    justify-content:center;
+    background:#fff;
+    border:1px dashed #CBD5E1;
+    border-radius:12px;
+    padding:18px;
+    margin-bottom:18px;
+}
+
+.ticket-card-qr-wrap img{
+    width:180px;
+    height:180px;
+}
+
+.ticket-card-details{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.ticket-card-detail span{
+    display:block;
+    font-size:11.5px;
+    color:#94A3B8;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    margin-bottom:2px;
+}
+
+.ticket-card-detail strong{
+    font-size:14.5px;
+    color:#0F172A;
+}
+
+.payment-actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.payment-secondary-btn{
+    width:100%;
+    height:48px;
+    border:1px solid #E2E8F0;
+    border-radius:12px;
+    background:#fff;
+    color:#334155;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s ease;
+}
+
+.payment-secondary-btn:hover{
+    background:#F8FAFC;
+}
+
+.payment-pay-btn:disabled,
+.payment-secondary-btn:disabled{
+    opacity:.6;
+    cursor:not-allowed;
+}
