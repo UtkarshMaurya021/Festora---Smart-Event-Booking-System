@@ -14,6 +14,9 @@ import EventDetails from "./pages/EventDetails";
 import MyBookings from "./pages/MyBookings.jsx";
 import VenueManagement from "./pages/admin/VenueManagement.jsx";
 import CategoryManagement from "./pages/admin/CategoryManagement.jsx";
+import EventManagement from "./pages/admin/EventManagement.jsx";
+import UserManagement from "./pages/admin/UserManagement.jsx";
+import OrganizerManagement from "./pages/admin/OrganizerManagement.jsx";
 import Payment from "./pages/PaymentPage.jsx"
 function App() {
   return (
@@ -56,6 +59,30 @@ function App() {
           element={
             <PrivateRoute role="ROLE_ADMIN">
               <VenueManagement />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/events"
+          element={
+            <PrivateRoute role="ROLE_ADMIN">
+              <EventManagement />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <PrivateRoute role="ROLE_ADMIN">
+              <UserManagement />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/organizers"
+          element={
+            <PrivateRoute role="ROLE_ADMIN">
+              <OrganizerManagement />
             </PrivateRoute>
           }
         />

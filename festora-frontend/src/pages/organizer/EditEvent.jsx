@@ -8,7 +8,7 @@ import api from "../../services/api";
 function EditEvent() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -19,39 +19,66 @@ function EditEvent() {
   const [venueId, setVenueId] = useState("");
   const [categories, setCategories] = useState([]);
   const [venues, setVenues] = useState([]);
-useEffect(() => {
-  const load = async () => {
-    try {
-      const e = await getEvent(id);
-      setTitle(e.data.title);
-      setDescription(e.data.description);
-      setPrice(e.data.price);
-      setTotalSeats(e.data.totalSeats);
-      setStart(e.data.eventStartDatetime.slice(0, 16));
-      setEnd(e.data.eventEndDatetime.slice(0, 16));
-      setCategoryId(e.data.category?.categoryId || "");
-      setVenueId(e.data.venue?.venueId || "");
 
-      const [c, v] = await Promise.all([
-        api.get("/categories"),
-        api.get("/venues")
-      ]);
-      setCategories(c.data);
-      setVenues(v.data);
-    } catch (error) {
-      console.error("Error loading event:", error);
-    }
-  };
+  // Image URLs: pre-populated from the event's existing images
+  const [imageUrls, setImageUrls] = useState([""]);
 
-  
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const e = await getEvent(id);
+        const ev = e.data;
+
+        setTitle(ev.title);
+        setDescription(ev.description);
+        setPrice(ev.price);
+        setTotalSeats(ev.totalSeats);
+        setStart(ev.eventStartDatetime.slice(0, 16));
+        setEnd(ev.eventEndDatetime.slice(0, 16));
+        setCategoryId(ev.category?.categoryId || "");
+        setVenueId(ev.venue?.venueId || "");
+
+        // Populate image URL inputs from the event's stored images
+        if (ev.images && ev.images.length > 0) {
+          setImageUrls(ev.images.map((img) => img.imageUrl));
+        } else {
+          setImageUrls([""]);
+        }
+
+        const [c, v] = await Promise.all([
+          api.get("/categories"),
+          api.get("/venues"),
+        ]);
+        setCategories(c.data);
+        setVenues(v.data);
+      } catch (error) {
+        console.error("Error loading event:", error);
+      }
+    };
+
     load();
   }, [id]);
+
+  // ---- image URL list helpers ----
+  const handleImageUrlChange = (index, value) => {
+    setImageUrls((prev) => prev.map((u, i) => (i === index ? value : u)));
+  };
+
+  const addImageUrl = () => {
+    setImageUrls((prev) => [...prev, ""]);
+  };
+
+  const removeImageUrl = (index) => {
+    setImageUrls((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const save = async () => {
     try {
       const token = localStorage.getItem("token");
-      
-      // Axios configuration matching your Step 102 specifications
+
+      // Filter out blank URL entries before sending
+      const filteredUrls = imageUrls.map((u) => u.trim()).filter((u) => u.length > 0);
+
       await api.put(
         `/organizer/events/${id}`,
         {
@@ -63,6 +90,7 @@ useEffect(() => {
           eventEndDatetime: end,
           categoryId,
           venueId,
+          imageUrls: filteredUrls,
         },
         {
           headers: {
@@ -71,12 +99,12 @@ useEffect(() => {
         }
       );
 
-      // Redirects to dashboard and passes the success message state
       navigate("/organizer/dashboard", {
-        state: { message: "Event updated successfully." }
+        state: { message: "Event updated successfully." },
       });
     } catch (error) {
       console.error("Error updating event:", error);
+      alert("Failed to update event. Check the console for details.");
     }
   };
 
@@ -85,50 +113,64 @@ useEffect(() => {
       <Sidebar />
       <div className="dashboard-main">
         <DashboardNavbar />
-        <div className="card p-4">
-          <h3>Edit Event</h3>
-          <input 
-            className="form-control mb-3" 
-            value={title} 
-            onChange={(e) => setTitle(e.target.value)} 
+        <div className="card p-4 shadow-sm m-4">
+          <h3 className="mb-4">Edit Event</h3>
+
+          <label className="form-label fw-bold">Event Title</label>
+          <input
+            className="form-control mb-3"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder="Event Title"
           />
-          <textarea 
-            className="form-control mb-3" 
-            rows="4" 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
+
+          <label className="form-label fw-bold">Description</label>
+          <textarea
+            className="form-control mb-3"
+            rows="4"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             placeholder="Event Description"
           />
-          <input 
-            type="number" 
-            className="form-control mb-3" 
-            value={price} 
-            onChange={(e) => setPrice(e.target.value)} 
+
+          <label className="form-label fw-bold">Price</label>
+          <input
+            type="number"
+            className="form-control mb-3"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
             placeholder="Price"
           />
-          <input 
-            type="number" 
-            className="form-control mb-3" 
-            value={totalSeats} 
-            onChange={(e) => setTotalSeats(e.target.value)} 
+
+          <label className="form-label fw-bold">Total Seats</label>
+          <input
+            type="number"
+            className="form-control mb-3"
+            value={totalSeats}
+            onChange={(e) => setTotalSeats(e.target.value)}
             placeholder="Total Seats"
           />
-          <input 
-            type="datetime-local" 
-            className="form-control mb-3" 
-            value={start} 
-            onChange={(e) => setStart(e.target.value)} 
+
+          <label className="form-label fw-bold">Start Date & Time</label>
+          <input
+            type="datetime-local"
+            className="form-control mb-3"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
           />
-          <input 
-            type="datetime-local" 
-            className="form-control mb-3" 
-            value={end} 
-            onChange={(e) => setEnd(e.target.value)} 
+
+          <label className="form-label fw-bold">End Date & Time</label>
+          <input
+            type="datetime-local"
+            className="form-control mb-3"
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
           />
-          <select 
-            className="form-select mb-3" 
-            value={categoryId} 
+
+          <label className="form-label fw-bold">Category</label>
+          <select
+            className="form-select mb-3"
+            value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
           >
             <option value="">Select Category</option>
@@ -138,9 +180,11 @@ useEffect(() => {
               </option>
             ))}
           </select>
-          <select 
-            className="form-select mb-4" 
-            value={venueId} 
+
+          <label className="form-label fw-bold">Venue</label>
+          <select
+            className="form-select mb-4"
+            value={venueId}
             onChange={(e) => setVenueId(e.target.value)}
           >
             <option value="">Select Venue</option>
@@ -150,8 +194,49 @@ useEffect(() => {
               </option>
             ))}
           </select>
-          <button className="btn btn-success" onClick={save}> 
-            Update Event 
+
+          {/* ---- Image URLs ---- */}
+          <label className="form-label fw-bold">Event Images (URLs)</label>
+          {imageUrls.map((url, index) => (
+            <div key={index} className="d-flex gap-2 mb-2 align-items-center">
+              <input
+                type="url"
+                className="form-control"
+                placeholder="https://example.com/image.jpg"
+                value={url}
+                onChange={(e) => handleImageUrlChange(index, e.target.value)}
+              />
+              {/* Live thumbnail preview */}
+              {url.startsWith("http") && (
+                <img
+                  src={url}
+                  alt="preview"
+                  style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 4, border: "1px solid #dee2e6", flexShrink: 0 }}
+                  onError={(e) => { e.target.style.display = "none"; }}
+                />
+              )}
+              {imageUrls.length > 1 && (
+                <button
+                  type="button"
+                  className="btn btn-outline-danger btn-sm"
+                  onClick={() => removeImageUrl(index)}
+                  style={{ flexShrink: 0 }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm mb-4"
+            onClick={addImageUrl}
+          >
+            + Add another image URL
+          </button>
+
+          <button className="btn btn-success" onClick={save}>
+            Update Event
           </button>
         </div>
       </div>

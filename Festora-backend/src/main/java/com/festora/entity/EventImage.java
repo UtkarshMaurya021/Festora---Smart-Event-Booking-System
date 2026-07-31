@@ -1,5 +1,5 @@
 package com.festora.entity;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
@@ -27,9 +27,8 @@ public class EventImage {
 
     private LocalDateTime uploadedAt;
 
-    @NotNull(message = "Event is required")
     @ManyToOne
     @JoinColumn(name = "event_id")
+    @JsonIgnore
     private Event event;
-
 }

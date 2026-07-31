@@ -2,6 +2,7 @@ package com.festora.controller;
 
 import java.util.List;
 import org.springframework.web.bind.annotation.*;
+import com.festora.dto.AdminDashboardResponse;
 import com.festora.entity.Event;
 import com.festora.entity.User;
 import com.festora.service.AdminService;
@@ -17,6 +18,11 @@ public class AdminController {
         this.adminService = adminService;
     }
 
+    @GetMapping("/dashboard")
+    public AdminDashboardResponse getDashboard() {
+        return adminService.getDashboard();
+    }
+
     @GetMapping("/users")
     public List<User> getUsers() {
         return adminService.getAllUsers();
@@ -25,6 +31,21 @@ public class AdminController {
     @GetMapping("/events")
     public List<Event> getEvents() {
         return adminService.getAllEvents();
+    }
+
+    @GetMapping("/organizer-requests")
+    public List<User> getOrganizerRequests() {
+        return adminService.getPendingOrganizers();
+    }
+
+    @PutMapping("/organizer-requests/{id}/approve")
+    public User approveOrganizer(@PathVariable Long id) {
+        return adminService.approveOrganizer(id);
+    }
+
+    @PutMapping("/organizer-requests/{id}/reject")
+    public User rejectOrganizer(@PathVariable Long id) {
+        return adminService.rejectOrganizer(id);
     }
 
     @PutMapping("/users/{id}/block")

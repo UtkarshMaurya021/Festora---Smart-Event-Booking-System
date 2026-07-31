@@ -13,21 +13,21 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Organizer {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long organizerId;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long organizerId;
 
-    private String companyName;
+	private String companyName;
 
-    private String contact;
+	private String contact;
 
-    private String description;
+	private String description;
 
-    @OneToOne
-    private User user;
+	@OneToOne
+	private User user;
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+	public void setUser(User user) {
+		this.user = user;
+	}
 
 }

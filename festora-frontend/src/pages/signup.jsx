@@ -85,7 +85,16 @@ function Signup() {
         role,
       });
 
-      navigate("/login");
+      if (role === "ROLE_ORGANIZER") {
+        navigate("/login", {
+          state: {
+            message:
+              "Your organizer account has been created and is awaiting admin approval. You'll be able to log in once approved.",
+          },
+        });
+      } else {
+        navigate("/login");
+      }
     } catch (error) {
       setServerError(
         error.response?.data?.message ||

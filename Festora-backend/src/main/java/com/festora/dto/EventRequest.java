@@ -3,6 +3,7 @@ package com.festora.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class EventRequest {
@@ -22,5 +23,5 @@ public class EventRequest {
     private Long categoryId;
 
     private Long venueId;
-
+    private List<String> imageUrls;
 }

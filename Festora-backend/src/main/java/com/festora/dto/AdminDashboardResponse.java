@@ -1,5 +1,8 @@
 package com.festora.dto;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -11,8 +14,24 @@ public class AdminDashboardResponse {
 
     private Long organizers;
 
-    private Long events;
+    private Long eventsCount;
 
     private Double revenue;
 
+    private List<OrganizerRequestSummary> organizerRequests;
+
+    @Data
+    @AllArgsConstructor
+    public static class OrganizerRequestSummary {
+
+        private Long id;
+
+        private String name;
+
+        private String email;
+
+        private String phone;
+
+        private LocalDateTime requestedAt;
+    }
 }

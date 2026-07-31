@@ -13,6 +13,14 @@ export const activateUser = (id) =>
 export const deleteEvent = (id) =>
     api.delete(`/admin/events/${id}`);
 
+export const getOrganizerRequests = () => api.get("/admin/organizer-requests");
+
+export const approveOrganizer = (id) =>
+    api.put(`/admin/organizer-requests/${id}/approve`);
+
+export const rejectOrganizer = (id) =>
+    api.put(`/admin/organizer-requests/${id}/reject`);
+
 // Add or verify inside src/services/adminService.js
 
 export const getCategories = () => api.get("/admin/categories");

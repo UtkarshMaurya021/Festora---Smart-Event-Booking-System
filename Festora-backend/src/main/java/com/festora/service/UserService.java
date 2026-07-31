@@ -27,8 +27,12 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setPassword(encoder.encode(request.getPassword()));
-        user.setRole(request.getRole() != null ? request.getRole() : Role.ROLE_USER);
-        user.setStatus(Status.ACTIVE);
+
+        Role role = request.getRole() != null ? request.getRole() : Role.ROLE_USER;
+        user.setRole(role);
+
+        // Organizers need admin approval before they can log in and create events
+        user.setStatus(role == Role.ROLE_ORGANIZER ? Status.PENDING : Status.ACTIVE);
         user.setCreatedAt(LocalDateTime.now());
 
         return repo.save(user);

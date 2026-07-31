@@ -2,11 +2,11 @@ package com.festora.service;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import com.festora.dto.EventSummaryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.festora.dto.EventRequest;
 import com.festora.dto.OrganizerDashboardResponse;
@@ -25,317 +25,373 @@ import com.festora.repository.EventRepository;
 import com.festora.repository.OrganizerRepository;
 import com.festora.repository.UserRepository;
 import com.festora.repository.VenueRepository;
-import org.springframework.scheduling.annotation.Scheduled;
 
 @Service
 public class EventService {
-	@Autowired
-	private BookingRepository bookingRepository;
-
-	private final EventRepository eventRepository;
-	private final OrganizerRepository organizerRepository;
-	private final UserRepository userRepository;
-	private final CategoryRepository categoryRepository;
-	private final VenueRepository venueRepository;
 
-	public EventService(EventRepository eventRepository, OrganizerRepository organizerRepository,
-			UserRepository userRepository, CategoryRepository categoryRepository, VenueRepository venueRepository) {
+@Autowired
+private BookingRepository bookingRepository;
 
-		this.eventRepository = eventRepository;
-		this.organizerRepository = organizerRepository;
-		this.userRepository = userRepository;
-		this.categoryRepository = categoryRepository;
-		this.venueRepository = venueRepository;
-	}
+private final EventRepository eventRepository;
+private final OrganizerRepository organizerRepository;
+private final UserRepository userRepository;
+private final CategoryRepository categoryRepository;
+private final VenueRepository venueRepository;
+// Added: was imported in the original but never injected — now properly wired
+private final EventImageRepository eventImageRepository;
 
-	// ===========================
-	// CREATE EVENT
-	// ===========================
-	public Event create(EventRequest request, String email) {
+public EventService(EventRepository eventRepository, OrganizerRepository organizerRepository,
+UserRepository userRepository, CategoryRepository categoryRepository, VenueRepository venueRepository,
+EventImageRepository eventImageRepository) {
 
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-
-		// AUTO-FIX: Automatically creates organizer record if missing or unlinked
-		Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
-			Organizer newOrganizer = new Organizer();
-			newOrganizer.setUser(user);
-			return organizerRepository.save(newOrganizer);
-		});
-
-		Category category = categoryRepository.findById(request.getCategoryId())
-				.orElseThrow(() -> new RuntimeException("Category not found"));
-
-		Venue venue = venueRepository.findById(request.getVenueId())
-				.orElseThrow(() -> new RuntimeException("Venue not found"));
-
-		Event event = new Event();
-
-		event.setTitle(request.getTitle());
-		event.setDescription(request.getDescription());
-		event.setEventStartDatetime(request.getEventStartDatetime());
-		event.setEventEndDatetime(request.getEventEndDatetime());
-
-		event.setPrice(request.getPrice());
-
-		event.setTotalSeats(request.getTotalSeats());
-		event.setAvailableSeats(request.getTotalSeats());
-
-		event.setStatus(Status.ACTIVE);
-
-		event.setCreatedAt(LocalDateTime.now());
-		event.setUpdatedAt(LocalDateTime.now());
-
-		event.setOrganizer(organizer);
-		event.setCategory(category);
-		event.setVenue(venue);
-
-		return eventRepository.save(event);
-	}
-
-	// ===========================
-	// MY EVENTS
-	// ===========================
-	public List<Event> getMyEvents(String email) {
-
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-
-		// AUTO-FIX: Fetch or automatically create organizer record if missing
-		Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
-			Organizer newOrganizer = new Organizer();
-			newOrganizer.setUser(user);
-			return organizerRepository.save(newOrganizer);
-		});
+this.eventRepository = eventRepository;
+this.organizerRepository = organizerRepository;
+this.userRepository = userRepository;
+this.categoryRepository = categoryRepository;
+this.venueRepository = venueRepository;
+this.eventImageRepository = eventImageRepository;
+}
 
-		// Fetch all events for this organizer, regardless of status,
-		// so deleted/expired/completed events remain visible and manageable.
-		return eventRepository.findByOrganizer(organizer);
-	}
+// ===========================
+// CREATE EVENT
+// ===========================
+public Event create(EventRequest request, String email) {
 
-	// ===========================
-	// GET SINGLE EVENT
-	// ===========================
-	public Event getEvent(Long id) {
+User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-		return eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
-	}
+// AUTO-FIX: Automatically creates organizer record if missing or unlinked
+Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+Organizer newOrganizer = new Organizer();
+newOrganizer.setUser(user);
+return organizerRepository.save(newOrganizer);
+});
 
-	// ===========================
-	// UPDATE EVENT
-	// ===========================
-	public Event updateEvent(Long id, EventRequest request, String email) {
+Category category = categoryRepository.findById(request.getCategoryId())
+.orElseThrow(() -> new RuntimeException("Category not found"));
 
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+Venue venue = venueRepository.findById(request.getVenueId())
+.orElseThrow(() -> new RuntimeException("Venue not found"));
+
+Event event = new Event();
+
+event.setTitle(request.getTitle());
+event.setDescription(request.getDescription());
+event.setEventStartDatetime(request.getEventStartDatetime());
+event.setEventEndDatetime(request.getEventEndDatetime());
+
+event.setPrice(request.getPrice());
 
-		// AUTO-FIX: Automatically creates organizer record if missing or unlinked
-		Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
-			Organizer newOrganizer = new Organizer();
-			newOrganizer.setUser(user);
-			return organizerRepository.save(newOrganizer);
-		});
+event.setTotalSeats(request.getTotalSeats());
+event.setAvailableSeats(request.getTotalSeats());
 
-		Event event = eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
+event.setStatus(Status.ACTIVE);
+
+event.setCreatedAt(LocalDateTime.now());
+event.setUpdatedAt(LocalDateTime.now());
 
-		if (!event.getOrganizer().getOrganizerId().equals(organizer.getOrganizerId())) {
-			throw new RuntimeException("Unauthorized");
-		}
+event.setOrganizer(organizer);
+event.setCategory(category);
+event.setVenue(venue);
 
-		Category category = categoryRepository.findById(request.getCategoryId())
-				.orElseThrow(() -> new RuntimeException("Category not found"));
+Event saved = eventRepository.save(event);
+
+// Persist image URLs supplied by the organizer
+saveImages(saved, request.getImageUrls());
+
+return saved;
+}
 
-		Venue venue = venueRepository.findById(request.getVenueId())
-				.orElseThrow(() -> new RuntimeException("Venue not found"));
+// ===========================
+// MY EVENTS
+// ===========================
+public List<Event> getMyEvents(String email) {
+
+User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+// AUTO-FIX: Fetch or automatically create organizer record if missing
+Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+Organizer newOrganizer = new Organizer();
+newOrganizer.setUser(user);
+return organizerRepository.save(newOrganizer);
+});
 
-		// Work out how many seats are already booked so we can carry that
-		// number forward when totalSeats changes, instead of leaving
-		// availableSeats stuck at its old value.
-		int bookedSeats = event.getTotalSeats() - event.getAvailableSeats();
+// Fetch all events for this organizer, regardless of status,
+// so deleted/expired/completed events remain visible and manageable.
+return eventRepository.findByOrganizer(organizer);
+}
 
-		Integer newTotalSeats = request.getTotalSeats();
-		if (newTotalSeats < bookedSeats) {
-			throw new RuntimeException("Total seats cannot be less than the " + bookedSeats + " seats already booked");
-		}
+// ===========================
+// GET SINGLE EVENT
+// ===========================
+public Event getEvent(Long id) {
 
-		event.setTitle(request.getTitle());
-		event.setDescription(request.getDescription());
-		event.setEventStartDatetime(request.getEventStartDatetime());
-		event.setEventEndDatetime(request.getEventEndDatetime());
-		event.setPrice(request.getPrice());
-		event.setTotalSeats(newTotalSeats);
-		event.setAvailableSeats(newTotalSeats - bookedSeats);
-		event.setCategory(category);
-		event.setVenue(venue);
-		event.setUpdatedAt(LocalDateTime.now());
+return eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
+}
 
-		return eventRepository.save(event);
-	}
+// ===========================
+// UPDATE EVENT
+// ===========================
+public Event updateEvent(Long id, EventRequest request, String email) {
 
-	// ===========================
-	// DELETE EVENT
-	// ===========================
-	public void deleteEvent(Long id, String email) {
+User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+// AUTO-FIX: Automatically creates organizer record if missing or unlinked
+Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+Organizer newOrganizer = new Organizer();
+newOrganizer.setUser(user);
+return organizerRepository.save(newOrganizer);
+});
 
-		// AUTO-FIX: Automatically creates organizer record if missing or unlinked
-		Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
-			Organizer newOrganizer = new Organizer();
-			newOrganizer.setUser(user);
-			return organizerRepository.save(newOrganizer);
-		});
+Event event = eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
 
-		Event event = eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
+if (!event.getOrganizer().getOrganizerId().equals(organizer.getOrganizerId())) {
+throw new RuntimeException("Unauthorized");
+}
 
-		if (!event.getOrganizer().getOrganizerId().equals(organizer.getOrganizerId())) {
-			throw new RuntimeException("Unauthorized");
-		}
-		event.setStatus(Status.INACTIVE); // or Status.CANCELLED
-		event.setUpdatedAt(LocalDateTime.now());
-		eventRepository.save(event);
-	}
+Category category = categoryRepository.findById(request.getCategoryId())
+.orElseThrow(() -> new RuntimeException("Category not found"));
 
-	public OrganizerDashboardResponse getDashboard(String email) {
+Venue venue = venueRepository.findById(request.getVenueId())
+.orElseThrow(() -> new RuntimeException("Venue not found"));
 
-		User user = userRepository.findByEmail(email).orElseThrow();
+// Work out how many seats are already booked so we can carry that
+// number forward when totalSeats changes, instead of leaving
+// availableSeats stuck at its old value.
+int bookedSeats = event.getTotalSeats() - event.getAvailableSeats();
 
-		Organizer organizer = organizerRepository.findByUser(user).orElseThrow();
+Integer newTotalSeats = request.getTotalSeats();
+if (newTotalSeats < bookedSeats) {
+throw new RuntimeException("Total seats cannot be less than the " + bookedSeats + " seats already booked");
+}
 
-		List<Booking> bookings = bookingRepository.findByEventOrganizer(organizer);
+event.setTitle(request.getTitle());
+event.setDescription(request.getDescription());
+event.setEventStartDatetime(request.getEventStartDatetime());
+event.setEventEndDatetime(request.getEventEndDatetime());
+event.setPrice(request.getPrice());
+event.setTotalSeats(newTotalSeats);
+event.setAvailableSeats(newTotalSeats - bookedSeats);
+event.setCategory(category);
+event.setVenue(venue);
+event.setUpdatedAt(LocalDateTime.now());
 
-		long totalTickets = 0;
+Event saved = eventRepository.save(event);
 
-		double revenue = 0;
+// Replace all existing images with the new URL list
+replaceImages(saved, request.getImageUrls());
 
-		for (Booking booking : bookings) {
+return saved;
+}
 
-			totalTickets += booking.getQuantity();
+// ===========================
+// DELETE EVENT
+// ===========================
+public void deleteEvent(Long id, String email) {
 
-			revenue += booking.getTotalAmount();
+User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-		}
+// AUTO-FIX: Automatically creates organizer record if missing or unlinked
+Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+Organizer newOrganizer = new Organizer();
+newOrganizer.setUser(user);
+return organizerRepository.save(newOrganizer);
+});
 
-		return new OrganizerDashboardResponse(
+Event event = eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
 
-				eventRepository.countByOrganizer(organizer),
+if (!event.getOrganizer().getOrganizerId().equals(organizer.getOrganizerId())) {
+throw new RuntimeException("Unauthorized");
+}
+event.setStatus(Status.INACTIVE); // or Status.CANCELLED
+event.setUpdatedAt(LocalDateTime.now());
+eventRepository.save(event);
+}
 
-				eventRepository.countByOrganizerAndStatus(organizer, Status.ACTIVE),
+public OrganizerDashboardResponse getDashboard(String email) {
 
-				eventRepository.countByOrganizerAndStatus(organizer, Status.FULL),
+User user = userRepository.findByEmail(email).orElseThrow();
 
-				eventRepository.countByOrganizerAndStatus(organizer, Status.STARTED),
+Organizer organizer = organizerRepository.findByUser(user).orElseThrow();
 
-				eventRepository.countByOrganizerAndStatus(organizer, Status.COMPLETED),
+List<Booking> bookings = bookingRepository.findByEventOrganizer(organizer);
 
-				eventRepository.countByOrganizerAndStatus(organizer, Status.INACTIVE),
+long totalTickets = 0;
 
-				totalTickets,
+double revenue = 0;
 
-				revenue
+for (Booking booking : bookings) {
 
-		);
+totalTickets += booking.getQuantity();
 
-	}
+revenue += booking.getTotalAmount();
 
-	public List<Event> getAllActiveEvents() {
+}
 
-		return eventRepository.findByStatus(Status.ACTIVE);
-	}
+return new OrganizerDashboardResponse(
 
-	// ===========================
-	// GET AND UPDATE ALL MY EVENTS
-	// ===========================
-	public List<Event> getAndUpdateOrganizerEvents(String email) {
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+eventRepository.countByOrganizer(organizer),
 
-		Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
-			Organizer newOrganizer = new Organizer();
-			newOrganizer.setUser(user);
-			return organizerRepository.save(newOrganizer);
-		});
+eventRepository.countByOrganizerAndStatus(organizer, Status.ACTIVE),
 
-		List<Event> events = eventRepository.findByOrganizer(organizer);
+eventRepository.countByOrganizerAndStatus(organizer, Status.FULL),
 
-		for (Event event : events) {
-			updateEventStatus(event);
-		}
+eventRepository.countByOrganizerAndStatus(organizer, Status.STARTED),
 
-		eventRepository.saveAll(events);
+eventRepository.countByOrganizerAndStatus(organizer, Status.COMPLETED),
 
-		return events;
-	}
+eventRepository.countByOrganizerAndStatus(organizer, Status.INACTIVE),
 
-	// FIX: Added the missing helper method signature so the code compiles.
-	private void updateEventStatus(Event event) {
-		if (event.getEventEndDatetime() != null && event.getEventEndDatetime().isBefore(LocalDateTime.now())) {
-			event.setStatus(Status.INACTIVE);
-			event.setUpdatedAt(LocalDateTime.now());
-		}
-	}
+totalTickets,
 
-	public List<EventSummaryResponse> getMyEventsSummary(String email) {
+revenue
 
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+);
 
-		Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
-			Organizer newOrganizer = new Organizer();
-			newOrganizer.setUser(user);
-			return organizerRepository.save(newOrganizer);
-		});
+}
 
-		List<Event> events = eventRepository.findByOrganizer(organizer);
+public List<Event> getAllActiveEvents() {
 
-		return events.stream().map(event -> {
+return eventRepository.findByStatus(Status.ACTIVE);
+}
 
-			int bookedSeats = bookingRepository.sumQuantityByEvent(event);
-			Long totalBookings = bookingRepository.countByEvent(event);
-			Double revenue = bookingRepository.sumAmountByEvent(event);
+// ===========================
+// GET AND UPDATE ALL MY EVENTS
+// ===========================
+public List<Event> getAndUpdateOrganizerEvents(String email) {
+User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-			return new EventSummaryResponse(event.getEventId(), event.getTitle(),
-					event.getCategory() != null ? event.getCategory().getCategoryName() : null,
-					event.getVenue() != null ? event.getVenue().getVenueName() : null, event.getTotalSeats(),
-					event.getAvailableSeats(), bookedSeats, totalBookings, java.math.BigDecimal.valueOf(revenue),
-					event.getStatus());
+Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+Organizer newOrganizer = new Organizer();
+newOrganizer.setUser(user);
+return organizerRepository.save(newOrganizer);
+});
 
-		}).toList();
-	}
+List<Event> events = eventRepository.findByOrganizer(organizer);
 
-	@Scheduled(fixedRate = 60000) // Every 1 minute
-	public void updateExpiredEvents() {
+for (Event event : events) {
+updateEventStatus(event);
+}
 
-		List<Event> events = eventRepository.findByStatus(Status.ACTIVE);
+eventRepository.saveAll(events);
 
-		LocalDateTime now = LocalDateTime.now();
+return events;
+}
 
-		for (Event event : events) {
+// FIX: Added the missing helper method signature so the code compiles.
+private void updateEventStatus(Event event) {
+if (event.getEventEndDatetime() != null && event.getEventEndDatetime().isBefore(LocalDateTime.now())) {
+event.setStatus(Status.INACTIVE);
+event.setUpdatedAt(LocalDateTime.now());
+}
+}
 
-			if (!now.isBefore(event.getEventStartDatetime())) {
+public List<EventSummaryResponse> getMyEventsSummary(String email) {
 
-				event.setStatus(Status.INACTIVE);
+User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-			}
+Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+Organizer newOrganizer = new Organizer();
+newOrganizer.setUser(user);
+return organizerRepository.save(newOrganizer);
+});
 
-			if (event.getAvailableSeats() == 0) {
+List<Event> events = eventRepository.findByOrganizer(organizer);
 
-				event.setStatus(Status.STARTED);
+return events.stream().map(event -> {
 
-			}
+int bookedSeats = bookingRepository.sumQuantityByEvent(event);
+Long totalBookings = bookingRepository.countByEvent(event);
+Double revenue = bookingRepository.sumAmountByEvent(event);
 
-		}
+return new EventSummaryResponse(event.getEventId(), event.getTitle(),
+event.getCategory() != null ? event.getCategory().getCategoryName() : null,
+event.getVenue() != null ? event.getVenue().getVenueName() : null, event.getTotalSeats(),
+event.getAvailableSeats(), bookedSeats, totalBookings, java.math.BigDecimal.valueOf(revenue),
+event.getStatus());
 
-		eventRepository.saveAll(events);
+}).toList();
+}
 
-	}
+@Scheduled(fixedRate = 60000) // Every 1 minute
+public void updateExpiredEvents() {
 
-	public List<Event> getMyActiveEvents(String email) {
+List<Event> events = eventRepository.findByStatus(Status.ACTIVE);
 
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+LocalDateTime now = LocalDateTime.now();
 
-		Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
-			Organizer newOrganizer = new Organizer();
-			newOrganizer.setUser(user);
-			return organizerRepository.save(newOrganizer);
-		});
+for (Event event : events) {
 
-		// Dashboard should only show currently active events
-		return eventRepository.findByOrganizerAndStatus(organizer, Status.ACTIVE);
-	}
+if (!now.isBefore(event.getEventStartDatetime())) {
+
+event.setStatus(Status.INACTIVE);
+
+}
+
+if (event.getAvailableSeats() == 0) {
+
+event.setStatus(Status.STARTED);
+
+}
+
+}
+
+eventRepository.saveAll(events);
+
+}
+
+public List<Event> getMyActiveEvents(String email) {
+
+User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
+Organizer newOrganizer = new Organizer();
+newOrganizer.setUser(user);
+return organizerRepository.save(newOrganizer);
+});
+
+// Dashboard should only show currently active events
+return eventRepository.findByOrganizerAndStatus(organizer, Status.ACTIVE);
+}
+
+// ===========================
+// IMAGE HELPERS (new)
+// ===========================
+
+/**
+ * Saves a list of image URLs as EventImage records linked to the given event.
+ * Skips null, blank, or non-http entries silently.
+ */
+private void saveImages(Event event, List<String> urls) {
+if (urls == null || urls.isEmpty()) return;
+
+List<EventImage> images = new ArrayList<>();
+for (String url : urls) {
+if (url == null || url.isBlank()) continue;
+String trimmed = url.trim();
+if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) continue;
+
+EventImage img = new EventImage();
+img.setImageUrl(trimmed);
+img.setUploadedAt(LocalDateTime.now());
+img.setEvent(event);
+images.add(img);
+}
+
+if (!images.isEmpty()) {
+eventImageRepository.saveAll(images);
+}
+}
+
+/**
+ * Replaces all existing images for the event with the new URL list.
+ * Clears current images first, then saves the new ones.
+ */
+private void replaceImages(Event event, List<String> urls) {
+List<EventImage> existing = event.getImages();
+if (existing != null && !existing.isEmpty()) {
+eventImageRepository.deleteAll(existing);
+existing.clear();
+}
+saveImages(event, urls);
+}
 }

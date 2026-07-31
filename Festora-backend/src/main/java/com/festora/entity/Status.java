@@ -10,5 +10,6 @@ public enum Status {
 	COMPLETED, // Current time > eventEndDatetime
 
 	INACTIVE // Cancelled by organizer/admin
+, PENDING
 
 }

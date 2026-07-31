@@ -46,6 +46,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errorBody("Validation failed", fieldErrors));
     }
 
+    /**
+     * Fires for plain RuntimeExceptions thrown from services/controllers
+     * (invalid login, pending/blocked account, not-found lookups, etc.)
+     * that don't have a more specific handler above.
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("message", ex.getMessage());
+        return ResponseEntity.badRequest().body(body);
+    }
+
     private Map<String, Object> errorBody(String message, Map<String, String> fieldErrors) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("timestamp", LocalDateTime.now());
