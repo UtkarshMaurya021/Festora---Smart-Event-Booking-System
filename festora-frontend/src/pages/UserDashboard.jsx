@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import DashboardNavbar from "../components/DashboardNavbar";
+import EventImageSlider from "../components/EventImageSlider";
 import { getUserDashboard } from "../services/dashboardService";
 import "../pages/styles/Userdashboard.css"
 function UserDashboard() {
@@ -147,51 +148,47 @@ function UserDashboard() {
 
             <div className="card-body">
               {activeEvents.length > 0 ? (
-                <div className="table-responsive">
-                  <table className="table align-middle">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Title</th>
-                        <th>Venue</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Seats</th>
-                        <th></th>
-                      </tr>
-                    </thead>
+                <div className="row g-4">
+                  {activeEvents.map((event, index) => {
+                    const eventId =
+                      event.eventId || event.event_id || index;
 
-                    <tbody>
-                      {activeEvents.map((event, index) => {
-                        const eventId =
-                          event.eventId || event.event_id || index;
+                    return (
+                      <div className="col-md-6 col-lg-4" key={eventId}>
+                        <div className="card border-0 shadow-sm rounded-4 h-100">
+                          <EventImageSlider images={event.images} />
 
-                        return (
-                          <tr key={eventId}>
-                            <td className="fw-semibold">{event.title}</td>
+                          <div className="card-body d-flex flex-column">
+                            <h5 className="fw-bold mb-1">{event.title}</h5>
 
-                            <td>{event.venue?.venueName || "N/A"}</td>
+                            <p className="text-muted mb-2 small">
+                              {event.venue?.venueName || "N/A"} &middot;{" "}
+                              {event.category?.categoryName || "N/A"}
+                            </p>
 
-                            <td>{event.category?.categoryName || "N/A"}</td>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <span className="fw-semibold">
+                                ₹ {event.price}
+                              </span>
 
-                            <td>₹ {event.price}</td>
+                              <span className="text-muted small">
+                                {event.availableSeats ||
+                                  event.available_seats}{" "}
+                                seats left
+                              </span>
+                            </div>
 
-                            <td>
-                              {event.availableSeats || event.available_seats}
-                            </td>
-
-                            <td>
-                              <Link
-                                to={`/event/${eventId}`}
-                                className="btn btn-primary rounded-pill px-4"
-                              >
-                                View Details
-                              </Link>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                            <Link
+                              to={`/event/${eventId}`}
+                              className="btn btn-primary rounded-pill px-4 mt-auto align-self-start"
+                            >
+                              View Details
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-5">

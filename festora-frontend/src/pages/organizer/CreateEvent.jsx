@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import DashboardNavbar from "../../components/DashboardNavbar";
+import ImageDropzone from "../../components/ImageDropzone";
 import axios from "axios";
 
 function CreateEvent() {
@@ -66,6 +67,20 @@ function CreateEvent() {
 
   const removeImageUrl = (index) => {
     setImageUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Called by ImageDropzone once a drag-and-dropped/browsed file has been
+  // uploaded and the backend has handed back its URL. Drops the URL into
+  // the first empty slot, or appends a new one, so it flows into the same
+  // imageUrls list the URL text fields use.
+  const handleImageUploaded = (url) => {
+    setImageUrls((prev) => {
+      const emptyIndex = prev.findIndex((u) => u.trim() === "");
+      if (emptyIndex !== -1) {
+        return prev.map((u, i) => (i === emptyIndex ? url : u));
+      }
+      return [...prev, url];
+    });
   };
 
   const save = async () => {
@@ -220,8 +235,12 @@ function CreateEvent() {
             })}
           </select>
 
+          {/* ---- Image Upload (drag & drop) ---- */}
+          <label className="form-label fw-bold">Event Images</label>
+          <ImageDropzone onUploaded={handleImageUploaded} />
+
           {/* ---- Image URLs ---- */}
-          <label className="form-label fw-bold">Event Images (URLs)</label>
+          <label className="form-label fw-bold">Or paste image URLs</label>
           {imageUrls.map((url, index) => (
             <div key={index} className="d-flex gap-2 mb-2 align-items-center">
               <input

@@ -4,7 +4,7 @@ import Sidebar from "../../components/Sidebar";
 import DashboardNavbar from "../../components/DashboardNavbar";
 import { getEvent } from "../../services/eventService";
 import api from "../../services/api";
-
+import ImageDropzone from "../../components/ImageDropzone";
 function EditEvent() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -71,13 +71,26 @@ function EditEvent() {
   const removeImageUrl = (index) => {
     setImageUrls((prev) => prev.filter((_, i) => i !== index));
   };
+  // Called when an image is uploaded from ImageDropzone
+  const handleImageUploaded = (url) => {
+    setImageUrls((prev) => {
+      const emptyIndex = prev.findIndex((u) => u.trim() === "");
 
+      if (emptyIndex !== -1) {
+        return prev.map((u, i) => (i === emptyIndex ? url : u));
+      }
+
+      return [...prev, url];
+    });
+  };
   const save = async () => {
     try {
       const token = localStorage.getItem("token");
 
       // Filter out blank URL entries before sending
-      const filteredUrls = imageUrls.map((u) => u.trim()).filter((u) => u.length > 0);
+      const filteredUrls = imageUrls
+        .map((u) => u.trim())
+        .filter((u) => u.length > 0);
 
       await api.put(
         `/organizer/events/${id}`,
@@ -96,7 +109,7 @@ function EditEvent() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       navigate("/organizer/dashboard", {
@@ -196,7 +209,12 @@ function EditEvent() {
           </select>
 
           {/* ---- Image URLs ---- */}
-          <label className="form-label fw-bold">Event Images (URLs)</label>
+          {/* Drag & Drop Upload */}
+          <label className="form-label fw-bold">Event Images</label>
+          <ImageDropzone onUploaded={handleImageUploaded} />
+
+          {/* Manual URL Entry */}
+          <label className="form-label fw-bold mt-3">Or paste image URLs</label>
           {imageUrls.map((url, index) => (
             <div key={index} className="d-flex gap-2 mb-2 align-items-center">
               <input
@@ -211,8 +229,17 @@ function EditEvent() {
                 <img
                   src={url}
                   alt="preview"
-                  style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 4, border: "1px solid #dee2e6", flexShrink: 0 }}
-                  onError={(e) => { e.target.style.display = "none"; }}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    objectFit: "cover",
+                    borderRadius: 4,
+                    border: "1px solid #dee2e6",
+                    flexShrink: 0,
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
                 />
               )}
               {imageUrls.length > 1 && (
