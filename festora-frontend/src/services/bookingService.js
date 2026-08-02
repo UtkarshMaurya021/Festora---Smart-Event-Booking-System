@@ -7,5 +7,5 @@ export const getBooking = (id) => {
     return api.get(`/bookings/${id}`);
 };
 export const getMyBookings = () => {
-    return api.get("/bookings/my");
+  return api.get("/bookings/userbooking");
 };

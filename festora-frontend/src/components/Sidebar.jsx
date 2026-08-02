@@ -48,7 +48,7 @@ function Sidebar() {
             Events
           </Link>
 
-          <Link to="/my-bookings">
+          <Link to="/userbookings">
             <FiBook />
             My Bookings
           </Link>

@@ -8,10 +8,13 @@ import Signup from "./pages/signup";
 import CreateEvent from "./pages/organizer/CreateEvent";
 import EditEvent from "./pages/organizer/EditEvent.jsx";
 import UserDashboard from "./pages/UserDashboard";
+import UserEvents from "./pages/UserEvents.jsx";
+import UserTickets from "./pages/UserTickets.jsx";
+import UserProfile from "./pages/UserProfile.jsx";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import EventDetails from "./pages/EventDetails";
-import MyBookings from "./pages/MyBookings.jsx";
+import MyBookings from "./pages/MyBooking.jsx";
 import VenueManagement from "./pages/admin/VenueManagement.jsx";
 import CategoryManagement from "./pages/admin/CategoryManagement.jsx";
 import EventManagement from "./pages/admin/EventManagement.jsx";
@@ -104,6 +107,30 @@ function App() {
           }
         />
         <Route
+          path="/user/events"
+          element={
+            <PrivateRoute role="ROLE_USER">
+              <UserEvents />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/user/tickets"
+          element={
+            <PrivateRoute role="ROLE_USER">
+              <UserTickets />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/user/profile"
+          element={
+            <PrivateRoute role="ROLE_USER">
+              <UserProfile />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/organizer/events/create"
           element={
             <PrivateRoute role="ROLE_ORGANIZER">
@@ -135,3 +162,4 @@ function App() {
 }
 
 export default App;
+ 

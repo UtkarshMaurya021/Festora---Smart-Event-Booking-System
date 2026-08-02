@@ -1,5 +1,6 @@
 package com.festora.controller;
 
+import com.festora.dto.UserProfileResponse;
 import com.festora.entity.Event;
 import com.festora.entity.User;
 import com.festora.repository.BookingRepository;
@@ -56,4 +57,17 @@ public class UserController {
 	public List<Event> getAllEvents() {
 		return eventService.getAllActiveEvents();
 	}
-}
+	
+	@GetMapping("/profile")
+	public UserProfileResponse getProfile(Authentication authentication) {
+		User user = userRepository.findByEmail(authentication.getName()).orElseThrow();
+
+		return new UserProfileResponse(
+				user.getName(),
+				user.getEmail(),
+				user.getPhone(),
+				user.getRole() != null ? user.getRole().name() : null,
+				user.getStatus() != null ? user.getStatus().name() : null,
+				user.getCreatedAt()
+		);
+}}

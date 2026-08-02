@@ -49,7 +49,7 @@ public class BookingController {
 
     }
 
-    @GetMapping("/my")
+    @GetMapping("/userbooking")
 
     public List<BookingResponse> myBookings(
 

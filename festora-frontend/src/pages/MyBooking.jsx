@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getMyBookings } from "../services/bookingService";
 import { Link } from "react-router-dom";
-function MyBookings() {
+function MyBooking() {
   const load = () => {
     getMyBookings().then((res) => {
       setBookings(res.data);
@@ -60,4 +60,4 @@ function MyBookings() {
   );
 }
 
-export default MyBookings;
+export default MyBooking;
