@@ -18,24 +18,6 @@ import com.festora.entity.Ticket;
 import com.festora.repository.BookingRepository;
 import com.festora.repository.PaymentRepository;
 
-/**
- * FestoraPay -- an in-house, zero-dependency mock payment gateway.
- *
- * It follows the exact same shape as a real gateway (Razorpay/Stripe/etc.)
- * so the flow is easy to explain and easy to later swap for a real one:
- *
- *   1. createOrder()   -> mints a transactionId for this booking, PENDING
- *   2. confirmPayment() -> the "checkout" step; decides SUCCESS/FAILED using
- *                          magic test values (exactly how real sandboxes work)
- *   3. markFailed()     -> called if the user abandons checkout without
- *                          submitting (closes the tab, hits back, etc.)
- *
- * Simulated outcome rules (documented so it's trivial to demo/explain):
- *   - CARD: a number ending in "0000"      -> declined
- *   - UPI:  the id "fail@festora"          -> declined
- *   - NETBANKING / WALLET: always succeed
- *   - everything else                       -> succeeds
- */
 @Service
 public class PaymentService {
 
@@ -45,15 +27,18 @@ public class PaymentService {
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
     private final TicketService ticketService;
+    private final EmailService emailService;
     private final Random random = new Random();
 
     public PaymentService(
             BookingRepository bookingRepository,
             PaymentRepository paymentRepository,
-            TicketService ticketService) {
+            TicketService ticketService,
+            EmailService emailService) {
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
         this.ticketService = ticketService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -64,7 +49,6 @@ public class PaymentService {
         Payment payment = paymentRepository.findByBooking(booking)
                 .orElseThrow(() -> new IllegalStateException("Payment record not found for this booking"));
 
-        // Already paid -- don't mint a new transaction, just reuse it
         if (payment.getStatus() != PaymentStatus.SUCCESS) {
             payment.setTransactionId(generateTransactionId());
             payment.setStatus(PaymentStatus.PENDING);
@@ -98,10 +82,14 @@ public class PaymentService {
         }
 
         if (payment.getStatus() == PaymentStatus.SUCCESS) {
-            // Already confirmed earlier (e.g. duplicate click). generateTicket()
-            // is idempotent, so this just fetches the tickets that were already
-            // issued instead of silently returning an empty ticket list.
             List<Ticket> existingTickets = ticketService.generateTicket(booking);
+            if (booking.getUser() != null) {
+                try {
+                    emailService.sendTicketBookedEmail(booking.getUser(), booking, existingTickets);
+                } catch (Exception ex) {
+                    System.err.println("Booking email notification error: " + ex.getMessage());
+                }
+            }
             return successResult(booking, existingTickets, "Payment already completed");
         }
 
@@ -120,6 +108,16 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         List<Ticket> tickets = ticketService.generateTicket(booking);
+
+        // Send Real-Time Ticket Booking Email Notification
+        if (booking.getUser() != null) {
+            try {
+                System.out.println("🚀 Triggering booking email to: " + booking.getUser().getEmail() + " for Booking #" + booking.getBookingId());
+                emailService.sendTicketBookedEmail(booking.getUser(), booking, tickets);
+            } catch (Exception ex) {
+                System.err.println("Booking email notification error: " + ex.getMessage());
+            }
+        }
 
         return successResult(booking, tickets, "Payment successful");
     }
@@ -157,7 +155,6 @@ public class PaymentService {
         Payment payment = paymentRepository.findByBooking(booking)
                 .orElseThrow(() -> new IllegalArgumentException("Payment record not found for this booking"));
 
-        // Only downgrade if it hasn't already succeeded (avoid clobbering a real success)
         if (payment.getStatus() != PaymentStatus.SUCCESS) {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);

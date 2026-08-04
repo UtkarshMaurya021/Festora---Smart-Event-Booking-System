@@ -15,6 +15,7 @@ import com.festora.entity.Category;
 import com.festora.entity.Event;
 import com.festora.entity.EventImage;
 import com.festora.entity.Organizer;
+import com.festora.entity.Role;
 import com.festora.entity.Status;
 import com.festora.entity.User;
 import com.festora.entity.Venue;
@@ -38,10 +39,11 @@ private final UserRepository userRepository;
 private final CategoryRepository categoryRepository;
 private final VenueRepository venueRepository;
 private final EventImageRepository eventImageRepository;
+private final EmailService emailService;
 
 public EventService(EventRepository eventRepository, OrganizerRepository organizerRepository,
 UserRepository userRepository, CategoryRepository categoryRepository, VenueRepository venueRepository,
-EventImageRepository eventImageRepository) {
+EventImageRepository eventImageRepository, EmailService emailService) {
 
 this.eventRepository = eventRepository;
 this.organizerRepository = organizerRepository;
@@ -49,10 +51,11 @@ this.userRepository = userRepository;
 this.categoryRepository = categoryRepository;
 this.venueRepository = venueRepository;
 this.eventImageRepository = eventImageRepository;
+this.emailService = emailService;
 }
 
 // ===========================
-// CREATE EVENT
+// CREATE EVENT (Requires Admin Approval)
 // ===========================
 public Event create(EventRequest request, String email) {
 
@@ -77,12 +80,13 @@ event.setDescription(request.getDescription());
 event.setEventStartDatetime(request.getEventStartDatetime());
 event.setEventEndDatetime(request.getEventEndDatetime());
 
-event.setPrice(request.getPrice());
+event.setPrice(request.getPrice() != null ? request.getPrice() : 0.0);
 
-event.setTotalSeats(request.getTotalSeats());
-event.setAvailableSeats(request.getTotalSeats());
+event.setTotalSeats(request.getTotalSeats() != null ? request.getTotalSeats() : 100);
+event.setAvailableSeats(request.getTotalSeats() != null ? request.getTotalSeats() : 100);
 
-event.setStatus(Status.ACTIVE);
+// Status is created as PENDING (Pending Admin Approval)
+event.setStatus(Status.PENDING);
 
 event.setCreatedAt(LocalDateTime.now());
 event.setUpdatedAt(LocalDateTime.now());
@@ -94,6 +98,26 @@ event.setVenue(venue);
 Event saved = eventRepository.save(event);
 
 saveImages(saved, request.getImageUrls());
+
+// 1. Send Email Notification to Organizer (Request Submitted / Pending Approval)
+emailService.sendEventSubmittedToOrganizerEmail(user, saved);
+
+// 2. Send Real-Time Email Alert to Admin about the new event creation request
+try {
+    List<User> admins = userRepository.findByRoleAndStatus(Role.ROLE_ADMIN, Status.ACTIVE);
+    if (!admins.isEmpty()) {
+        for (User admin : admins) {
+            emailService.sendNewEventSubmittedToAdminEmail(admin, saved, user);
+        }
+    } else {
+        User defaultAdmin = new User();
+        defaultAdmin.setName("System Administrator");
+        defaultAdmin.setEmail("admin@festora.com");
+        emailService.sendNewEventSubmittedToAdminEmail(defaultAdmin, saved, user);
+    }
+} catch (Exception ex) {
+    System.err.println("Admin notification error: " + ex.getMessage());
+}
 
 return saved;
 }
@@ -190,9 +214,12 @@ Event event = eventRepository.findById(id).orElseThrow(() -> new RuntimeExceptio
 if (!event.getOrganizer().getOrganizerId().equals(organizer.getOrganizerId())) {
 throw new RuntimeException("Unauthorized");
 }
-event.setStatus(Status.INACTIVE); // or Status.CANCELLED
+event.setStatus(Status.INACTIVE);
 event.setUpdatedAt(LocalDateTime.now());
 eventRepository.save(event);
+
+// Send Email Notification to Organizer & Booked Attendees about event deletion
+emailService.sendEventCancelledEmail(user, event);
 }
 
 public OrganizerDashboardResponse getDashboard(String email) {
@@ -265,12 +292,6 @@ eventRepository.saveAll(events);
 return events;
 }
 
-// Keeps a single event's status in sync when its list is fetched
-// on-demand (mirrors the logic in the @Scheduled updateExpiredEvents()
-// job below). STARTED once eventStartDatetime has passed, COMPLETED
-// once eventEndDatetime has passed. Only auto-transitions events that
-// are still in the live ACTIVE/FULL/STARTED lifecycle so it never
-// resurrects an event an organizer/admin has explicitly deactivated.
 private void updateEventStatus(Event event) {
 if (event.getStatus() != Status.ACTIVE
 && event.getStatus() != Status.FULL
@@ -320,12 +341,7 @@ event.getStatus());
 }).toList();
 }
 
-// Runs every minute. Flips an event's status automatically once its
-// organizer-set start/end time arrives: STARTED once eventStartDatetime
-// has passed, COMPLETED once eventEndDatetime has passed, FULL if it
-// sells out before starting. Requires @EnableScheduling on the main
-// application class (added) to actually run.
-@Scheduled(fixedRate = 60000) // Every 1 minute
+@Scheduled(fixedRate = 60000)
 public void updateExpiredEvents() {
 
 LocalDateTime now = LocalDateTime.now();
@@ -369,10 +385,6 @@ return eventRepository.findByOrganizerAndStatusIn(organizer,
 List.of(Status.ACTIVE, Status.FULL, Status.STARTED));
 }
 
-// ===========================
-// IMAGE HELPERS
-// ===========================
-
 private void saveImages(Event event, List<String> urls) {
 if (urls == null || urls.isEmpty()) return;
 
@@ -386,7 +398,6 @@ EventImage img = new EventImage();
 img.setImageUrl(trimmed);
 img.setUploadedAt(LocalDateTime.now());
 img.setEvent(event);
-// First image in the list is the primary/cover image, per the ER diagram's is_primary flag.
 img.setIsPrimary(images.isEmpty());
 images.add(img);
 }

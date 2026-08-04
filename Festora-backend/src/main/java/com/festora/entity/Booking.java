@@ -23,6 +23,8 @@ public class Booking {
 	@Min(value = 1, message = "Quantity must be at least 1")
 	private Integer quantity;
 
+	private String seatNumbers;
+
 	@NotNull(message = "Total amount is required")
 	@PositiveOrZero(message = "Total amount cannot be negative")
 	private Double totalAmount;

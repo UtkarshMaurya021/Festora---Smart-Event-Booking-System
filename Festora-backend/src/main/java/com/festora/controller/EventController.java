@@ -2,6 +2,7 @@ package com.festora.controller;
 
 import com.festora.entity.Event;
 import com.festora.repository.EventRepository;
+import com.festora.service.BookingService;
 import com.festora.service.EventService;
 
 import org.springframework.http.ResponseEntity;
@@ -16,18 +17,25 @@ import java.util.List;
 public class EventController {
 
     private final EventRepository repository;
-    private final EventService service;   
+    private final EventService service;
+    private final BookingService bookingService;
 
-    // Constructor injection
-    public EventController(EventRepository repository, EventService service) {
+    public EventController(EventRepository repository, EventService service, BookingService bookingService) {
         this.repository = repository;
         this.service = service;
+        this.bookingService = bookingService;
     }
 
     @GetMapping("/{id}")
     public Event getEvent(@PathVariable Long id) {
         return service.getEvent(id);
     }
+
+    @GetMapping("/{id}/booked-seats")
+    public List<String> getBookedSeats(@PathVariable Long id) {
+        return bookingService.getBookedSeatsForEvent(id);
+    }
+
     @GetMapping
     public List<Event> getAllEvents() {
         return repository.findAll();

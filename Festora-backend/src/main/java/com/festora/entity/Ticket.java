@@ -30,6 +30,8 @@ public class Ticket {
     @Column(unique = true)
     private String ticketNumber;
 
+    private String seatNumber;
+
     @NotBlank(message = "QR code path is required")
     private String qrCodePath;
 

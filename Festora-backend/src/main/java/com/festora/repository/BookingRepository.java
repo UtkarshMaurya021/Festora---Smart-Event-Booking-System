@@ -17,9 +17,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
 	List<Booking> findByUser(User user);
 
+	List<Booking> findByEvent(Event event);
+
 	List<Booking> findByEventOrganizer(Organizer organizer);
 
 	Long countByEvent(Event event);
+
+	List<Booking> findAllByOrderByBookingDateDesc();
 
 	@Query("""
 			SELECT COALESCE(SUM(b.totalAmount),0)

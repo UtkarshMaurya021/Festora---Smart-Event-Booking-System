@@ -17,13 +17,12 @@ function CreateEvent() {
   const [categories, setCategories] = useState([]);
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
-  // Image URLs: one input per URL, starts with one empty field
   const [imageUrls, setImageUrls] = useState([""]);
-
   const navigate = useNavigate();
 
-  // Helper: unwraps either a bare array or a Spring Page object ({ content: [...] })
   const unwrapList = (data) => {
     if (Array.isArray(data)) return data;
     if (data && Array.isArray(data.content)) return data.content;
@@ -34,10 +33,7 @@ function CreateEvent() {
     const loadData = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          console.error("No token found in localStorage");
-          return;
-        }
+        if (!token) return;
 
         const headers = { Authorization: `Bearer ${token}` };
 
@@ -49,14 +45,13 @@ function CreateEvent() {
         setCategories(unwrapList(c.data));
         setVenues(unwrapList(v.data));
       } catch (error) {
-        console.error("Error loading dropdown data:", error.response?.data || error);
+        console.error("Error loading categories or venues:", error);
       }
     };
 
     loadData();
   }, []);
 
-  // ---- image URL list helpers ----
   const handleImageUrlChange = (index, value) => {
     setImageUrls((prev) => prev.map((u, i) => (i === index ? value : u)));
   };
@@ -69,10 +64,6 @@ function CreateEvent() {
     setImageUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Called by ImageDropzone once a drag-and-dropped/browsed file has been
-  // uploaded and the backend has handed back its URL. Drops the URL into
-  // the first empty slot, or appends a new one, so it flows into the same
-  // imageUrls list the URL text fields use.
   const handleImageUploaded = (url) => {
     setImageUrls((prev) => {
       const emptyIndex = prev.findIndex((u) => u.trim() === "");
@@ -84,29 +75,35 @@ function CreateEvent() {
   };
 
   const save = async () => {
-    if (!title.trim()) return alert("Title is required.");
-    if (!start || !end) return alert("Start and end date/time are required.");
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    if (!title.trim()) {
+      setErrorMsg("Title is required.");
+      return;
+    }
+    if (!start || !end) {
+      setErrorMsg("Start and end date/time are required.");
+      return;
+    }
     if (!categoryId || !venueId) {
-      alert("Please select a Category and a Venue before saving.");
+      setErrorMsg("Please select a Category and a Venue before saving.");
       return;
     }
 
-    // Filter out blank URL entries before sending
     const filteredUrls = imageUrls.map((u) => u.trim()).filter((u) => u.length > 0);
 
     const payload = {
       title,
       description,
-      price: Number(price),
-      totalSeats: Number(totalSeats),
+      price: Number(price) || 0,
+      totalSeats: Number(totalSeats) || 100,
       eventStartDatetime: start,
       eventEndDatetime: end,
       categoryId: Number(categoryId),
       venueId: Number(venueId),
       imageUrls: filteredUrls,
     };
-
-    console.log("Submitting Create Event Payload:", payload);
 
     try {
       setLoading(true);
@@ -123,16 +120,20 @@ function CreateEvent() {
         }
       );
 
-      navigate("/organizer/dashboard", {
-        state: { message: "Event created successfully." },
-      });
+      setSuccessMsg("🎉 Event created successfully! Status: PENDING (Awaiting Admin Approval). Email notifications sent!");
+
+      setTimeout(() => {
+        navigate("/organizer/events", {
+          state: { message: "Event created successfully and is awaiting Admin approval." },
+        });
+      }, 1500);
     } catch (error) {
-      console.error("Error response received during creation:", error.response?.data || error);
+      console.error("Error creating event:", error.response?.data || error);
       const serverMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
-        "Check browser console for details.";
-      alert(`Failed to create event: ${serverMessage}`);
+        "Check all required fields and try again.";
+      setErrorMsg(`Failed to create event: ${serverMessage}`);
     } finally {
       setLoading(false);
     }
@@ -142,145 +143,179 @@ function CreateEvent() {
     <>
       <Sidebar />
 
-      <div className="dashboard-main">
+      <div className="dashboard-main bg-light min-vh-100">
         <DashboardNavbar />
 
-        <div className="card p-4 shadow-sm m-4">
-          <h3 className="mb-4">Create Event</h3>
-
-          <label className="form-label fw-bold">Event Title</label>
-          <input
-            className="form-control mb-3"
-            placeholder="Enter Event Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-
-          <label className="form-label fw-bold">Description</label>
-          <textarea
-            className="form-control mb-3"
-            rows="4"
-            placeholder="Enter Event Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-
-          <label className="form-label fw-bold">Price</label>
-          <input
-            type="number"
-            className="form-control mb-3"
-            placeholder="Enter Price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-
-          <label className="form-label fw-bold">Total Seats</label>
-          <input
-            type="number"
-            className="form-control mb-3"
-            placeholder="Enter Total Seats"
-            value={totalSeats}
-            onChange={(e) => setTotalSeats(e.target.value)}
-          />
-
-          <label className="form-label fw-bold">Start Date & Time</label>
-          <input
-            type="datetime-local"
-            className="form-control mb-3"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-          />
-
-          <label className="form-label fw-bold">End Date & Time</label>
-          <input
-            type="datetime-local"
-            className="form-control mb-3"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-          />
-
-          <label className="form-label fw-bold">Category</label>
-          <select
-            className="form-select mb-3"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-          >
-            <option value="">Select Category</option>
-            {categories.map((c) => {
-              const id = c.categoryId ?? c.category_id;
-              const name = c.categoryName ?? c.category_name ?? "Unknown";
-              return (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              );
-            })}
-          </select>
-
-          <label className="form-label fw-bold">Venue</label>
-          <select
-            className="form-select mb-3"
-            value={venueId}
-            onChange={(e) => setVenueId(e.target.value)}
-          >
-            <option value="">Select Venue</option>
-            {venues.map((v) => {
-              const id = v.venueId ?? v.venue_id;
-              const name = v.venueName ?? v.venue_name ?? "Unknown";
-              return (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              );
-            })}
-          </select>
-
-          {/* ---- Image Upload (drag & drop) ---- */}
-          <label className="form-label fw-bold">Event Images</label>
-          <ImageDropzone onUploaded={handleImageUploaded} />
-
-          {/* ---- Image URLs ---- */}
-          <label className="form-label fw-bold">Or paste image URLs</label>
-          {imageUrls.map((url, index) => (
-            <div key={index} className="d-flex gap-2 mb-2 align-items-center">
-              <input
-                type="url"
-                className="form-control"
-                placeholder="https://example.com/image.jpg"
-                value={url}
-                onChange={(e) => handleImageUrlChange(index, e.target.value)}
-              />
-              {/* Show a preview thumbnail once the user types a valid-looking URL */}
-              {url.startsWith("http") && (
-                <img
-                  src={url}
-                  alt="preview"
-                  style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 4, border: "1px solid #dee2e6", flexShrink: 0 }}
-                  onError={(e) => { e.target.style.display = "none"; }}
-                />
-              )}
-              {imageUrls.length > 1 && (
-                <button
-                  type="button"
-                  className="btn btn-outline-danger btn-sm"
-                  onClick={() => removeImageUrl(index)}
-                  style={{ flexShrink: 0 }}
-                >
-                  ✕
-                </button>
-              )}
+        <div className="card p-4 shadow-sm border-0 rounded-4 m-4 bg-white">
+          <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+            <div>
+              <h3 className="fw-bold mb-1">Create New Event</h3>
+              <p className="text-muted small mb-0">
+                Created events will be marked as <strong className="text-warning">PENDING</strong> until reviewed and approved by the Admin.
+              </p>
             </div>
-          ))}
-          <button
-            type="button"
-            className="btn btn-outline-secondary btn-sm mb-4"
-            onClick={addImageUrl}
-          >
-            + Add another image URL
-          </button>
+            <span className="badge bg-warning text-dark px-3 py-2 fw-semibold">
+              Requires Admin Approval
+            </span>
+          </div>
 
-          <button className="btn btn-primary mt-2" onClick={save} disabled={loading}>
-            {loading ? "Saving..." : "Create Event"}
+          {/* Inline Feedback Messages (No Alert Popups) */}
+          {errorMsg && <div className="alert alert-danger rounded-3 mb-3">{errorMsg}</div>}
+          {successMsg && <div className="alert alert-success rounded-3 mb-3">{successMsg}</div>}
+
+          <div className="mb-3">
+            <label className="form-label fw-bold">Event Title</label>
+            <input
+              className="form-control"
+              placeholder="e.g. National Music Fest 2026"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label fw-bold">Description</label>
+            <textarea
+              className="form-control"
+              rows="3"
+              placeholder="Detailed description of the event..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="row g-3 mb-3">
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Ticket Base Price (₹)</label>
+              <input
+                type="number"
+                className="form-control"
+                placeholder="e.g. 500"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Total Capacity / Seats</label>
+              <input
+                type="number"
+                className="form-control"
+                placeholder="e.g. 200"
+                value={totalSeats}
+                onChange={(e) => setTotalSeats(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="row g-3 mb-3">
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Start Date & Time</label>
+              <input
+                type="datetime-local"
+                className="form-control"
+                value={start}
+                onChange={(e) => setStart(e.target.value)}
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-bold">End Date & Time</label>
+              <input
+                type="datetime-local"
+                className="form-control"
+                value={end}
+                onChange={(e) => setEnd(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="row g-3 mb-4">
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Category</label>
+              <select
+                className="form-select"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+              >
+                <option value="">Select Category</option>
+                {categories.map((c) => {
+                  const id = c.categoryId ?? c.category_id;
+                  const name = c.categoryName ?? c.category_name ?? "Category";
+                  return (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Venue</label>
+              <select
+                className="form-select"
+                value={venueId}
+                onChange={(e) => setVenueId(e.target.value)}
+              >
+                <option value="">Select Venue</option>
+                {venues.map((v) => {
+                  const id = v.venueId ?? v.venue_id;
+                  const name = v.venueName ?? v.venue_name ?? "Venue";
+                  return (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+
+          {/* Image Upload */}
+          <div className="mb-4">
+            <label className="form-label fw-bold">Event Banner / Images</label>
+            <ImageDropzone onUploaded={handleImageUploaded} />
+
+            <div className="mt-3">
+              <label className="form-label fw-bold small text-muted">Or paste image web URLs:</label>
+              {imageUrls.map((url, index) => (
+                <div key={index} className="d-flex gap-2 mb-2 align-items-center">
+                  <input
+                    type="url"
+                    className="form-control form-control-sm"
+                    placeholder="https://images.unsplash.com/photo-..."
+                    value={url}
+                    onChange={(e) => handleImageUrlChange(index, e.target.value)}
+                  />
+                  {url.startsWith("http") && (
+                    <img
+                      src={url}
+                      alt="preview"
+                      style={{ width: 42, height: 42, objectFit: "cover", borderRadius: 6, border: "1px solid #cbd5e1" }}
+                      onError={(e) => { e.target.style.display = "none"; }}
+                    />
+                  )}
+                  {imageUrls.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={() => removeImageUrl(index)}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm"
+                onClick={addImageUrl}
+              >
+                + Add another URL
+              </button>
+            </div>
+          </div>
+
+          <button className="btn btn-primary btn-lg fw-bold px-5 py-3 w-100" onClick={save} disabled={loading}>
+            {loading ? "Creating Event..." : "Create Event"}
           </button>
         </div>
       </div>

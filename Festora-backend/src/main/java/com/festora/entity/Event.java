@@ -50,6 +50,7 @@ public class Event {
 
 	@NotNull(message = "Status is required")
 	@Enumerated(EnumType.STRING)
+	@Column(name = "status", length = 50)
 	private Status status;
 
 	private LocalDateTime createdAt;

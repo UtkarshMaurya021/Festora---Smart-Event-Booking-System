@@ -5,8 +5,10 @@ import DashboardNavbar from "../../components/DashboardNavbar";
 import { getEventsSummary } from "../../services/eventService";
 
 const STATUS_BADGE = {
+  PENDING: "bg-warning text-dark",
+  PENDING_APPROVAL: "bg-warning text-dark",
   ACTIVE: "bg-success",
-  FULL: "bg-warning text-dark",
+  FULL: "bg-info text-dark",
   STARTED: "bg-primary",
   COMPLETED: "bg-secondary",
   INACTIVE: "bg-danger",

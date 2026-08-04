@@ -1,14 +1,6 @@
 import { useRef, useState } from "react";
 import api from "../services/api";
 
-/**
- * Drag-and-drop (or click-to-browse) image uploader.
- *
- * Uploads the file to POST /api/organizer/upload-image and, on success,
- * calls onUploaded(url) with the full URL the backend hands back. The
- * parent page is expected to push that URL into its existing imageUrls
- * list, so the rest of the save flow is untouched.
- */
 function ImageDropzone({ onUploaded }) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -30,9 +22,8 @@ function ImageDropzone({ onUploaded }) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await api.post("/organizer/upload-image", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // Do NOT set explicit Content-Type header so browser/Axios sets correct multipart boundary
+      const res = await api.post("/organizer/upload-image", formData);
 
       if (res.data?.url) {
         onUploaded(res.data.url);
@@ -40,7 +31,7 @@ function ImageDropzone({ onUploaded }) {
     } catch (err) {
       console.error("Image upload failed:", err.response?.data || err);
       setError(
-        err.response?.data?.message || "Upload failed. Please try again."
+        err.response?.data?.message || "Upload failed. Please try pasting an image URL below instead."
       );
     } finally {
       setUploading(false);
@@ -57,7 +48,6 @@ function ImageDropzone({ onUploaded }) {
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     uploadFile(file);
-    // reset so selecting the same file again still fires onChange
     e.target.value = "";
   };
 
@@ -72,12 +62,12 @@ function ImageDropzone({ onUploaded }) {
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         style={{
-          border: `2px dashed ${isDragging ? "#0d6efd" : "#ced4da"}`,
-          borderRadius: 8,
+          border: `2px dashed ${isDragging ? "#0d6efd" : "#cbd5e1"}`,
+          borderRadius: 12,
           padding: "1.5rem",
           textAlign: "center",
           cursor: "pointer",
-          backgroundColor: isDragging ? "#e7f1ff" : "#f8f9fa",
+          backgroundColor: isDragging ? "#e0f2fe" : "#f8fafc",
           transition: "background-color 0.15s ease, border-color 0.15s ease",
         }}
       >
@@ -89,9 +79,9 @@ function ImageDropzone({ onUploaded }) {
           style={{ display: "none" }}
         />
         {uploading ? (
-          <span className="text-muted">Uploading...</span>
+          <span className="text-primary fw-bold">Uploading Image...</span>
         ) : (
-          <span className="text-muted">
+          <span className="text-secondary">
             Drag & drop an image here, or <strong>click to browse</strong>
           </span>
         )}

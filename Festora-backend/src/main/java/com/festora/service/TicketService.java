@@ -24,9 +24,6 @@ import com.google.zxing.qrcode.QRCodeWriter;
 @Service
 public class TicketService {
 
-    // Folder the QR images are written to, relative to the app's working
-    // directory. WebConfig maps "/uploads/**" -> "file:uploads/", so this
-    // must stay in sync with that mapping.
     private static final String QR_FOLDER = "uploads" + File.separator + "qr";
 
     private final TicketRepository repository;
@@ -38,7 +35,6 @@ public class TicketService {
     }
 
     public List<Ticket> myTickets(String email) {
-
         User user = userRepository
                 .findByEmail(email)
                 .orElseThrow();
@@ -52,18 +48,7 @@ public class TicketService {
                 .toList();
     }
 
-    /**
-     * Generates (or returns the existing) tickets for a booking — one ticket
-     * per seat, per the ER diagram's Booking (1) -> Ticket (N) relationship.
-     *
-     * Idempotent: calling this twice for the same booking (e.g. a duplicate
-     * payment confirmation, a retried request) must NOT create duplicate
-     * rows or QR files. We look up however many tickets already exist for
-     * the booking and only mint the ones still missing, so the booking ends
-     * up with exactly `quantity` tickets no matter how many times this runs.
-     */
     public List<Ticket> generateTicket(Booking booking) throws Exception {
-
         List<Ticket> existing = repository.findAllByBooking(booking);
 
         int quantity = booking.getQuantity() != null ? booking.getQuantity() : 1;
@@ -73,22 +58,27 @@ public class TicketService {
             return existing;
         }
 
-        List<Ticket> newlyIssued = new ArrayList<>();
-        for (int seatNumber = alreadyIssued + 1; seatNumber <= quantity; seatNumber++) {
+        String[] seatsArray = null;
+        if (booking.getSeatNumbers() != null && !booking.getSeatNumbers().isBlank()) {
+            seatsArray = booking.getSeatNumbers().split(",\\s*");
+        }
 
+        List<Ticket> newlyIssued = new ArrayList<>();
+        for (int seatIndex = alreadyIssued; seatIndex < quantity; seatIndex++) {
             Ticket ticket = new Ticket();
             ticket.setBooking(booking);
             ticket.setIssueDate(LocalDateTime.now());
             ticket.setStatus(TicketStatus.VALID);
 
-            String ticketNumber = "FES-" +
-                    UUID.randomUUID()
-                            .toString()
-                            .substring(0, 8)
-                            .toUpperCase();
+            String assignedSeat = (seatsArray != null && seatIndex < seatsArray.length) 
+                ? seatsArray[seatIndex] 
+                : "Seat " + (seatIndex + 1);
+            ticket.setSeatNumber(assignedSeat);
+
+            String ticketNumber = "FES-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
             ticket.setTicketNumber(ticketNumber);
 
-            String qrPath = writeQrCode(ticketNumber, buildQrPayload(ticketNumber, booking, seatNumber, quantity));
+            String qrPath = writeQrCode(ticketNumber, buildQrPayload(ticketNumber, booking, assignedSeat, quantity));
             ticket.setQrCodePath(qrPath);
 
             newlyIssued.add(repository.save(ticket));
@@ -99,7 +89,7 @@ public class TicketService {
         return all;
     }
 
-    private String buildQrPayload(String ticketNumber, Booking booking, int seatNumber, int quantity) {
+    private String buildQrPayload(String ticketNumber, Booking booking, String seatName, int quantity) {
         String eventTitle = booking.getEvent() != null ? booking.getEvent().getTitle() : "N/A";
         String userName = booking.getUser() != null ? booking.getUser().getName() : "N/A";
         String eventStart = (booking.getEvent() != null && booking.getEvent().getEventStartDatetime() != null)
@@ -114,12 +104,11 @@ public class TicketService {
                 "\nEvent:" + eventTitle +
                 "\nVenue:" + venueName +
                 "\nWhen:" + eventStart +
-                "\nSeat:" + seatNumber + " of " + quantity +
+                "\nSeat:" + seatName +
                 "\nUser:" + userName;
     }
 
     private String writeQrCode(String ticketNumber, String data) throws Exception {
-
         QRCodeWriter writer = new QRCodeWriter();
         BitMatrix matrix = writer.encode(data, BarcodeFormat.QR_CODE, 300, 300);
 
@@ -132,9 +121,6 @@ public class TicketService {
         Path filePath = new File(folder, fileName).toPath();
 
         MatrixToImageWriter.writeToPath(matrix, "PNG", filePath);
-
-        // Stored with forward slashes so it concatenates cleanly into a URL
-        // on the frontend regardless of OS: http://host/{qrCodePath}
         return "uploads/qr/" + fileName;
     }
 }

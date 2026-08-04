@@ -1,5 +1,6 @@
 package com.festora.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,8 +13,10 @@ public class EventRequest {
 
     private String description;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime eventStartDatetime;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime eventEndDatetime;
 
     private Double price;
@@ -23,5 +26,6 @@ public class EventRequest {
     private Long categoryId;
 
     private Long venueId;
+
     private List<String> imageUrls;
 }

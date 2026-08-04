@@ -1,5 +1,6 @@
 package com.festora.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,6 +17,8 @@ public interface PaymentRepository
     Optional<Payment> findByBooking(Booking booking);
 
     Optional<Payment> findByTransactionId(String transactionId);
+
+    List<Payment> findAllByOrderByPaymentDateDesc();
 
     @Query("""
             SELECT COALESCE(SUM(p.amount),0)

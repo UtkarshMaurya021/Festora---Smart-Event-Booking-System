@@ -3,9 +3,14 @@ package com.festora.controller;
 import java.util.List;
 import org.springframework.web.bind.annotation.*;
 import com.festora.dto.AdminDashboardResponse;
+import com.festora.entity.Booking;
+import com.festora.entity.EmailLog;
 import com.festora.entity.Event;
+import com.festora.entity.Payment;
+import com.festora.entity.Status;
 import com.festora.entity.User;
 import com.festora.service.AdminService;
+import com.festora.service.EmailService;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -13,9 +18,11 @@ import com.festora.service.AdminService;
 public class AdminController {
 
     private final AdminService adminService;
+    private final EmailService emailService;
 
-    public AdminController(AdminService adminService) {
+    public AdminController(AdminService adminService, EmailService emailService) {
         this.adminService = adminService;
+        this.emailService = emailService;
     }
 
     @GetMapping("/dashboard")
@@ -33,6 +40,16 @@ public class AdminController {
         return adminService.getAllEvents();
     }
 
+    @GetMapping("/bookings")
+    public List<Booking> getBookings() {
+        return adminService.getAllBookings();
+    }
+
+    @GetMapping("/payments")
+    public List<Payment> getPayments() {
+        return adminService.getAllPayments();
+    }
+
     @GetMapping("/organizer-requests")
     public List<User> getOrganizerRequests() {
         return adminService.getPendingOrganizers();
@@ -48,6 +65,26 @@ public class AdminController {
         return adminService.rejectOrganizer(id);
     }
 
+    @GetMapping("/pending-events")
+    public List<Event> getPendingEvents() {
+        return adminService.getPendingEvents();
+    }
+
+    @PutMapping("/events/{id}/approve")
+    public Event approveEvent(@PathVariable Long id) {
+        return adminService.approveEvent(id);
+    }
+
+    @PutMapping("/events/{id}/reject")
+    public Event rejectEvent(@PathVariable Long id) {
+        return adminService.rejectEvent(id);
+    }
+
+    @PutMapping("/events/{id}/status")
+    public Event updateEventStatus(@PathVariable Long id, @RequestParam Status status) {
+        return adminService.updateEventStatus(id, status);
+    }
+
     @PutMapping("/users/{id}/block")
     public User blockUser(@PathVariable Long id) {
         return adminService.blockUser(id);
@@ -61,5 +98,10 @@ public class AdminController {
     @DeleteMapping("/events/{id}")
     public void deleteEvent(@PathVariable Long id) {
         adminService.deleteEvent(id);
+    }
+
+    @GetMapping("/email-logs")
+    public List<EmailLog> getEmailLogs() {
+        return emailService.getAllEmailLogs();
     }
 }

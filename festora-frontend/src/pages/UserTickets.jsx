@@ -5,9 +5,6 @@ import { getTickets } from "../services/Ticketservice.jS";
 
 const API_HOST = "http://localhost:8080/";
 
-// Formats an ISO datetime string into something readable, e.g.
-// "12 Aug 2026, 6:00 pm". Falls back gracefully if the value is missing
-// or not a valid date.
 function formatDateTime(dt) {
   if (!dt) return "N/A";
   const d = new Date(dt);
@@ -43,7 +40,7 @@ function UserTickets() {
     return (
       <div className="d-flex justify-content-center align-items-center vh-100">
         <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
+          <span className="visually-hidden">Loading issued tickets...</span>
         </div>
       </div>
     );
@@ -57,7 +54,6 @@ function UserTickets() {
         <DashboardNavbar />
 
         <div className="container-fluid px-4 py-4">
-          {/* Header Banner */}
           <div
             className="rounded-4 p-5 text-white shadow-lg mb-4"
             style={{
@@ -65,16 +61,15 @@ function UserTickets() {
                 "linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#3b82f6 100%)",
             }}
           >
-            <h2 className="fw-bold mb-2">Your Tickets 🎫</h2>
-
+            <h2 className="fw-bold mb-2">Your Digital Tickets 🎫</h2>
             <p className="mb-0 opacity-75">
-              Scan the QR code at the venue to check in.
+              Scan the QR code at the venue gate for fast check-in.
             </p>
           </div>
 
           <div className="card border-0 shadow rounded-4">
             <div className="card-header bg-white border-0 py-4">
-              <h4 className="fw-bold mb-0">Issued Tickets</h4>
+              <h4 className="fw-bold mb-0">Issued Digital Tickets</h4>
             </div>
 
             <div className="card-body">
@@ -86,54 +81,51 @@ function UserTickets() {
 
                     return (
                       <div className="col-md-6 col-lg-4" key={ticket.ticketId}>
-                        <div className="card border-0 shadow-sm rounded-4 h-100">
-                          <div className="card-body d-flex flex-column align-items-center text-center">
-                            <img
-                              src={API_HOST + ticket.qrCodePath}
-                              alt={ticket.ticketNumber}
-                              style={{
-                                width: 150,
-                                height: 150,
-                                objectFit: "contain",
-                              }}
-                              className="mb-3"
-                            />
+                        <div className="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                          <div className="card-body d-flex flex-column align-items-center text-center p-4">
+                            <div className="bg-light p-3 rounded-4 mb-3 border">
+                              <img
+                                src={API_HOST + ticket.qrCodePath}
+                                alt={ticket.ticketNumber}
+                                style={{
+                                  width: 160,
+                                  height: 160,
+                                  objectFit: "contain",
+                                }}
+                              />
+                            </div>
 
-                            <h5 className="fw-bold mb-1">
+                            <h5 className="fw-bold mb-1 text-dark">
                               {event?.title || "N/A"}
                             </h5>
 
-                            <p className="text-muted mb-1 small">
-                              {event?.venue?.venueName || "N/A"}
-                              {event?.venue?.address
-                                ? `, ${event.venue.address}`
-                                : ""}
+                            <p className="text-muted mb-2 small">
+                              📍 {event?.venue?.venueName || "N/A"}
+                              {event?.venue?.address ? `, ${event.venue.address}` : ""}
                             </p>
 
-                            <div className="w-100 text-start small text-muted mb-2">
-                              <div>
-                                <strong>Starts:</strong>{" "}
-                                {formatDateTime(event?.eventStartDatetime)}
+                            <div className="w-100 bg-light p-3 rounded-3 text-start small mb-3">
+                              <div className="mb-1">
+                                <strong>📅 Starts:</strong> {formatDateTime(event?.eventStartDatetime)}
                               </div>
                               <div>
-                                <strong>Ends:</strong>{" "}
-                                {formatDateTime(event?.eventEndDatetime)}
+                                <strong>🏁 Ends:</strong> {formatDateTime(event?.eventEndDatetime)}
                               </div>
                             </div>
 
-                            <span className="badge bg-primary-subtle text-primary mb-2">
-                              {ticket.ticketNumber}
-                            </span>
+                            <div className="d-flex gap-2 mb-2 flex-wrap justify-content-center">
+                              <span className="badge bg-primary fs-6 px-3 py-2">
+                                {ticket.ticketNumber}
+                              </span>
+                              <span className="badge bg-warning text-dark fs-6 px-3 py-2">
+                                Seat: {ticket.seatNumber || "General"}
+                              </span>
+                            </div>
 
-                            <div className="w-100 d-flex justify-content-between small text-muted mt-2">
-                              <span>Qty: {booking?.quantity ?? "N/A"}</span>
-
+                            <div className="w-100 d-flex justify-content-between small text-muted mt-2 border-top pt-2">
+                              <span>Total Qty: {booking?.quantity ?? 1}</span>
                               <span>
-                                {ticket.issueDate
-                                  ? new Date(
-                                      ticket.issueDate
-                                    ).toLocaleDateString()
-                                  : "N/A"}
+                                Issued: {ticket.issueDate ? new Date(ticket.issueDate).toLocaleDateString() : "N/A"}
                               </span>
                             </div>
                           </div>
@@ -145,7 +137,6 @@ function UserTickets() {
               ) : (
                 <div className="text-center py-5">
                   <h5>No Tickets Yet</h5>
-
                   <p className="text-muted">
                     Tickets appear here once a booking is paid for.
                   </p>
