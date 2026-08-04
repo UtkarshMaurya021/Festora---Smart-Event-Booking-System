@@ -37,7 +37,6 @@ private final OrganizerRepository organizerRepository;
 private final UserRepository userRepository;
 private final CategoryRepository categoryRepository;
 private final VenueRepository venueRepository;
-// Added: was imported in the original but never injected — now properly wired
 private final EventImageRepository eventImageRepository;
 
 public EventService(EventRepository eventRepository, OrganizerRepository organizerRepository,
@@ -59,7 +58,6 @@ public Event create(EventRequest request, String email) {
 
 User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-// AUTO-FIX: Automatically creates organizer record if missing or unlinked
 Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
 Organizer newOrganizer = new Organizer();
 newOrganizer.setUser(user);
@@ -95,7 +93,6 @@ event.setVenue(venue);
 
 Event saved = eventRepository.save(event);
 
-// Persist image URLs supplied by the organizer
 saveImages(saved, request.getImageUrls());
 
 return saved;
@@ -108,15 +105,12 @@ public List<Event> getMyEvents(String email) {
 
 User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-// AUTO-FIX: Fetch or automatically create organizer record if missing
 Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
 Organizer newOrganizer = new Organizer();
 newOrganizer.setUser(user);
 return organizerRepository.save(newOrganizer);
 });
 
-// Fetch all events for this organizer, regardless of status,
-// so deleted/expired/completed events remain visible and manageable.
 return eventRepository.findByOrganizer(organizer);
 }
 
@@ -135,7 +129,6 @@ public Event updateEvent(Long id, EventRequest request, String email) {
 
 User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-// AUTO-FIX: Automatically creates organizer record if missing or unlinked
 Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
 Organizer newOrganizer = new Organizer();
 newOrganizer.setUser(user);
@@ -154,9 +147,6 @@ Category category = categoryRepository.findById(request.getCategoryId())
 Venue venue = venueRepository.findById(request.getVenueId())
 .orElseThrow(() -> new RuntimeException("Venue not found"));
 
-// Work out how many seats are already booked so we can carry that
-// number forward when totalSeats changes, instead of leaving
-// availableSeats stuck at its old value.
 int bookedSeats = event.getTotalSeats() - event.getAvailableSeats();
 
 Integer newTotalSeats = request.getTotalSeats();
@@ -177,7 +167,6 @@ event.setUpdatedAt(LocalDateTime.now());
 
 Event saved = eventRepository.save(event);
 
-// Replace all existing images with the new URL list
 replaceImages(saved, request.getImageUrls());
 
 return saved;
@@ -190,7 +179,6 @@ public void deleteEvent(Long id, String email) {
 
 User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-// AUTO-FIX: Automatically creates organizer record if missing or unlinked
 Organizer organizer = organizerRepository.findByUser(user).orElseGet(() -> {
 Organizer newOrganizer = new Organizer();
 newOrganizer.setUser(user);
@@ -277,12 +265,32 @@ eventRepository.saveAll(events);
 return events;
 }
 
-// FIX: Added the missing helper method signature so the code compiles.
+// Keeps a single event's status in sync when its list is fetched
+// on-demand (mirrors the logic in the @Scheduled updateExpiredEvents()
+// job below). STARTED once eventStartDatetime has passed, COMPLETED
+// once eventEndDatetime has passed. Only auto-transitions events that
+// are still in the live ACTIVE/FULL/STARTED lifecycle so it never
+// resurrects an event an organizer/admin has explicitly deactivated.
 private void updateEventStatus(Event event) {
-if (event.getEventEndDatetime() != null && event.getEventEndDatetime().isBefore(LocalDateTime.now())) {
-event.setStatus(Status.INACTIVE);
-event.setUpdatedAt(LocalDateTime.now());
+if (event.getStatus() != Status.ACTIVE
+&& event.getStatus() != Status.FULL
+&& event.getStatus() != Status.STARTED) {
+return;
 }
+
+LocalDateTime now = LocalDateTime.now();
+
+if (event.getEventEndDatetime() != null && !now.isBefore(event.getEventEndDatetime())) {
+event.setStatus(Status.COMPLETED);
+} else if (event.getEventStartDatetime() != null && !now.isBefore(event.getEventStartDatetime())) {
+event.setStatus(Status.STARTED);
+} else if (event.getAvailableSeats() != null && event.getAvailableSeats() == 0) {
+event.setStatus(Status.FULL);
+} else {
+event.setStatus(Status.ACTIVE);
+}
+
+event.setUpdatedAt(now);
 }
 
 public List<EventSummaryResponse> getMyEventsSummary(String email) {
@@ -312,27 +320,35 @@ event.getStatus());
 }).toList();
 }
 
+// Runs every minute. Flips an event's status automatically once its
+// organizer-set start/end time arrives: STARTED once eventStartDatetime
+// has passed, COMPLETED once eventEndDatetime has passed, FULL if it
+// sells out before starting. Requires @EnableScheduling on the main
+// application class (added) to actually run.
 @Scheduled(fixedRate = 60000) // Every 1 minute
 public void updateExpiredEvents() {
 
-List<Event> events = eventRepository.findByStatus(Status.ACTIVE);
-
 LocalDateTime now = LocalDateTime.now();
+
+List<Event> events = eventRepository.findByStatusIn(
+List.of(Status.ACTIVE, Status.FULL, Status.STARTED));
 
 for (Event event : events) {
 
-if (!now.isBefore(event.getEventStartDatetime())) {
+if (event.getEventEndDatetime() != null && !now.isBefore(event.getEventEndDatetime())) {
+event.setStatus(Status.COMPLETED);
 
-event.setStatus(Status.INACTIVE);
-
-}
-
-if (event.getAvailableSeats() == 0) {
-
+} else if (event.getEventStartDatetime() != null && !now.isBefore(event.getEventStartDatetime())) {
 event.setStatus(Status.STARTED);
 
+} else if (event.getAvailableSeats() != null && event.getAvailableSeats() == 0) {
+event.setStatus(Status.FULL);
+
+} else {
+event.setStatus(Status.ACTIVE);
 }
 
+event.setUpdatedAt(now);
 }
 
 eventRepository.saveAll(events);
@@ -349,18 +365,14 @@ newOrganizer.setUser(user);
 return organizerRepository.save(newOrganizer);
 });
 
-// Dashboard should only show currently active events
-return eventRepository.findByOrganizerAndStatus(organizer, Status.ACTIVE);
+return eventRepository.findByOrganizerAndStatusIn(organizer,
+List.of(Status.ACTIVE, Status.FULL, Status.STARTED));
 }
 
 // ===========================
-// IMAGE HELPERS (new)
+// IMAGE HELPERS
 // ===========================
 
-/**
- * Saves a list of image URLs as EventImage records linked to the given event.
- * Skips null, blank, or non-http entries silently.
- */
 private void saveImages(Event event, List<String> urls) {
 if (urls == null || urls.isEmpty()) return;
 
@@ -374,6 +386,8 @@ EventImage img = new EventImage();
 img.setImageUrl(trimmed);
 img.setUploadedAt(LocalDateTime.now());
 img.setEvent(event);
+// First image in the list is the primary/cover image, per the ER diagram's is_primary flag.
+img.setIsPrimary(images.isEmpty());
 images.add(img);
 }
 
@@ -382,10 +396,6 @@ eventImageRepository.saveAll(images);
 }
 }
 
-/**
- * Replaces all existing images for the event with the new URL list.
- * Clears current images first, then saves the new ones.
- */
 private void replaceImages(Event event, List<String> urls) {
 List<EventImage> existing = event.getImages();
 if (existing != null && !existing.isEmpty()) {

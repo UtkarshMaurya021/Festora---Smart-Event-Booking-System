@@ -11,7 +11,11 @@ public class BookingResponse {
 
     private Long bookingId;
 
+    private Long eventId;
+
     private String eventTitle;
+
+    private String eventImageUrl;
 
     private Integer quantity;
 

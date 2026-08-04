@@ -806,6 +806,12 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
 }
 /* ---- QR ticket card (post-payment) ---- */
 
+.ticket-card-list{
+    display:flex;
+    flex-direction:column;
+    width:100%;
+}
+
 .ticket-card{
     width:100%;
     background:#F8FAFC;

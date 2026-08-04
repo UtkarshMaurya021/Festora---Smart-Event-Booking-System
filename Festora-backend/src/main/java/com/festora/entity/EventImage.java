@@ -25,6 +25,9 @@ public class EventImage {
     @Column(nullable = false, length = 1000)
     private String imageUrl;
 
+    @Column(nullable = false)
+    private Boolean isPrimary = false;
+
     private LocalDateTime uploadedAt;
 
     @ManyToOne

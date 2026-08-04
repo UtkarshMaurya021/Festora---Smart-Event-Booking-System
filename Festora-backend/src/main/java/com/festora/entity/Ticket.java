@@ -22,7 +22,7 @@ public class Ticket {
     private Long ticketId;
 
     @NotNull(message = "Booking is required")
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name="booking_id")
     private Booking booking;
 
@@ -35,5 +35,12 @@ public class Ticket {
 
     @NotNull(message = "Issue date is required")
     private LocalDateTime issueDate;
+
+    @NotNull(message = "Status is required")
+    @Enumerated(EnumType.STRING)
+    private TicketStatus status;
+
+    // Set when the ticket is scanned/checked in at the venue; null until then.
+    private LocalDateTime verifiedAt;
 
 }

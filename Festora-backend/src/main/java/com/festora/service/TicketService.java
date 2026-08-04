@@ -4,14 +4,15 @@ import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
 import com.festora.entity.Booking;
 import com.festora.entity.Ticket;
+import com.festora.entity.TicketStatus;
 import com.festora.entity.User;
 import com.festora.repository.TicketRepository;
 import com.festora.repository.UserRepository;
@@ -52,39 +53,53 @@ public class TicketService {
     }
 
     /**
-     * Generates (or returns the existing) ticket for a booking.
+     * Generates (or returns the existing) tickets for a booking — one ticket
+     * per seat, per the ER diagram's Booking (1) -> Ticket (N) relationship.
      *
-     * Idempotent: since Ticket has a one-to-one relationship with Booking,
-     * calling this twice for the same booking (e.g. a duplicate payment
-     * confirmation, a retried request) must NOT create a second row or a
-     * second QR file. We look the ticket up first and only mint a new one
-     * if it doesn't already exist.
+     * Idempotent: calling this twice for the same booking (e.g. a duplicate
+     * payment confirmation, a retried request) must NOT create duplicate
+     * rows or QR files. We look up however many tickets already exist for
+     * the booking and only mint the ones still missing, so the booking ends
+     * up with exactly `quantity` tickets no matter how many times this runs.
      */
-    public Ticket generateTicket(Booking booking) throws Exception {
+    public List<Ticket> generateTicket(Booking booking) throws Exception {
 
-        Optional<Ticket> existing = repository.findByBooking(booking);
-        if (existing.isPresent()) {
-            return existing.get();
+        List<Ticket> existing = repository.findAllByBooking(booking);
+
+        int quantity = booking.getQuantity() != null ? booking.getQuantity() : 1;
+        int alreadyIssued = existing.size();
+
+        if (alreadyIssued >= quantity) {
+            return existing;
         }
 
-        Ticket ticket = new Ticket();
-        ticket.setBooking(booking);
-        ticket.setIssueDate(LocalDateTime.now());
+        List<Ticket> newlyIssued = new ArrayList<>();
+        for (int seatNumber = alreadyIssued + 1; seatNumber <= quantity; seatNumber++) {
 
-        String ticketNumber = "FES-" +
-                UUID.randomUUID()
-                        .toString()
-                        .substring(0, 8)
-                        .toUpperCase();
-        ticket.setTicketNumber(ticketNumber);
+            Ticket ticket = new Ticket();
+            ticket.setBooking(booking);
+            ticket.setIssueDate(LocalDateTime.now());
+            ticket.setStatus(TicketStatus.VALID);
 
-        String qrPath = writeQrCode(ticketNumber, buildQrPayload(ticketNumber, booking));
-        ticket.setQrCodePath(qrPath);
+            String ticketNumber = "FES-" +
+                    UUID.randomUUID()
+                            .toString()
+                            .substring(0, 8)
+                            .toUpperCase();
+            ticket.setTicketNumber(ticketNumber);
 
-        return repository.save(ticket);
+            String qrPath = writeQrCode(ticketNumber, buildQrPayload(ticketNumber, booking, seatNumber, quantity));
+            ticket.setQrCodePath(qrPath);
+
+            newlyIssued.add(repository.save(ticket));
+        }
+
+        List<Ticket> all = new ArrayList<>(existing);
+        all.addAll(newlyIssued);
+        return all;
     }
 
-    private String buildQrPayload(String ticketNumber, Booking booking) {
+    private String buildQrPayload(String ticketNumber, Booking booking, int seatNumber, int quantity) {
         String eventTitle = booking.getEvent() != null ? booking.getEvent().getTitle() : "N/A";
         String userName = booking.getUser() != null ? booking.getUser().getName() : "N/A";
         String eventStart = (booking.getEvent() != null && booking.getEvent().getEventStartDatetime() != null)
@@ -99,7 +114,7 @@ public class TicketService {
                 "\nEvent:" + eventTitle +
                 "\nVenue:" + venueName +
                 "\nWhen:" + eventStart +
-                "\nQty:" + booking.getQuantity() +
+                "\nSeat:" + seatNumber + " of " + quantity +
                 "\nUser:" + userName;
     }
 

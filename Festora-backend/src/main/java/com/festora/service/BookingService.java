@@ -30,6 +30,13 @@ public class BookingService {
 	private final UserRepository userRepository;
 	private final PaymentRepository paymentRepository;
 
+	private String firstImageUrl(Event event) {
+		if (event.getImages() == null || event.getImages().isEmpty()) {
+			return null;
+		}
+		return event.getImages().get(0).getImageUrl();
+	}
+
 	public BookingService(BookingRepository bookingRepository, EventRepository eventRepository,
 			UserRepository userRepository, PaymentRepository paymentRepository) {
 
@@ -88,7 +95,11 @@ public class BookingService {
 
 				saved.getBookingId(),
 
+				saved.getEvent().getEventId(),
+
 				saved.getEvent().getTitle(),
+
+				firstImageUrl(saved.getEvent()),
 
 				saved.getQuantity(),
 
@@ -114,7 +125,11 @@ public class BookingService {
 
 						b.getBookingId(),
 
+						b.getEvent().getEventId(),
+
 						b.getEvent().getTitle(),
+
+						firstImageUrl(b.getEvent()),
 
 						b.getQuantity(),
 
@@ -141,7 +156,9 @@ public class BookingService {
 
 	    return new BookingResponse(
 	            booking.getBookingId(),
+	            booking.getEvent().getEventId(),
 	            booking.getEvent().getTitle(),
+	            firstImageUrl(booking.getEvent()),
 	            booking.getQuantity(),
 	            booking.getTotalAmount(),
 	            booking.getBookingDate(),

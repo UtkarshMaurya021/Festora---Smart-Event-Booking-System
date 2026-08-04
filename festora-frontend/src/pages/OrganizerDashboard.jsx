@@ -5,6 +5,14 @@ import { getOrganizerDashboard } from "../services/dashboardService";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getMyActiveEvents, deleteEvent } from "../services/eventService";
 
+const STATUS_BADGE_CLASS = {
+  ACTIVE: "bg-success",
+  FULL: "bg-warning text-dark",
+  STARTED: "bg-primary",
+  COMPLETED: "bg-secondary",
+  INACTIVE: "bg-danger",
+};
+
 function OrganizerDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -39,7 +47,6 @@ function OrganizerDashboard() {
   const loadDashboard = async () => {
     try {
       const res = await getOrganizerDashboard();
-      // Map the Java DTO names (totalTicketsBooked, totalRevenue) to your local state names
       setDashboard({
         totalEvents: res.data.totalEvents,
         activeEvents: res.data.activeEvents,
@@ -67,6 +74,15 @@ function OrganizerDashboard() {
     };
 
     initializeDashboardData();
+    // The backend automatically flips an event's status (e.g. ACTIVE ->
+    // STARTED) once its organizer-set start time arrives. Re-fetch
+    // periodically so that change shows up here without a manual reload.
+    const timer = setInterval(() => {
+      loadDashboard();
+      loadEvents();
+    }, 30000);
+
+    return () => clearInterval(timer);
   }, []);
 
   const removeEvent = async (event) => {
@@ -77,8 +93,6 @@ function OrganizerDashboard() {
       setDeletingId(event.eventId);
       setError("");
       await deleteEvent(event.eventId);
-      // Refresh both the event list and the summary counters so the
-      // dashboard cards stay in sync with the deletion.
       await Promise.all([loadEvents(), loadDashboard()]);
     } catch (err) {
       console.error("Error deleting event:", err);
@@ -94,7 +108,6 @@ function OrganizerDashboard() {
       <div className="dashboard-main">
         <DashboardNavbar />
 
-        {/* Vanishing Bootstrap success banner hook */}
         {success && (
           <div
             className="alert alert-success alert-dismissible fade show"
@@ -142,7 +155,7 @@ function OrganizerDashboard() {
 
         <div className="card mt-4 p-4">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4>My Events</h4>
+            <h4>My Active Events</h4>
             <Link to="/organizer/events/create" className="btn btn-primary">
               + Create Event
             </Link>
@@ -163,7 +176,7 @@ function OrganizerDashboard() {
               {events.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="text-center">
-                    No Events Created
+                    No Active Events 
                   </td>
                 </tr>
               ) : (
@@ -177,7 +190,13 @@ function OrganizerDashboard() {
                       {event.availableSeats}/ {event.totalSeats}
                     </td>
                     <td>
-                      <span className="badge bg-success">{event.status}</span>
+                      <span
+                        className={`badge ${
+                          STATUS_BADGE_CLASS[event.status] || "bg-success"
+                        }`}
+                      >
+                        {event.status}
+                      </span>
                     </td>
                     <td>
                       <Link

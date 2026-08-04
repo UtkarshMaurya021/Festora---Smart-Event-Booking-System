@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 
 import AllEvents from "./pages/organizer/AllEvents.jsx";
@@ -14,7 +14,7 @@ import UserProfile from "./pages/UserProfile.jsx";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import EventDetails from "./pages/EventDetails";
-import MyBookings from "./pages/MyBooking.jsx";
+import UserBookings from "./pages/UserBookings.jsx";
 import VenueManagement from "./pages/admin/VenueManagement.jsx";
 import CategoryManagement from "./pages/admin/CategoryManagement.jsx";
 import EventManagement from "./pages/admin/EventManagement.jsx";
@@ -146,7 +146,15 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route path="/my-bookings" element={<MyBookings />} />
+        <Route
+          path="/userbookings"
+          element={
+            <PrivateRoute role="ROLE_USER">
+              <UserBookings />
+            </PrivateRoute>
+          }
+        />
+        <Route path="/my-bookings" element={<Navigate to="/userbookings" replace />} />
         <Route path="/event/:id" element={<EventDetails />} />
         <Route
           path="/organizer/events/edit/:id"

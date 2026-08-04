@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import { getBooking } from "../services/bookingService";
@@ -48,6 +48,22 @@ function formatCardNumber(value) {
   return digits.replace(/(.{4})/g, "$1 ").trim();
 }
 
+// Formats an ISO datetime string into something readable, e.g.
+// "12 Aug 2026, 6:00 pm". Falls back gracefully if the value is missing
+// or not a valid date.
+function formatDateTime(dt) {
+  if (!dt) return null;
+  const d = new Date(dt);
+  if (isNaN(d.getTime())) return dt;
+  return d.toLocaleString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 // Reads a same/known-origin image URL into a base64 PNG data URL so it can
 // be embedded straight into the generated PDF.
 function loadImageAsDataUrl(url) {
@@ -89,8 +105,6 @@ function PaymentPage() {
   const [starting, setStarting] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState("");
-
-  const qrImgRef = useRef(null);
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -167,79 +181,96 @@ function PaymentPage() {
   };
 
   const downloadTicketPdf = async () => {
-    if (!result?.qrCodePath) return;
+    const tickets = result?.tickets?.length ? result.tickets : (result?.qrCodePath
+      ? [{ ticketNumber: result.ticketNumber, qrCodePath: result.qrCodePath }]
+      : []);
+    if (!tickets.length) return;
 
     setDownloadError("");
     setDownloading(true);
     try {
-      const qrDataUrl = await loadImageAsDataUrl(`${API_HOST}/${result.qrCodePath}`);
-
       const doc = new jsPDF({ unit: "pt", format: "a4" });
       const pageWidth = doc.internal.pageSize.getWidth();
       const marginX = 56;
 
-      // Header
-      doc.setFillColor(29, 78, 216);
-      doc.rect(0, 0, pageWidth, 90, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.text("FESTORA", marginX, 50);
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "normal");
-      doc.text("E-Ticket", marginX, 68);
+      for (let i = 0; i < tickets.length; i++) {
+        const ticket = tickets[i];
+        const qrDataUrl = await loadImageAsDataUrl(`${API_HOST}/${ticket.qrCodePath}`);
 
-      // Event details
-      let y = 140;
-      doc.setTextColor(15, 23, 42);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(20);
-      doc.text(result.eventTitle || "Event", marginX, y);
+        if (i > 0) doc.addPage();
 
-      y += 26;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(12);
-      doc.setTextColor(100, 116, 139);
-      if (result.venueName) {
-        doc.text(result.venueName, marginX, y);
-        y += 30;
-      } else {
+        // Header
+        doc.setFillColor(29, 78, 216);
+        doc.rect(0, 0, pageWidth, 90, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.text("FESTORA", marginX, 50);
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        doc.text(
+          tickets.length > 1 ? `E-Ticket ${i + 1} of ${tickets.length}` : "E-Ticket",
+          marginX,
+          68
+        );
+
+        // Event details
+        let y = 140;
+        doc.setTextColor(15, 23, 42);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(20);
+        doc.text(result.eventTitle || "Event", marginX, y);
+
+        y += 26;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+        doc.setTextColor(100, 116, 139);
+        if (result.venueName) {
+          doc.text(result.venueName, marginX, y);
+          y += 30;
+        } else {
+          y += 10;
+        }
+
+        const detailRow = (label, value) => {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          doc.setTextColor(148, 163, 184);
+          doc.text(label.toUpperCase(), marginX, y);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(13);
+          doc.setTextColor(15, 23, 42);
+          doc.text(String(value), marginX, y + 16);
+          y += 46;
+        };
+
+        detailRow("Ticket Number", ticket.ticketNumber);
+        detailRow("Booking ID", `#${result.bookingId}`);
+        if (tickets.length > 1) detailRow("Seat", `${i + 1} of ${tickets.length}`);
+        const startText = formatDateTime(result.eventStartDatetime);
+        const endText = formatDateTime(result.eventEndDatetime);
+        if (startText) detailRow("Event Starts", startText);
+        if (endText) detailRow("Event Ends", endText);
+
+        // QR code, centered
+        const qrSize = 180;
+        const qrX = (pageWidth - qrSize) / 2;
         y += 10;
-      }
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(qrX - 16, y - 16, qrSize + 32, qrSize + 32, 8, 8);
+        doc.addImage(qrDataUrl, "PNG", qrX, y, qrSize, qrSize);
 
-      const detailRow = (label, value) => {
+        y += qrSize + 40;
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(148, 163, 184);
-        doc.text(label.toUpperCase(), marginX, y);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(13);
-        doc.setTextColor(15, 23, 42);
-        doc.text(String(value), marginX, y + 16);
-        y += 46;
-      };
+        doc.text("Present this QR code at the venue entrance for scanning.", pageWidth / 2, y, {
+          align: "center",
+        });
+      }
 
-      detailRow("Ticket Number", result.ticketNumber);
-      detailRow("Booking ID", `#${result.bookingId}`);
-      detailRow("Quantity", result.quantity);
-
-      // QR code, centered
-      const qrSize = 180;
-      const qrX = (pageWidth - qrSize) / 2;
-      y += 10;
-      doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(qrX - 16, y - 16, qrSize + 32, qrSize + 32, 8, 8);
-      doc.addImage(qrDataUrl, "PNG", qrX, y, qrSize, qrSize);
-
-      y += qrSize + 40;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(148, 163, 184);
-      doc.text("Present this QR code at the venue entrance for scanning.", pageWidth / 2, y, {
-        align: "center",
-      });
-
-      doc.save(`${result.ticketNumber || "festora-ticket"}.pdf`);
+      const fileBase = tickets.length > 1 ? `festora-tickets-booking-${result.bookingId}` : (tickets[0].ticketNumber || "festora-ticket");
+      doc.save(`${fileBase}.pdf`);
     } catch (err) {
       console.error("Failed to generate ticket PDF:", err);
       setDownloadError("Couldn't generate the PDF. Please try again.");
@@ -448,43 +479,69 @@ function PaymentPage() {
           </div>
         )}
 
-        {/* ---------------- SUCCESS: QR ticket + PDF download ---------------- */}
+        {/* ---------------- SUCCESS: QR ticket(s) + PDF download ---------------- */}
         {step === "success" && result && (
           <div className="payment-status-screen">
             <FiCheckCircle className="payment-status-icon payment-status-icon-success" />
             <h2 className="payment-status-title">Payment successful</h2>
-            <p className="payment-status-text">Your ticket is ready — scan it at the venue.</p>
+            <p className="payment-status-text">
+              {result.tickets?.length > 1
+                ? `Your ${result.tickets.length} tickets are ready — scan each one at the venue.`
+                : "Your ticket is ready — scan it at the venue."}
+            </p>
 
-            {result.qrCodePath && (
-              <div className="ticket-card">
-                <div className="ticket-card-header">
-                  <span className="ticket-card-brand">Festora E-Ticket</span>
-                  <span className="ticket-card-number">{result.ticketNumber}</span>
+            {(() => {
+              const tickets = result.tickets?.length
+                ? result.tickets
+                : (result.qrCodePath
+                    ? [{ ticketNumber: result.ticketNumber, qrCodePath: result.qrCodePath }]
+                    : []);
+
+              if (!tickets.length) return null;
+
+              return (
+                <div className="ticket-card-list">
+                  {tickets.map((ticket, idx) => (
+                    <div className="ticket-card" key={ticket.ticketNumber || idx}>
+                      <div className="ticket-card-header">
+                        <span className="ticket-card-brand">Festora E-Ticket</span>
+                        <span className="ticket-card-number">{ticket.ticketNumber}</span>
+                      </div>
+
+                      <p className="ticket-card-event">{result.eventTitle}</p>
+                      {result.venueName && <p className="ticket-card-venue">{result.venueName}</p>}
+                      {(result.eventStartDatetime || result.eventEndDatetime) && (
+                        <p className="ticket-card-venue">
+                          {formatDateTime(result.eventStartDatetime) || "N/A"}
+                          {" – "}
+                          {formatDateTime(result.eventEndDatetime) || "N/A"}
+                        </p>
+                      )}
+
+                      <div className="ticket-card-qr-wrap">
+                        <img
+                          src={`${API_HOST}/${ticket.qrCodePath}`}
+                          alt={`QR code for ticket ${ticket.ticketNumber}`}
+                        />
+                      </div>
+
+                      <div className="ticket-card-details">
+                        <div className="ticket-card-detail">
+                          <span>Booking ID</span>
+                          <strong>#{result.bookingId}</strong>
+                        </div>
+                        <div className="ticket-card-detail">
+                          <span>{tickets.length > 1 ? "Seat" : "Quantity"}</span>
+                          <strong>
+                            {tickets.length > 1 ? `${idx + 1} of ${tickets.length}` : result.quantity}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-
-                <p className="ticket-card-event">{result.eventTitle}</p>
-                {result.venueName && <p className="ticket-card-venue">{result.venueName}</p>}
-
-                <div className="ticket-card-qr-wrap">
-                  <img
-                    ref={qrImgRef}
-                    src={`${API_HOST}/${result.qrCodePath}`}
-                    alt={`QR code for ticket ${result.ticketNumber}`}
-                  />
-                </div>
-
-                <div className="ticket-card-details">
-                  <div className="ticket-card-detail">
-                    <span>Booking ID</span>
-                    <strong>#{result.bookingId}</strong>
-                  </div>
-                  <div className="ticket-card-detail">
-                    <span>Quantity</span>
-                    <strong>{result.quantity}</strong>
-                  </div>
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {downloadError && <div className="payment-error-banner">{downloadError}</div>}
 
@@ -492,14 +549,18 @@ function PaymentPage() {
               <button
                 className="payment-pay-btn"
                 onClick={downloadTicketPdf}
-                disabled={downloading || !result.qrCodePath}
+                disabled={downloading || !(result.tickets?.length || result.qrCodePath)}
               >
                 <FiDownload style={{ marginRight: 8, verticalAlign: "middle" }} />
-                {downloading ? "Preparing PDF…" : "Download ticket as PDF"}
+                {downloading
+                  ? "Preparing PDF…"
+                  : result.tickets?.length > 1
+                  ? "Download all tickets as PDF"
+                  : "Download ticket as PDF"}
               </button>
               <button
                 className="payment-secondary-btn"
-                onClick={() => navigate("/my-bookings?status=success")}
+                onClick={() => navigate("/userbookings?status=success")}
               >
                 View my bookings
               </button>

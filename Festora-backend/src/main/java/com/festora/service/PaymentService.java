@@ -1,6 +1,7 @@
 package com.festora.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Random;
 
 import org.springframework.stereotype.Service;
@@ -98,10 +99,10 @@ public class PaymentService {
 
         if (payment.getStatus() == PaymentStatus.SUCCESS) {
             // Already confirmed earlier (e.g. duplicate click). generateTicket()
-            // is idempotent, so this just fetches the ticket that was already
-            // issued instead of silently returning a null ticket number.
-            Ticket existingTicket = ticketService.generateTicket(booking);
-            return successResult(booking, existingTicket, "Payment already completed");
+            // is idempotent, so this just fetches the tickets that were already
+            // issued instead of silently returning an empty ticket list.
+            List<Ticket> existingTickets = ticketService.generateTicket(booking);
+            return successResult(booking, existingTickets, "Payment already completed");
         }
 
         boolean declined = isDeclined(request);
@@ -112,23 +113,26 @@ public class PaymentService {
         if (declined) {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
-            return new PaymentResult("FAILED", declineReason(request), null, null, null, null, null, null);
+            return new PaymentResult("FAILED", declineReason(request), null, null, null, null, null, null, null);
         }
 
         payment.setStatus(PaymentStatus.SUCCESS);
         paymentRepository.save(payment);
 
-        Ticket ticket = ticketService.generateTicket(booking);
+        List<Ticket> tickets = ticketService.generateTicket(booking);
 
-        return successResult(booking, ticket, "Payment successful");
+        return successResult(booking, tickets, "Payment successful");
     }
 
-    private PaymentResult successResult(Booking booking, Ticket ticket, String message) {
+    private PaymentResult successResult(Booking booking, List<Ticket> tickets, String message) {
         PaymentResult result = new PaymentResult();
         result.setStatus("SUCCESS");
         result.setMessage(message);
-        result.setTicketNumber(ticket.getTicketNumber());
-        result.setQrCodePath(ticket.getQrCodePath());
+
+        Ticket firstTicket = tickets.isEmpty() ? null : tickets.get(0);
+        result.setTicketNumber(firstTicket != null ? firstTicket.getTicketNumber() : null);
+        result.setQrCodePath(firstTicket != null ? firstTicket.getQrCodePath() : null);
+
         result.setBookingId(booking.getBookingId());
         result.setEventTitle(booking.getEvent() != null ? booking.getEvent().getTitle() : null);
         result.setVenueName(
@@ -137,6 +141,11 @@ public class PaymentService {
                         : null
         );
         result.setQuantity(booking.getQuantity());
+        result.setTickets(
+                tickets.stream()
+                        .map(t -> new PaymentResult.TicketSummary(t.getTicketNumber(), t.getQrCodePath()))
+                        .toList()
+        );
         return result;
     }
 

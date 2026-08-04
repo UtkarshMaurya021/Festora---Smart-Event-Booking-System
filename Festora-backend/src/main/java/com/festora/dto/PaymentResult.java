@@ -1,5 +1,7 @@
 package com.festora.dto;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +15,8 @@ public class PaymentResult {
 
     private String message;
 
+    // Kept for backward compatibility with the existing single-QR success
+    // screen: mirrors the first ticket in `tickets` below.
     private String ticketNumber; // populated only on SUCCESS
 
     // The rest are populated only on SUCCESS, so the frontend can render
@@ -26,5 +30,18 @@ public class PaymentResult {
     private String venueName;
 
     private Integer quantity;
+
+    // One entry per seat booked (booking.quantity), per the ER diagram's
+    // Booking (1) -> Ticket (N) relationship. The full set is always
+    // available afterwards via GET /api/tickets/my.
+    private List<TicketSummary> tickets;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TicketSummary {
+        private String ticketNumber;
+        private String qrCodePath;
+    }
 
 }

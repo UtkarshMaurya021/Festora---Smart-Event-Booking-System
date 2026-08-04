@@ -5,6 +5,22 @@ import { getTickets } from "../services/Ticketservice.jS";
 
 const API_HOST = "http://localhost:8080/";
 
+// Formats an ISO datetime string into something readable, e.g.
+// "12 Aug 2026, 6:00 pm". Falls back gracefully if the value is missing
+// or not a valid date.
+function formatDateTime(dt) {
+  if (!dt) return "N/A";
+  const d = new Date(dt);
+  if (isNaN(d.getTime())) return dt;
+  return d.toLocaleString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 function UserTickets() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,9 +103,23 @@ function UserTickets() {
                               {event?.title || "N/A"}
                             </h5>
 
-                            <p className="text-muted mb-2 small">
+                            <p className="text-muted mb-1 small">
                               {event?.venue?.venueName || "N/A"}
+                              {event?.venue?.address
+                                ? `, ${event.venue.address}`
+                                : ""}
                             </p>
+
+                            <div className="w-100 text-start small text-muted mb-2">
+                              <div>
+                                <strong>Starts:</strong>{" "}
+                                {formatDateTime(event?.eventStartDatetime)}
+                              </div>
+                              <div>
+                                <strong>Ends:</strong>{" "}
+                                {formatDateTime(event?.eventEndDatetime)}
+                              </div>
+                            </div>
 
                             <span className="badge bg-primary-subtle text-primary mb-2">
                               {ticket.ticketNumber}
