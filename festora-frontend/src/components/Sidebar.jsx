@@ -13,14 +13,14 @@ import {
 import { MdConfirmationNumber } from "react-icons/md";
 
 import "../pages/styles/sidebar.css";
+import { logout } from "../services/authService";
 
 function Sidebar() {
   const role = localStorage.getItem("role");
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
+    logout().finally(() => navigate("/login"));
   };
 
   return (

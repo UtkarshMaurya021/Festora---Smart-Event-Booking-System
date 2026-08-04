@@ -20,11 +20,16 @@ import CategoryManagement from "./pages/admin/CategoryManagement.jsx";
 import EventManagement from "./pages/admin/EventManagement.jsx";
 import UserManagement from "./pages/admin/UserManagement.jsx";
 import OrganizerManagement from "./pages/admin/OrganizerManagement.jsx";
-import Payment from "./pages/PaymentPage.jsx"
+import Payment from "./pages/PaymentPage.jsx";
+import About from "./pages/About";
+import PublicEvents from "./pages/PublicEvents";
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/about" element={<About />} />
+
+        <Route path="/events" element={<PublicEvents />} />
         <Route path="/" element={<LandingPage />} />
 
         <Route path="/login" element={<Login />} />
@@ -154,7 +159,10 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route path="/my-bookings" element={<Navigate to="/userbookings" replace />} />
+        <Route
+          path="/my-bookings"
+          element={<Navigate to="/userbookings" replace />}
+        />
         <Route path="/event/:id" element={<EventDetails />} />
         <Route
           path="/organizer/events/edit/:id"
@@ -170,4 +178,3 @@ function App() {
 }
 
 export default App;
- 

@@ -15,6 +15,10 @@ public class JwtUtil {
 
     private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
 
+    // Access token validity: 15 minutes. Short-lived on purpose now that a
+    // refresh token exists to silently obtain a new one.
+    private final long ACCESS_TOKEN_VALIDITY_MS = 15 * 60 * 1000;
+
     public String generateToken(String email){
 
         return Jwts.builder()
@@ -23,7 +27,7 @@ public class JwtUtil {
 
                 .issuedAt(new Date())
 
-                .expiration(new Date(System.currentTimeMillis()+86400000))
+                .expiration(new Date(System.currentTimeMillis()+ACCESS_TOKEN_VALIDITY_MS))
 
                 .signWith(key)
 

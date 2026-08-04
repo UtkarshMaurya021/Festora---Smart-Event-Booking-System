@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { MdConfirmationNumber } from "react-icons/md";
 
 import "../pages/styles/Navbar.css";
@@ -26,21 +26,23 @@ function Navbar() {
           <ul className="navbar-nav ms-auto align-items-lg-center">
 
             <li className="nav-item">
-              <Link className="nav-link festora-link" to="/">
+              <NavLink className="nav-link festora-link" to="/">
                 Home
-              </Link>
+              </NavLink>
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link festora-link" to="#">
+              {/* Linked dynamically to PublicEvents page */}
+              <NavLink className="nav-link festora-link" to="/events">
                 Events
-              </Link>
+              </NavLink>
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link festora-link" to="#">
+              {/* Linked dynamically to About page */}
+              <NavLink className="nav-link festora-link" to="/about">
                 About
-              </Link>
+              </NavLink>
             </li>
 
             <li className="nav-item ms-lg-3">

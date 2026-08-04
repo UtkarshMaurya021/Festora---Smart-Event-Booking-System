@@ -1,12 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
+import { logout as logoutRequest } from "../services/authService";
 
 export default function AdminNavbar() {
   const navigate = useNavigate();
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    navigate("/login");
+    logoutRequest().finally(() => navigate("/login"));
   };
 
   return (

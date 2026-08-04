@@ -1,0 +1,95 @@
+.public-events-header {
+  background: linear-gradient(135deg, #0f172a, #2563eb);
+  color: #fff;
+  padding: 80px 0;
+}
+
+.public-events-header h1 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.public-events-header p {
+  font-size: 18px;
+  opacity: 0.9;
+  margin-bottom: 25px;
+}
+
+.public-events-header .form-control,
+.public-events-header .form-select {
+  height: 50px;
+  border-radius: 10px;
+  border: none;
+  box-shadow: none;
+}
+
+.event-card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.event-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.event-card h4 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.event-card p {
+  margin-bottom: 8px;
+}
+
+.event-info {
+  margin-top: 15px;
+  margin-bottom: 20px;
+}
+
+.event-info p {
+  font-size: 15px;
+  color: #555;
+}
+
+.event-info strong {
+  color: #111827;
+}
+
+.event-card .btn {
+  border-radius: 8px;
+  padding: 10px;
+  font-weight: 600;
+}
+
+.event-card img {
+  transition: transform .4s;
+}
+
+.event-card:hover img {
+  transform: scale(1.05);
+}
+
+@media (max-width:768px) {
+
+  .public-events-header {
+    padding: 60px 0;
+  }
+
+  .public-events-header h1 {
+    font-size: 34px;
+  }
+
+  .public-events-header p {
+    font-size: 16px;
+  }
+
+  .event-card {
+    margin-bottom: 20px;
+  }
+}

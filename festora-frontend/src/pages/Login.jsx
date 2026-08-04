@@ -24,8 +24,9 @@ function Login() {
         password,
       });
 
-      // Save token, role, and name in localStorage
+      // Save token, refreshToken, role, and name in localStorage
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("name", res.data.name);
 
