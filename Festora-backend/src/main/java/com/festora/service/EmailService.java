@@ -2,12 +2,13 @@ package com.festora.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Properties;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.festora.entity.Booking;
@@ -21,7 +22,7 @@ import jakarta.mail.internet.MimeMessage;
 
 /**
  * Real-Time Email Notification Service
- * Dispatches styled HTML email notifications matching the Festora UI template.
+ * Dispatches HTML emails instantly in the main thread with dual-port fallback (Port 587 -> Port 465 SSL).
  */
 @Service
 public class EmailService {
@@ -32,15 +33,36 @@ public class EmailService {
     @Value("${spring.mail.username:kalashsatypal4@gmail.com}")
     private String senderEmail;
 
+    @Value("${spring.mail.password:cabzmqfsejgyaazr}")
+    private String senderPassword;
+
     private final EmailLogRepository emailLogRepository;
 
     public EmailService(EmailLogRepository emailLogRepository) {
         this.emailLogRepository = emailLogRepository;
     }
 
-    /**
-     * Builds HTML template matching Festora's purple header branding.
-     */
+    private JavaMailSender createSslMailSender() {
+        JavaMailSenderImpl sslSender = new JavaMailSenderImpl();
+        sslSender.setHost("smtp.gmail.com");
+        sslSender.setPort(465);
+        sslSender.setUsername(senderEmail.trim());
+        sslSender.setPassword(senderPassword.replaceAll("\\s+", ""));
+
+        Properties props = sslSender.getJavaMailProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.ssl.enable", "true");
+        props.put("mail.smtp.socketFactory.port", "465");
+        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        props.put("mail.smtp.ssl.trust", "*");
+        props.put("mail.smtp.connectiontimeout", "8000");
+        props.put("mail.smtp.timeout", "8000");
+        props.put("mail.smtp.writetimeout", "8000");
+
+        return sslSender;
+    }
+
     private String buildHtmlWrapper(String contentHtml) {
         return String.format(
             "<!DOCTYPE html>" +
@@ -50,7 +72,7 @@ public class EmailService {
             "<style>" +
             "  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 30px 15px; color: #1e293b; }" +
             "  .card { max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0; }" +
-            "  .header { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 36px 20px; text-align: center; color: #ffffff; }" +
+            "  .header { background: linear-gradient(135deg, #6366f1 0%%, #4f46e5 100%%); padding: 36px 20px; text-align: center; color: #ffffff; }" +
             "  .header h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }" +
             "  .header p { margin: 6px 0 0 0; font-size: 14px; opacity: 0.9; font-weight: 500; }" +
             "  .content { padding: 36px 32px; font-size: 15px; line-height: 1.6; color: #334155; }" +
@@ -85,31 +107,45 @@ public class EmailService {
     }
 
     /**
-     * Sends HTML email in real-time and logs the entry into the database.
+     * Dispatches HTML email synchronously in real-time.
      */
-    @Async
     public void sendAndLogHtml(String recipient, String subject, String contentHtml, String plainBody, String notificationType) {
         String status = "SIMULATED";
 
         try {
-            if (mailSender != null && senderEmail != null && !senderEmail.contains("your-email")) {
-                MimeMessage message = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-                helper.setFrom(senderEmail);
-                helper.setTo(recipient);
-                helper.setSubject(subject);
+            if (recipient != null && !recipient.isBlank()) {
+                String targetRecipient = recipient.trim();
+                System.out.println("📬 [REAL-TIME EMAIL DISPATCH] Target: " + targetRecipient + " | Type: " + notificationType);
 
-                String fullHtml = buildHtmlWrapper(contentHtml);
-                helper.setText(fullHtml, true);
+                try {
+                    JavaMailSender currentSender = mailSender != null ? mailSender : createSslMailSender();
+                    MimeMessage message = currentSender.createMimeMessage();
+                    MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                    helper.setFrom(senderEmail.trim());
+                    helper.setTo(targetRecipient);
+                    helper.setSubject(subject);
+                    helper.setText(buildHtmlWrapper(contentHtml), true);
 
-                mailSender.send(message);
-                status = "SENT";
-                System.out.println("✅ REAL HTML EMAIL SENT TO: " + recipient);
-            } else {
-                System.out.println("ℹ️ REAL-TIME EMAIL LOGGED FOR: " + recipient + " [Type: " + notificationType + "]");
+                    currentSender.send(message);
+                    status = "SENT";
+                    System.out.println("✅ [REAL-TIME EMAIL DELIVERED] Successfully sent to: " + targetRecipient);
+                } catch (Exception primaryEx) {
+                    System.err.println("⚠️ Port 587 primary dispatch exception: " + primaryEx.getMessage() + ". Retrying via SSL Port 465...");
+                    JavaMailSender sslSender = createSslMailSender();
+                    MimeMessage sslMessage = sslSender.createMimeMessage();
+                    MimeMessageHelper sslHelper = new MimeMessageHelper(sslMessage, true, "UTF-8");
+                    sslHelper.setFrom(senderEmail.trim());
+                    sslHelper.setTo(targetRecipient);
+                    sslHelper.setSubject(subject);
+                    sslHelper.setText(buildHtmlWrapper(contentHtml), true);
+
+                    sslSender.send(sslMessage);
+                    status = "SENT";
+                    System.out.println("✅ [REAL-TIME EMAIL DELIVERED VIA PORT 465] Successfully sent to: " + targetRecipient);
+                }
             }
-        } catch (Exception e) {
-            System.err.println("❌ Email dispatch error: " + e.getMessage());
+        } catch (Exception ex) {
+            System.err.println("❌ Real-time email dispatch exception: " + ex.getMessage());
             status = "FAILED";
         }
 
@@ -127,7 +163,6 @@ public class EmailService {
         }
     }
 
-    // 1. Organizer Account Approved Email
     public void sendOrganizerApprovedEmail(User user) {
         String subject = "Welcome to Festora, " + user.getName() + " 🎉";
         String htmlContent = String.format(
@@ -141,7 +176,6 @@ public class EmailService {
         sendAndLogHtml(user.getEmail(), subject, htmlContent, "Organizer Account Approved: " + user.getEmail(), "ORGANIZER_APPROVED");
     }
 
-    // 2. New Event Creation Submitted to Organizer
     public void sendEventSubmittedToOrganizerEmail(User organizerUser, Event event) {
         String subject = "Event Creation Submitted - " + event.getTitle();
         String htmlContent = String.format(
@@ -165,7 +199,6 @@ public class EmailService {
         sendAndLogHtml(organizerUser.getEmail(), subject, htmlContent, "Event Submitted: " + event.getTitle(), "EVENT_SUBMITTED_SUCCESS");
     }
 
-    // 3. New Event Alert to Admin
     public void sendNewEventSubmittedToAdminEmail(User adminUser, Event event, User organizerUser) {
         String subject = "New Event Request - " + event.getTitle();
         String htmlContent = String.format(
@@ -180,7 +213,7 @@ public class EmailService {
             "<div class='btn-container'>" +
             "  <a href='http://localhost:5173/admin/dashboard' class='btn'>Review in Admin Dashboard</a>" +
             "</div>",
-            organizerUser.getName(),
+            adminUser.getName(),
             organizerUser.getEmail(),
             event.getTitle(),
             organizerUser.getName(),
@@ -190,7 +223,6 @@ public class EmailService {
         sendAndLogHtml(adminUser.getEmail(), subject, htmlContent, "Admin Alert: " + event.getTitle(), "ADMIN_NEW_EVENT_ALERT");
     }
 
-    // 4. Event Approved (Success) -> Notify Organizer
     public void sendEventApprovedEmail(User organizerUser, Event event) {
         String subject = "Your Event is LIVE! - " + event.getTitle();
         String htmlContent = String.format(
@@ -215,7 +247,6 @@ public class EmailService {
         sendAndLogHtml(organizerUser.getEmail(), subject, htmlContent, "Event Approved: " + event.getTitle(), "EVENT_APPROVED_SUCCESS");
     }
 
-    // 5. Event Rejected Notification -> Notify Organizer
     public void sendEventRejectedEmail(User organizerUser, Event event) {
         String subject = "Update on Event Request - " + event.getTitle();
         String htmlContent = String.format(
@@ -228,7 +259,6 @@ public class EmailService {
         sendAndLogHtml(organizerUser.getEmail(), subject, htmlContent, "Event Rejected: " + event.getTitle(), "EVENT_REJECTED_FAILURE");
     }
 
-    // 6. Ticket Booked Confirmation (Real-Time Booking Email)
     public void sendTicketBookedEmail(User user, Booking booking, List<Ticket> tickets) {
         StringBuilder ticketRows = new StringBuilder();
         for (Ticket t : tickets) {
@@ -268,7 +298,6 @@ public class EmailService {
         sendAndLogHtml(user.getEmail(), subject, htmlContent, "Booking Confirmed: #" + booking.getBookingId(), "TICKET_BOOKED");
     }
 
-    // 7. Event Cancelled / Deleted Notification
     public void sendEventCancelledEmail(User user, Event event) {
         String subject = "Event Cancelled Notice - " + event.getTitle();
         String htmlContent = String.format(
@@ -282,7 +311,6 @@ public class EmailService {
         sendAndLogHtml(user.getEmail(), subject, htmlContent, "Event Cancelled: " + event.getTitle(), "EVENT_DELETED_NOTIFICATION");
     }
 
-    // 8. Event Started Notification
     public void sendEventStartedEmail(User user, Event event) {
         String subject = "LIVE NOW: " + event.getTitle() + " has started!";
         String htmlContent = String.format(
@@ -299,7 +327,6 @@ public class EmailService {
         sendAndLogHtml(user.getEmail(), subject, htmlContent, "Event Started: " + event.getTitle(), "EVENT_STARTED");
     }
 
-    // 9. Event Completed Notification
     public void sendEventCompletedEmail(User user, Event event) {
         String subject = "Event Completed - Thank you for attending " + event.getTitle();
         String htmlContent = String.format(
@@ -312,7 +339,6 @@ public class EmailService {
         sendAndLogHtml(user.getEmail(), subject, htmlContent, "Event Completed: " + event.getTitle(), "EVENT_COMPLETED");
     }
 
-    // 10. Forgot Password OTP Email
     public void sendForgotPasswordEmail(User user, String resetToken) {
         String subject = "Festora Account - Password Reset Security Code";
         String htmlContent = String.format(

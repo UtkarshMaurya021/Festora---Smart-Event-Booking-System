@@ -32,6 +32,10 @@ public class UserService {
     }
 
     public User register(RegisterRequest request) {
+        if (request.getPassword() == null || request.getPassword().length() < 8) {
+            throw new RuntimeException("Registration password must contain at least 8 characters");
+        }
+
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
@@ -41,7 +45,7 @@ public class UserService {
         Role role = request.getRole() != null ? request.getRole() : Role.ROLE_USER;
         user.setRole(role);
 
-        // Organizers need admin approval before they can log in and create events
+        // Organizers need admin approval before they can log in
         user.setStatus(role == Role.ROLE_ORGANIZER ? Status.PENDING : Status.ACTIVE);
         user.setCreatedAt(LocalDateTime.now());
 
@@ -72,6 +76,10 @@ public class UserService {
 
     @Transactional
     public void resetPassword(String email, String token, String newPassword) {
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new RuntimeException("New password must contain at least 8 characters");
+        }
+
         User user = repo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User with email '" + email + "' not found."));
 

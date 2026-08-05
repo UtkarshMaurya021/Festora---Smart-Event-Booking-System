@@ -7,6 +7,10 @@ import Login from "./pages/Login";
 import Signup from "./pages/signup";
 import CreateEvent from "./pages/organizer/CreateEvent";
 import EditEvent from "./pages/organizer/EditEvent.jsx";
+import OrganizerBookings from "./pages/organizer/OrganizerBookings.jsx";
+import OrganizerVenues from "./pages/organizer/OrganizerVenues.jsx";
+import OrganizerProfile from "./pages/organizer/OrganizerProfile.jsx";
+import VerifyTicket from "./pages/VerifyTicket.jsx";
 import UserDashboard from "./pages/UserDashboard";
 import UserEvents from "./pages/UserEvents.jsx";
 import UserTickets from "./pages/UserTickets.jsx";
@@ -20,9 +24,12 @@ import CategoryManagement from "./pages/admin/CategoryManagement.jsx";
 import EventManagement from "./pages/admin/EventManagement.jsx";
 import UserManagement from "./pages/admin/UserManagement.jsx";
 import OrganizerManagement from "./pages/admin/OrganizerManagement.jsx";
+import BookingManagement from "./pages/admin/BookingManagement.jsx";
+import PaymentManagement from "./pages/admin/PaymentManagement.jsx";
 import Payment from "./pages/PaymentPage.jsx";
 import About from "./pages/About";
 import PublicEvents from "./pages/PublicEvents";
+
 function App() {
   return (
     <BrowserRouter>
@@ -50,6 +57,46 @@ function App() {
           element={
             <PrivateRoute role="ROLE_ORGANIZER">
               <AllEvents />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/organizer/verify-ticket"
+          element={
+            <PrivateRoute role="ROLE_ORGANIZER">
+              <VerifyTicket />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/organizer/bookings"
+          element={
+            <PrivateRoute role="ROLE_ORGANIZER">
+              <OrganizerBookings />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/organizer/venues"
+          element={
+            <PrivateRoute role="ROLE_ORGANIZER">
+              <OrganizerVenues />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/organizer/profile"
+          element={
+            <PrivateRoute role="ROLE_ORGANIZER">
+              <OrganizerProfile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/verify-ticket"
+          element={
+            <PrivateRoute role="ROLE_ADMIN">
+              <VerifyTicket />
             </PrivateRoute>
           }
         />
@@ -91,6 +138,22 @@ function App() {
           element={
             <PrivateRoute role="ROLE_ADMIN">
               <OrganizerManagement />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/bookings"
+          element={
+            <PrivateRoute role="ROLE_ADMIN">
+              <BookingManagement />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/payments"
+          element={
+            <PrivateRoute role="ROLE_ADMIN">
+              <PaymentManagement />
             </PrivateRoute>
           }
         />

@@ -15,12 +15,8 @@ public class PaymentResult {
 
     private String message;
 
-    // Kept for backward compatibility with the existing single-QR success
-    // screen: mirrors the first ticket in `tickets` below.
-    private String ticketNumber; // populated only on SUCCESS
+    private String ticketNumber;
 
-    // The rest are populated only on SUCCESS, so the frontend can render
-    // the QR ticket straight after payment without a second round trip.
     private String qrCodePath;
 
     private Long bookingId;
@@ -29,11 +25,18 @@ public class PaymentResult {
 
     private String venueName;
 
+    private String venueAddress;
+
+    private String eventStartDatetime;
+
+    private String eventEndDatetime;
+
+    private String seatNumbers;
+
+    private Double totalAmount;
+
     private Integer quantity;
 
-    // One entry per seat booked (booking.quantity), per the ER diagram's
-    // Booking (1) -> Ticket (N) relationship. The full set is always
-    // available afterwards via GET /api/tickets/my.
     private List<TicketSummary> tickets;
 
     @Data

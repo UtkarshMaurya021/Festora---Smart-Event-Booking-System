@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.festora.dto.BookingRequest;
 import com.festora.dto.BookingResponse;
+import com.festora.dto.TicketVerificationResponse;
 import com.festora.entity.Booking;
 import com.festora.service.BookingService;
 
@@ -17,50 +18,44 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    public BookingController(BookingService bookingService){
-
-        this.bookingService=bookingService;
-
+    public BookingController(BookingService bookingService) {
+        this.bookingService = bookingService;
     }
+
+    @GetMapping("/verify/{id}")
+    public TicketVerificationResponse verifyTicket(@PathVariable Long id) {
+        return bookingService.verifyTicket(id);
+    }
+
     @GetMapping("/{id}")
     public BookingResponse getBooking(
             @PathVariable Long id,
-            Authentication authentication){
+            Authentication authentication) {
         return bookingService.getBooking(
                 id,
-                authentication.getName()
-        );
+                authentication.getName());
     }
+
     @PostMapping
-
     public BookingResponse book(
-
             @RequestBody BookingRequest request,
-
-            Authentication authentication){
-
+            Authentication authentication) {
         return bookingService.bookEvent(
-
                 request,
-
-                authentication.getName()
-
-        );
-
+                authentication.getName());
     }
 
     @GetMapping("/userbooking")
-
     public List<BookingResponse> myBookings(
-
-            Authentication authentication){
-
+            Authentication authentication) {
         return bookingService.myBookings(
-
-                authentication.getName()
-
-        );
-
+                authentication.getName());
     }
 
+    @GetMapping("/organizer")
+    public List<Booking> getOrganizerBookings(
+            Authentication authentication) {
+        return bookingService.getOrganizerBookings(
+                authentication.getName());
+    }
 }

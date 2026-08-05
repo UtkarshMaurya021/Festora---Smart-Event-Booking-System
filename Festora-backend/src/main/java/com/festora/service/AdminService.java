@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.festora.dto.AdminDashboardResponse;
 import com.festora.entity.Booking;
@@ -60,7 +61,7 @@ public class AdminService {
                 users,
                 organizers,
                 events,
-                revenue,
+                revenue != null ? revenue : 0.0,
                 organizerRequests);
     }
 
@@ -84,6 +85,7 @@ public class AdminService {
         return userRepository.findByRoleAndStatus(Role.ROLE_ORGANIZER, Status.PENDING);
     }
 
+    @Transactional
     public User approveOrganizer(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Organizer request not found"));
@@ -104,6 +106,7 @@ public class AdminService {
         return saved;
     }
 
+    @Transactional
     public User rejectOrganizer(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Organizer request not found"));
@@ -120,6 +123,7 @@ public class AdminService {
         return eventRepository.findByStatusIn(List.of(Status.PENDING, Status.PENDING_APPROVAL));
     }
 
+    @Transactional
     public Event approveEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
@@ -133,12 +137,13 @@ public class AdminService {
                 emailService.sendEventApprovedEmail(saved.getOrganizer().getUser(), saved);
             }
         } catch (Exception ex) {
-            System.err.println("Email dispatch log: " + ex.getMessage());
+            System.err.println("Email dispatch log in approveEvent: " + ex.getMessage());
         }
 
         return saved;
     }
 
+    @Transactional
     public Event rejectEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
@@ -152,12 +157,13 @@ public class AdminService {
                 emailService.sendEventRejectedEmail(saved.getOrganizer().getUser(), saved);
             }
         } catch (Exception ex) {
-            System.err.println("Email dispatch log: " + ex.getMessage());
+            System.err.println("Email dispatch log in rejectEvent: " + ex.getMessage());
         }
 
         return saved;
     }
 
+    @Transactional
     public User blockUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -165,6 +171,7 @@ public class AdminService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public User activateUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -172,6 +179,7 @@ public class AdminService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public void deleteEvent(Long id) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
@@ -185,10 +193,11 @@ public class AdminService {
             }
             notifyAttendeesForEvent(event, "EVENT_CANCELLED");
         } catch (Exception ex) {
-            System.err.println("Email dispatch log: " + ex.getMessage());
+            System.err.println("Email dispatch log in deleteEvent: " + ex.getMessage());
         }
     }
 
+    @Transactional
     public Event updateEventStatus(Long id, Status newStatus) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
@@ -206,7 +215,7 @@ public class AdminService {
                 notifyAttendeesForEvent(saved, "EVENT_CANCELLED");
             }
         } catch (Exception ex) {
-            System.err.println("Email dispatch log: " + ex.getMessage());
+            System.err.println("Email dispatch log in updateEventStatus: " + ex.getMessage());
         }
 
         return saved;

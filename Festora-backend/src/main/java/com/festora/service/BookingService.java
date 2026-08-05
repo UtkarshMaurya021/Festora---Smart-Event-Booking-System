@@ -5,20 +5,22 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.festora.dto.BookingRequest;
 import com.festora.dto.BookingResponse;
+import com.festora.dto.TicketVerificationResponse;
 import com.festora.entity.Booking;
 import com.festora.entity.Event;
+import com.festora.entity.Organizer;
 import com.festora.entity.Payment;
 import com.festora.entity.PaymentStatus;
 import com.festora.entity.Status;
 import com.festora.entity.User;
 import com.festora.repository.BookingRepository;
 import com.festora.repository.EventRepository;
+import com.festora.repository.OrganizerRepository;
 import com.festora.repository.PaymentRepository;
 import com.festora.repository.UserRepository;
 
@@ -31,6 +33,7 @@ public class BookingService {
 	private final EventRepository eventRepository;
 	private final UserRepository userRepository;
 	private final PaymentRepository paymentRepository;
+	private final OrganizerRepository organizerRepository;
 
 	private String firstImageUrl(Event event) {
 		if (event.getImages() == null || event.getImages().isEmpty()) {
@@ -40,17 +43,15 @@ public class BookingService {
 	}
 
 	public BookingService(BookingRepository bookingRepository, EventRepository eventRepository,
-			UserRepository userRepository, PaymentRepository paymentRepository) {
+			UserRepository userRepository, PaymentRepository paymentRepository,
+			OrganizerRepository organizerRepository) {
 		this.bookingRepository = bookingRepository;
 		this.eventRepository = eventRepository;
 		this.userRepository = userRepository;
 		this.paymentRepository = paymentRepository;
+		this.organizerRepository = organizerRepository;
 	}
 
-	/**
-	 * Returns all currently occupied/booked seat numbers for a specific event.
-	 * Used for real-time frontend seat grid locking to prevent double booking.
-	 */
 	public List<String> getBookedSeatsForEvent(Long eventId) {
 		Event event = eventRepository.findById(eventId)
 				.orElseThrow(() -> new RuntimeException("Event not found"));
@@ -73,6 +74,32 @@ public class BookingService {
 		return new ArrayList<>(occupiedSeats);
 	}
 
+	private BookingResponse mapToBookingResponse(Booking b) {
+		Event e = b.getEvent();
+		String vName = (e != null && e.getVenue() != null) ? e.getVenue().getVenueName() : "N/A";
+		String vAddr = (e != null && e.getVenue() != null) 
+				? (e.getVenue().getAddress() + (e.getVenue().getCity() != null ? ", " + e.getVenue().getCity() : ""))
+				: "N/A";
+		LocalDateTime startDt = (e != null) ? e.getEventStartDatetime() : null;
+		LocalDateTime endDt = (e != null) ? e.getEventEndDatetime() : null;
+
+		return new BookingResponse(
+				b.getBookingId(),
+				e != null ? e.getEventId() : null,
+				e != null ? e.getTitle() : "Event",
+				e != null ? firstImageUrl(e) : null,
+				vName,
+				vAddr,
+				startDt,
+				endDt,
+				b.getQuantity(),
+				b.getSeatNumbers() != null ? b.getSeatNumbers() : "General Entry",
+				b.getTotalAmount(),
+				b.getBookingDate(),
+				b.getStatus().name()
+		);
+	}
+
 	@Transactional
 	public synchronized BookingResponse bookEvent(BookingRequest request, String email) {
 		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
@@ -92,26 +119,31 @@ public class BookingService {
 			throw new RuntimeException("Insufficient seats available.");
 		}
 
-		// Double-Booking Check: Verify no requested seat is already booked by another user
 		List<String> alreadyBooked = getBookedSeatsForEvent(event.getEventId());
-		if (request.getSeatNumbers() != null && !request.getSeatNumbers().isEmpty()) {
-			for (String requestedSeat : request.getSeatNumbers()) {
-				if (alreadyBooked.contains(requestedSeat.trim())) {
-					throw new RuntimeException("Seat " + requestedSeat.trim() + " has already been booked by another attendee. Please select available seats.");
-				}
+		List<String> finalSeats = new ArrayList<>();
+
+		String rawTier = (request.getSeatNumbers() != null && !request.getSeatNumbers().isEmpty())
+				? request.getSeatNumbers().get(0)
+				: "STANDARD";
+
+		String tierPrefix = rawTier.contains("-") ? rawTier.split("-")[0] : rawTier;
+
+		int nextIndex = 1;
+		for (int i = 0; i < request.getQuantity(); i++) {
+			String candidate = tierPrefix + "-" + nextIndex;
+			while (alreadyBooked.contains(candidate)) {
+				nextIndex++;
+				candidate = tierPrefix + "-" + nextIndex;
 			}
+			finalSeats.add(candidate);
+			alreadyBooked.add(candidate);
 		}
 
 		Booking booking = new Booking();
 		booking.setUser(user);
 		booking.setEvent(event);
 		booking.setQuantity(request.getQuantity());
-
-		if (request.getSeatNumbers() != null && !request.getSeatNumbers().isEmpty()) {
-			booking.setSeatNumbers(String.join(", ", request.getSeatNumbers()));
-		} else {
-			booking.setSeatNumbers("General Entry");
-		}
+		booking.setSeatNumbers(String.join(", ", finalSeats));
 
 		booking.setTotalAmount(event.getPrice() * request.getQuantity());
 		booking.setBookingDate(LocalDateTime.now());
@@ -129,17 +161,7 @@ public class BookingService {
 		payment.setStatus(PaymentStatus.PENDING);
 		paymentRepository.save(payment);
 
-		return new BookingResponse(
-				saved.getBookingId(),
-				saved.getEvent().getEventId(),
-				saved.getEvent().getTitle(),
-				firstImageUrl(saved.getEvent()),
-				saved.getQuantity(),
-				saved.getSeatNumbers(),
-				saved.getTotalAmount(),
-				saved.getBookingDate(),
-				saved.getStatus().name()
-		);
+		return mapToBookingResponse(saved);
 	}
 
 	public List<BookingResponse> myBookings(String email) {
@@ -147,18 +169,53 @@ public class BookingService {
 
 		return bookingRepository.findByUser(user)
 				.stream()
-				.map(b -> new BookingResponse(
-						b.getBookingId(),
-						b.getEvent().getEventId(),
-						b.getEvent().getTitle(),
-						firstImageUrl(b.getEvent()),
-						b.getQuantity(),
-						b.getSeatNumbers() != null ? b.getSeatNumbers() : "General Entry",
-						b.getTotalAmount(),
-						b.getBookingDate(),
-						b.getStatus().name()
-				))
+				.map(this::mapToBookingResponse)
 				.toList();
+	}
+
+	public List<Booking> getOrganizerBookings(String email) {
+		User user = userRepository.findByEmail(email).orElse(null);
+		if (user == null) {
+			return List.of();
+		}
+		Organizer organizer = organizerRepository.findByUser(user).orElse(null);
+		if (organizer == null) {
+			return List.of();
+		}
+		return bookingRepository.findByEventOrganizer(organizer);
+	}
+
+	public TicketVerificationResponse verifyTicket(Long id) {
+		Booking booking = bookingRepository.findById(id).orElse(null);
+		if (booking == null) {
+			return new TicketVerificationResponse(
+					id, "N/A", "N/A", null, "N/A", null, 0, "N/A", 0.0, null,
+					"INVALID", false, "❌ INVALID TICKET: No booking record found with Ticket ID #" + id
+			);
+		}
+
+		boolean isValid = "ACTIVE".equalsIgnoreCase(booking.getStatus().name())
+				|| "CONFIRMED".equalsIgnoreCase(booking.getStatus().name());
+
+		String msg = isValid
+				? "✅ VALID TICKET: Entry verified for " + (booking.getUser() != null ? booking.getUser().getName() : "Attendee")
+				: "⚠️ TICKET INACTIVE: Current status is " + booking.getStatus().name();
+
+		return new TicketVerificationResponse(
+				booking.getBookingId(),
+				booking.getUser() != null ? booking.getUser().getName() : "N/A",
+				booking.getUser() != null ? booking.getUser().getEmail() : "N/A",
+				booking.getEvent() != null ? booking.getEvent().getEventId() : null,
+				booking.getEvent() != null ? booking.getEvent().getTitle() : "N/A",
+				booking.getEvent() != null ? firstImageUrl(booking.getEvent()) : null,
+				booking.getQuantity(),
+				booking.getSeatNumbers() != null ? booking.getSeatNumbers() : "General Entry",
+				booking.getTotalAmount(),
+				booking.getBookingDate(),
+				booking.getStatus().name(),
+				isValid,
+				msg
+		);
 	}
 
 	public BookingResponse getBooking(Long id, String email) {
@@ -169,16 +226,6 @@ public class BookingService {
 	        throw new RuntimeException("Unauthorized");
 	    }
 
-	    return new BookingResponse(
-	            booking.getBookingId(),
-	            booking.getEvent().getEventId(),
-	            booking.getEvent().getTitle(),
-	            firstImageUrl(booking.getEvent()),
-	            booking.getQuantity(),
-	            booking.getSeatNumbers() != null ? booking.getSeatNumbers() : "General Entry",
-	            booking.getTotalAmount(),
-	            booking.getBookingDate(),
-	            booking.getStatus().name()
-	    );
+	    return mapToBookingResponse(booking);
 	}
 }

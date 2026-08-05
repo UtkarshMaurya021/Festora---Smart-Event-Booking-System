@@ -7,6 +7,7 @@ import {
   confirmPayment,
   markPaymentFailed,
 } from "../services/paymentService";
+import Navbar from "../components/Navbar";
 import {
   FiShield,
   FiCheckCircle,
@@ -15,25 +16,11 @@ import {
   FiSmartphone,
   FiChevronLeft,
   FiDownload,
+  FiBookmark,
+  FiZap,
 } from "react-icons/fi";
 import { BsBank2, BsWallet2 } from "react-icons/bs";
 
-/**
- * FestoraPay -- a self-built, free mock payment gateway.
- *
- * Same shape as a real checkout (order -> pick a method -> pay -> verify)
- * but everything happens on our own server, so there's no signup, no KYC,
- * and no external dependency to explain.
- *
- * Simulated outcomes (documented here so it's easy to demo):
- *   - Card number ending in 0000   -> declined
- *   - UPI id "fail@festora"        -> declined
- *   - Netbanking / Wallet          -> always succeed
- *   - anything else                -> succeeds
- */
-
-// Where the backend serves uploaded files (QR codes) from. Kept as one
-// constant so it's obvious where to point this at deploy time.
 const API_HOST = "http://localhost:8080";
 
 const METHODS = [
@@ -48,9 +35,6 @@ function formatCardNumber(value) {
   return digits.replace(/(.{4})/g, "$1 ").trim();
 }
 
-// Formats an ISO datetime string into something readable, e.g.
-// "12 Aug 2026, 6:00 pm". Falls back gracefully if the value is missing
-// or not a valid date.
 function formatDateTime(dt) {
   if (!dt) return null;
   const d = new Date(dt);
@@ -64,8 +48,6 @@ function formatDateTime(dt) {
   });
 }
 
-// Reads a same/known-origin image URL into a base64 PNG data URL so it can
-// be embedded straight into the generated PDF.
 function loadImageAsDataUrl(url) {
   return fetch(url)
     .then((res) => {
@@ -91,7 +73,6 @@ function PaymentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // step: summary -> checkout -> processing -> success | failed
   const [step, setStep] = useState("summary");
   const [order, setOrder] = useState(null);
   const [method, setMethod] = useState("CARD");
@@ -151,7 +132,6 @@ function PaymentPage() {
     e.preventDefault();
     setStep("processing");
 
-    // brief, deliberate delay so it *feels* like a real gateway round-trip
     await new Promise((resolve) => setTimeout(resolve, 1100));
 
     try {
@@ -199,63 +179,62 @@ function PaymentPage() {
 
         if (i > 0) doc.addPage();
 
-        // Header
-        doc.setFillColor(29, 78, 216);
+        // Dark Banner Header
+        doc.setFillColor(15, 23, 42);
         doc.rect(0, 0, pageWidth, 90, "F");
         doc.setTextColor(255, 255, 255);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(22);
-        doc.text("FESTORA", marginX, 50);
+        doc.text("FESTORA OFFICIAL E-TICKET", marginX, 46);
         doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
         doc.text(
-          tickets.length > 1 ? `E-Ticket ${i + 1} of ${tickets.length}` : "E-Ticket",
+          tickets.length > 1 ? `Gate Pass ${i + 1} of ${tickets.length} · Booking #${result.bookingId}` : `Gate Pass · Booking #${result.bookingId}`,
           marginX,
-          68
+          66
         );
 
-        // Event details
-        let y = 140;
+        let y = 130;
         doc.setTextColor(15, 23, 42);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(20);
-        doc.text(result.eventTitle || "Event", marginX, y);
+        doc.text(result.eventTitle || booking?.eventTitle || "Festora Event", marginX, y);
 
-        y += 26;
+        y += 24;
         doc.setFont("helvetica", "normal");
         doc.setFontSize(12);
-        doc.setTextColor(100, 116, 139);
-        if (result.venueName) {
-          doc.text(result.venueName, marginX, y);
-          y += 30;
-        } else {
-          y += 10;
-        }
+        doc.setTextColor(71, 85, 105);
+        const venueText = result.venueName || booking?.venueName || "Central Convention Hall";
+        doc.text(`Venue: ${venueText}`, marginX, y);
+        y += 26;
 
         const detailRow = (label, value) => {
-          doc.setFont("helvetica", "normal");
+          doc.setFont("helvetica", "bold");
           doc.setFontSize(10);
           doc.setTextColor(148, 163, 184);
           doc.text(label.toUpperCase(), marginX, y);
           doc.setFont("helvetica", "bold");
           doc.setFontSize(13);
           doc.setTextColor(15, 23, 42);
-          doc.text(String(value), marginX, y + 16);
-          y += 46;
+          doc.text(String(value), marginX + 160, y);
+          y += 32;
         };
 
-        detailRow("Ticket Number", ticket.ticketNumber);
-        detailRow("Booking ID", `#${result.bookingId}`);
-        if (tickets.length > 1) detailRow("Seat", `${i + 1} of ${tickets.length}`);
-        const startText = formatDateTime(result.eventStartDatetime);
-        const endText = formatDateTime(result.eventEndDatetime);
+        detailRow("Ticket Number", ticket.ticketNumber || `TKT-${result.bookingId}-${i+1}`);
+        detailRow("Booking ID", `#${result.bookingId || bookingId}`);
+        detailRow("Seat Tier / Allocation", result.seatNumbers || booking?.seatNumbers || "Reserved Tier");
+        
+        const startText = formatDateTime(result.eventStartDatetime || booking?.eventStartDatetime);
+        const endText = formatDateTime(result.eventEndDatetime || booking?.eventEndDatetime);
         if (startText) detailRow("Event Starts", startText);
         if (endText) detailRow("Event Ends", endText);
+        
+        const amountVal = result.totalAmount || booking?.totalAmount;
+        if (amountVal) detailRow("Total Amount Paid", `₹${amountVal}`);
 
-        // QR code, centered
         const qrSize = 180;
         const qrX = (pageWidth - qrSize) / 2;
-        y += 10;
+        y += 20;
         doc.setDrawColor(226, 232, 240);
         doc.roundedRect(qrX - 16, y - 16, qrSize + 32, qrSize + 32, 8, 8);
         doc.addImage(qrDataUrl, "PNG", qrX, y, qrSize, qrSize);
@@ -264,12 +243,12 @@ function PaymentPage() {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(148, 163, 184);
-        doc.text("Present this QR code at the venue entrance for scanning.", pageWidth / 2, y, {
+        doc.text("Present this digital QR code gate pass at venue entrance for scanning.", pageWidth / 2, y, {
           align: "center",
         });
       }
 
-      const fileBase = tickets.length > 1 ? `festora-tickets-booking-${result.bookingId}` : (tickets[0].ticketNumber || "festora-ticket");
+      const fileBase = tickets.length > 1 ? `festora-tickets-booking-${result.bookingId || bookingId}` : (tickets[0].ticketNumber || `festora-ticket-${bookingId}`);
       doc.save(`${fileBase}.pdf`);
     } catch (err) {
       console.error("Failed to generate ticket PDF:", err);
@@ -281,304 +260,363 @@ function PaymentPage() {
 
   if (loading) {
     return (
-      <div className="payment-page">
-        <p className="payment-loading">Loading your booking…</p>
+      <div className="bg-light min-vh-100">
+        <Navbar />
+        <div className="container mt-5 text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading checkout...</span>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!booking) {
     return (
-      <div className="payment-page">
-        <div className="payment-card">
-          <p className="payment-error">{error || "Booking not found."}</p>
+      <div className="bg-light min-vh-100">
+        <Navbar />
+        <div className="container mt-5">
+          <div className="alert alert-danger rounded-4 shadow-sm p-4 text-center">
+            {error || "Booking not found."}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="payment-page">
-      <div className="payment-card">
-        <div className="payment-badge">
-          <FiShield />
-          <span>Secured by FestoraPay · Test Mode</span>
-        </div>
+    <div className="bg-light min-vh-100 pb-5">
+      <Navbar />
 
-        {/* ---------------- SUMMARY ---------------- */}
-        {step === "summary" && (
-          <>
-            <h1 className="payment-title">Complete your booking</h1>
-            <p className="payment-subtitle">
-              Review your order, then pay securely to confirm your seats.
-            </p>
-
-            <div className="payment-summary">
-              <div className="payment-summary-row">
-                <span>Event</span>
-                <strong>{booking.eventTitle}</strong>
-              </div>
-              <div className="payment-summary-row">
-                <span>Booking ID</span>
-                <strong>#{bookingId}</strong>
-              </div>
-              <div className="payment-summary-row">
-                <span>Quantity</span>
-                <strong>{booking.quantity}</strong>
-              </div>
-              <div className="payment-summary-row">
-                <span>Status</span>
-                <strong className={`payment-status payment-status-${booking.status?.toLowerCase()}`}>
-                  {booking.status}
-                </strong>
-              </div>
-              <div className="payment-summary-divider" />
-              <div className="payment-summary-row payment-summary-total">
-                <span>Total amount</span>
-                <strong>₹{booking.totalAmount}</strong>
-              </div>
-            </div>
-
-            {error && <div className="payment-error-banner">{error}</div>}
-
-            <button className="payment-pay-btn" onClick={startCheckout} disabled={starting}>
-              {starting ? "Starting checkout…" : `Pay ₹${booking.totalAmount}`}
-            </button>
-
-            <p className="payment-footnote">
-              <FiCheckCircle /> No real money moves. This is a demo payment gateway.
-            </p>
-          </>
-        )}
-
-        {/* ---------------- CHECKOUT (method + form) ---------------- */}
-        {step === "checkout" && order && (
-          <>
-            <button className="payment-back-btn" onClick={closeCheckout}>
-              <FiChevronLeft /> Back
-            </button>
-
-            <h1 className="payment-title">Pay ₹{order.amount}</h1>
-            <p className="payment-subtitle">Transaction ID: {order.transactionId}</p>
-
-            <div className="payment-method-tabs">
-              {METHODS.map((m) => {
-                const Icon = m.icon;
-                return (
-                  <button
-                    type="button"
-                    key={m.id}
-                    className={`payment-method-tab ${method === m.id ? "active" : ""}`}
-                    onClick={() => setMethod(m.id)}
-                  >
-                    <Icon />
-                    <span>{m.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <form className="payment-form" onSubmit={handlePay}>
-              {method === "CARD" && (
-                <>
-                  <div className="payment-field">
-                    <label>Card number</label>
-                    <input
-                      type="text"
-                      placeholder="4111 1111 1111 1111"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                      required
-                    />
-                  </div>
-                  <div className="payment-field-row">
-                    <div className="payment-field">
-                      <label>Expiry</label>
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        maxLength={5}
-                        value={expiry}
-                        onChange={(e) => setExpiry(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="payment-field">
-                      <label>CVV</label>
-                      <input
-                        type="password"
-                        placeholder="123"
-                        maxLength={3}
-                        value={cvv}
-                        onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <p className="payment-hint">
-                    Test tip: any card works — a number ending in <strong>0000</strong> simulates a decline.
-                  </p>
-                </>
-              )}
-
-              {method === "UPI" && (
-                <>
-                  <div className="payment-field">
-                    <label>UPI ID</label>
-                    <input
-                      type="text"
-                      placeholder="yourname@bank"
-                      value={upiId}
-                      onChange={(e) => setUpiId(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <p className="payment-hint">
-                    Test tip: any UPI ID works — <strong>fail@festora</strong> simulates a decline.
-                  </p>
-                </>
-              )}
-
-              {method === "NETBANKING" && (
-                <div className="payment-field">
-                  <label>Select your bank</label>
-                  <select value={bank} onChange={(e) => setBank(e.target.value)}>
-                    <option>State Bank of India</option>
-                    <option>HDFC Bank</option>
-                    <option>ICICI Bank</option>
-                    <option>Axis Bank</option>
-                    <option>Punjab National Bank</option>
-                  </select>
+      <div className="container my-4">
+        <div className="row justify-content-center">
+          <div className="col-lg-8 col-xl-7">
+            {/* Elevated Main Card Container */}
+            <div className="card border-0 rounded-4 shadow-sm overflow-hidden bg-white">
+              
+              {/* Dark Indigo Hero Header */}
+              <div
+                className="dashboard-hero-banner"
+                style={{
+                  background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #312e81 100%)",
+                  borderRadius: "0",
+                  padding: "32px 36px",
+                  color: "#ffffff",
+                }}
+              >
+                <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                  <span className="badge hero-badge-light">
+                    <FiShield className="text-primary me-1" /> FestoraPay Secured
+                  </span>
+                  <span className="badge bg-white text-dark fw-bold px-3 py-2 fs-6 shadow-sm">
+                    Booking #{bookingId}
+                  </span>
                 </div>
-              )}
 
-              {method === "WALLET" && (
-                <div className="payment-field">
-                  <label>Select your wallet</label>
-                  <select value={wallet} onChange={(e) => setWallet(e.target.value)}>
-                    <option>FestoraWallet</option>
-                    <option>PayZone</option>
-                    <option>QuickPay</option>
-                  </select>
-                </div>
-              )}
+                {step === "success" ? (
+                  <>
+                    <h2 className="fw-bold mb-1 text-white" style={{ color: "#ffffff", fontSize: "2rem" }}>
+                      🎉 Payment & Booking Confirmed!
+                    </h2>
+                    <p className="mb-0 small" style={{ color: "#e2e8f0", fontSize: "0.95rem" }}>
+                      Your digital gate pass ticket has been issued below and emailed to your inbox.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="fw-bold mb-1 text-white" style={{ color: "#ffffff", fontSize: "2rem" }}>
+                      Complete Your Reservation
+                    </h2>
+                    <p className="mb-0 small" style={{ color: "#e2e8f0", fontSize: "0.95rem" }}>
+                      Review order details and select your preferred payment mode to issue tickets.
+                    </p>
+                  </>
+                )}
+              </div>
 
-              <button className="payment-pay-btn" type="submit">
-                Pay ₹{order.amount}
-              </button>
-            </form>
-          </>
-        )}
+              {/* Card Body */}
+              <div className="p-4 p-md-5">
+                
+                {/* STEP 1: SUMMARY */}
+                {step === "summary" && (
+                  <>
+                    <h4 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                      <FiBookmark className="text-primary" /> Order Summary
+                    </h4>
 
-        {/* ---------------- PROCESSING ---------------- */}
-        {step === "processing" && (
-          <div className="payment-status-screen">
-            <div className="payment-spinner" />
-            <h2 className="payment-status-title">Processing payment…</h2>
-            <p className="payment-status-text">Please don't close this window.</p>
-          </div>
-        )}
-
-        {/* ---------------- SUCCESS: QR ticket(s) + PDF download ---------------- */}
-        {step === "success" && result && (
-          <div className="payment-status-screen">
-            <FiCheckCircle className="payment-status-icon payment-status-icon-success" />
-            <h2 className="payment-status-title">Payment successful</h2>
-            <p className="payment-status-text">
-              {result.tickets?.length > 1
-                ? `Your ${result.tickets.length} tickets are ready — scan each one at the venue.`
-                : "Your ticket is ready — scan it at the venue."}
-            </p>
-
-            {(() => {
-              const tickets = result.tickets?.length
-                ? result.tickets
-                : (result.qrCodePath
-                    ? [{ ticketNumber: result.ticketNumber, qrCodePath: result.qrCodePath }]
-                    : []);
-
-              if (!tickets.length) return null;
-
-              return (
-                <div className="ticket-card-list">
-                  {tickets.map((ticket, idx) => (
-                    <div className="ticket-card" key={ticket.ticketNumber || idx}>
-                      <div className="ticket-card-header">
-                        <span className="ticket-card-brand">Festora E-Ticket</span>
-                        <span className="ticket-card-number">{ticket.ticketNumber}</span>
+                    <div className="bg-light rounded-4 p-4 border mb-4">
+                      <div className="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span className="text-muted fw-semibold">Event Title</span>
+                        <strong className="text-dark fs-5">{booking.eventTitle}</strong>
                       </div>
+                      <div className="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span className="text-muted fw-semibold">Booking ID</span>
+                        <strong className="text-dark fs-5">#{bookingId}</strong>
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span className="text-muted fw-semibold">Ticket Quantity</span>
+                        <strong className="text-dark">{booking.quantity} Ticket(s)</strong>
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span className="text-muted fw-semibold">Seat Tier / Numbers</span>
+                        <span className="badge bg-dark text-white px-3 py-2 fs-6">{booking.seatNumbers || "General Tier"}</span>
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center py-3">
+                        <span className="fw-bold text-dark fs-5">Total Payable</span>
+                        <strong className="text-success fs-3">₹{booking.totalAmount}</strong>
+                      </div>
+                    </div>
 
-                      <p className="ticket-card-event">{result.eventTitle}</p>
-                      {result.venueName && <p className="ticket-card-venue">{result.venueName}</p>}
-                      {(result.eventStartDatetime || result.eventEndDatetime) && (
-                        <p className="ticket-card-venue">
-                          {formatDateTime(result.eventStartDatetime) || "N/A"}
-                          {" – "}
-                          {formatDateTime(result.eventEndDatetime) || "N/A"}
-                        </p>
+                    {error && <div className="alert alert-danger rounded-4 fw-semibold mb-4">{error}</div>}
+
+                    <button
+                      className="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow mb-3"
+                      onClick={startCheckout}
+                      disabled={starting}
+                    >
+                      {starting ? "Starting checkout…" : `Pay ₹${booking.totalAmount}`}
+                    </button>
+
+                    <div className="text-center text-muted small d-flex align-items-center justify-content-center gap-1">
+                      <FiCheckCircle className="text-success" /> Direct Instant Gate Pass QR Code Generation
+                    </div>
+                  </>
+                )}
+
+                {/* STEP 2: CHECKOUT FORM */}
+                {step === "checkout" && order && (
+                  <>
+                    <div className="d-flex justify-content-between align-items-center mb-4">
+                      <button className="btn btn-outline-secondary btn-sm rounded-pill fw-bold" onClick={closeCheckout}>
+                        <FiChevronLeft className="me-1" /> Back
+                      </button>
+                      <span className="text-muted small">Txn ID: <strong className="text-dark">{order.transactionId}</strong></span>
+                    </div>
+
+                    <div className="bg-light rounded-4 p-4 mb-4 text-center border">
+                      <div className="text-muted small text-uppercase fw-bold mb-1">Amount to Pay</div>
+                      <h2 className="fw-bold text-success mb-0">₹{order.amount}</h2>
+                    </div>
+
+                    {/* Method Selector Tabs */}
+                    <div className="row g-2 mb-4">
+                      {METHODS.map((m) => {
+                        const Icon = m.icon;
+                        const isSelected = method === m.id;
+                        return (
+                          <div className="col-3" key={m.id}>
+                            <button
+                              type="button"
+                              className={`btn w-100 py-3 rounded-4 d-flex flex-column align-items-center gap-1 fw-bold ${
+                                isSelected ? "btn-primary shadow" : "btn-outline-secondary border-secondary-subtle bg-white text-dark"
+                              }`}
+                              onClick={() => setMethod(m.id)}
+                            >
+                              <Icon size={20} />
+                              <span style={{ fontSize: "0.8rem" }}>{m.label}</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Checkout Inputs */}
+                    <form onSubmit={handlePay}>
+                      {method === "CARD" && (
+                        <div className="bg-white rounded-4 p-3 border mb-4">
+                          <div className="mb-3">
+                            <label className="form-label fw-bold text-dark small">Card Number</label>
+                            <input
+                              type="text"
+                              placeholder="4111 1111 1111 1111"
+                              value={cardNumber}
+                              onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                              className="form-control rounded-3 py-2 fw-semibold"
+                              required
+                            />
+                          </div>
+                          <div className="row g-3">
+                            <div className="col-6">
+                              <label className="form-label fw-bold text-dark small">Expiry (MM/YY)</label>
+                              <input
+                                type="text"
+                                placeholder="12/28"
+                                maxLength={5}
+                                value={expiry}
+                                onChange={(e) => setExpiry(e.target.value)}
+                                className="form-control rounded-3 py-2 fw-semibold"
+                                required
+                              />
+                            </div>
+                            <div className="col-6">
+                              <label className="form-label fw-bold text-dark small">CVV</label>
+                              <input
+                                type="password"
+                                placeholder="123"
+                                maxLength={3}
+                                value={cvv}
+                                onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
+                                className="form-control rounded-3 py-2 fw-semibold"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
                       )}
 
-                      <div className="ticket-card-qr-wrap">
-                        <img
-                          src={`${API_HOST}/${ticket.qrCodePath}`}
-                          alt={`QR code for ticket ${ticket.ticketNumber}`}
-                        />
-                      </div>
+                      {method === "UPI" && (
+                        <div className="bg-white rounded-4 p-3 border mb-4">
+                          <label className="form-label fw-bold text-dark small">UPI ID Address</label>
+                          <input
+                            type="text"
+                            placeholder="yourname@bank / mobile@upi"
+                            value={upiId}
+                            onChange={(e) => setUpiId(e.target.value)}
+                            className="form-control rounded-3 py-2 fw-semibold"
+                            required
+                          />
+                        </div>
+                      )}
 
-                      <div className="ticket-card-details">
-                        <div className="ticket-card-detail">
-                          <span>Booking ID</span>
-                          <strong>#{result.bookingId}</strong>
+                      {method === "NETBANKING" && (
+                        <div className="bg-white rounded-4 p-3 border mb-4">
+                          <label className="form-label fw-bold text-dark small">Select Banking Institution</label>
+                          <select value={bank} onChange={(e) => setBank(e.target.value)} className="form-select rounded-3 py-2 fw-semibold">
+                            <option>State Bank of India</option>
+                            <option>HDFC Bank</option>
+                            <option>ICICI Bank</option>
+                            <option>Axis Bank</option>
+                            <option>Punjab National Bank</option>
+                          </select>
                         </div>
-                        <div className="ticket-card-detail">
-                          <span>{tickets.length > 1 ? "Seat" : "Quantity"}</span>
-                          <strong>
-                            {tickets.length > 1 ? `${idx + 1} of ${tickets.length}` : result.quantity}
-                          </strong>
+                      )}
+
+                      {method === "WALLET" && (
+                        <div className="bg-white rounded-4 p-3 border mb-4">
+                          <label className="form-label fw-bold text-dark small">Select Wallet Partner</label>
+                          <select value={wallet} onChange={(e) => setWallet(e.target.value)} className="form-select rounded-3 py-2 fw-semibold">
+                            <option>FestoraWallet</option>
+                            <option>PayZone</option>
+                            <option>QuickPay</option>
+                          </select>
                         </div>
-                      </div>
+                      )}
+
+                      <button className="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow" type="submit">
+                        Confirm & Pay ₹{order.amount}
+                      </button>
+                    </form>
+                  </>
+                )}
+
+                {/* STEP 3: PROCESSING */}
+                {step === "processing" && (
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-primary mb-3" style={{ width: "3.5rem", height: "3.5rem" }} role="status">
+                      <span className="visually-hidden">Processing payment...</span>
                     </div>
-                  ))}
-                </div>
-              );
-            })()}
+                    <h3 className="fw-bold text-dark">Processing FestoraPay Transaction...</h3>
+                    <p className="text-muted small">Generating digital QR tickets. Please do not refresh this page.</p>
+                  </div>
+                )}
 
-            {downloadError && <div className="payment-error-banner">{downloadError}</div>}
+                {/* STEP 4: SUCCESS WITH E-TICKET PASS */}
+                {step === "success" && result && (
+                  <div>
+                    {(() => {
+                      const tickets = result.tickets?.length
+                        ? result.tickets
+                        : (result.qrCodePath
+                            ? [{ ticketNumber: result.ticketNumber, qrCodePath: result.qrCodePath }]
+                            : []);
 
-            <div className="payment-actions">
-              <button
-                className="payment-pay-btn"
-                onClick={downloadTicketPdf}
-                disabled={downloading || !(result.tickets?.length || result.qrCodePath)}
-              >
-                <FiDownload style={{ marginRight: 8, verticalAlign: "middle" }} />
-                {downloading
-                  ? "Preparing PDF…"
-                  : result.tickets?.length > 1
-                  ? "Download all tickets as PDF"
-                  : "Download ticket as PDF"}
-              </button>
-              <button
-                className="payment-secondary-btn"
-                onClick={() => navigate("/userbookings?status=success")}
-              >
-                View my bookings
-              </button>
+                      if (!tickets.length) return null;
+
+                      return (
+                        <div className="row g-4 mb-4">
+                          {tickets.map((ticket, idx) => (
+                            <div className={tickets.length > 1 ? "col-md-6" : "col-12"} key={ticket.ticketNumber || idx}>
+                              <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white text-center" style={{ border: "2px dashed #cbd5e1" }}>
+                                {/* Ticket Dark Header */}
+                                <div className="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+                                  <span className="fw-bold tracking-wide">FESTORA E-TICKET</span>
+                                  <span className="badge bg-primary text-white">{ticket.ticketNumber}</span>
+                                </div>
+
+                                <div className="p-4">
+                                  <h4 className="fw-bold text-dark mb-1">{result.eventTitle || booking?.eventTitle}</h4>
+                                  <p className="text-muted small mb-3">{result.venueName || booking?.venueName || "Central Convention Hall"}</p>
+
+                                  {/* QR Code */}
+                                  <div className="d-inline-block p-3 bg-light rounded-4 border mb-3">
+                                    <img
+                                      src={`${API_HOST}/${ticket.qrCodePath}`}
+                                      alt={`QR code for ticket ${ticket.ticketNumber}`}
+                                      style={{ width: 180, height: 180, borderRadius: 8 }}
+                                    />
+                                  </div>
+
+                                  <div className="bg-light p-3 rounded-4 border d-flex justify-content-around text-start">
+                                    <div>
+                                      <div className="text-muted small">Booking Ref</div>
+                                      <strong className="text-dark">#{result.bookingId || bookingId}</strong>
+                                    </div>
+                                    <div>
+                                      <div className="text-muted small">Seat / Tier Info</div>
+                                      <strong className="text-primary">
+                                        {result.seatNumbers || booking?.seatNumbers || (tickets.length > 1 ? `Seat ${idx + 1}` : "Reserved")}
+                                      </strong>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
+                    {downloadError && <div className="alert alert-danger rounded-4 fw-semibold mb-3">{downloadError}</div>}
+
+                    <div className="d-grid gap-2">
+                      <button
+                        className="btn btn-primary btn-lg rounded-pill py-3 fw-bold shadow"
+                        onClick={downloadTicketPdf}
+                        disabled={downloading || !(result.tickets?.length || result.qrCodePath)}
+                      >
+                        <FiDownload className="me-2" />
+                        {downloading
+                          ? "Preparing Ticket PDF…"
+                          : result.tickets?.length > 1
+                          ? "Download All Gate Pass Tickets (PDF)"
+                          : "Download Gate Pass Ticket (PDF)"}
+                      </button>
+                      <button
+                        className="btn btn-outline-secondary rounded-pill py-2 fw-bold"
+                        onClick={() => navigate("/userbookings?status=success")}
+                      >
+                        View All My Bookings
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 5: FAILED */}
+                {step === "failed" && result && (
+                  <div className="text-center py-4">
+                    <FiXCircle className="text-danger mb-3" size={64} />
+                    <h3 className="fw-bold text-dark mb-2">Payment Transaction Failed</h3>
+                    <p className="text-muted small mb-4">{result.message}</p>
+                    <button className="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow" onClick={retry}>
+                      Try Again
+                    </button>
+                  </div>
+                )}
+              </div>
+
             </div>
           </div>
-        )}
-
-        {/* ---------------- FAILED ---------------- */}
-        {step === "failed" && result && (
-          <div className="payment-status-screen">
-            <FiXCircle className="payment-status-icon payment-status-icon-failed" />
-            <h2 className="payment-status-title">Payment failed</h2>
-            <p className="payment-status-text">{result.message}</p>
-            <button className="payment-pay-btn" onClick={retry}>
-              Try again
-            </button>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

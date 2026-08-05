@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   FiHome,
   FiCalendar,
@@ -9,6 +9,7 @@ import {
   FiMapPin,
   FiGrid,
   FiLogOut,
+  FiCheckSquare,
 } from "react-icons/fi";
 import { MdConfirmationNumber } from "react-icons/md";
 
@@ -17,10 +18,9 @@ import { logout } from "../services/authService";
 
 function Sidebar() {
   const role = localStorage.getItem("role");
-  const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout().finally(() => navigate("/login"));
+    logout().finally(() => (window.location.href = "/login"));
   };
 
   return (
@@ -86,6 +86,26 @@ function Sidebar() {
             Create Event
           </Link>
 
+          <Link to="/organizer/verify-ticket">
+            <FiCheckSquare />
+            Verify Ticket
+          </Link>
+
+          <Link to="/organizer/bookings">
+            <FiBook />
+            Attendee Bookings
+          </Link>
+
+          <Link to="/organizer/venues">
+            <FiMapPin />
+            Venue Directory
+          </Link>
+
+          <Link to="/organizer/profile">
+            <FiUser />
+            Profile & Company
+          </Link>
+
         </nav>
       )}
 
@@ -97,6 +117,11 @@ function Sidebar() {
           <Link to="/admin/dashboard">
             <FiHome />
             Dashboard
+          </Link>
+
+          <Link to="/admin/verify-ticket">
+            <FiCheckSquare />
+            Verify Ticket
           </Link>
 
           <Link to="/admin/users">

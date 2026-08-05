@@ -12,6 +12,7 @@ import com.festora.dto.PaymentInitResponse;
 import com.festora.dto.PaymentRequest;
 import com.festora.dto.PaymentResult;
 import com.festora.entity.Booking;
+import com.festora.entity.Event;
 import com.festora.entity.Payment;
 import com.festora.entity.PaymentStatus;
 import com.festora.entity.Ticket;
@@ -101,7 +102,7 @@ public class PaymentService {
         if (declined) {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
-            return new PaymentResult("FAILED", declineReason(request), null, null, null, null, null, null, null);
+            return new PaymentResult("FAILED", declineReason(request), null, null, null, null, null, null, null, null, null, null, null, null);
         }
 
         payment.setStatus(PaymentStatus.SUCCESS);
@@ -109,7 +110,6 @@ public class PaymentService {
 
         List<Ticket> tickets = ticketService.generateTicket(booking);
 
-        // Send Real-Time Ticket Booking Email Notification
         if (booking.getUser() != null) {
             try {
                 System.out.println("🚀 Triggering booking email to: " + booking.getUser().getEmail() + " for Booking #" + booking.getBookingId());
@@ -132,13 +132,26 @@ public class PaymentService {
         result.setQrCodePath(firstTicket != null ? firstTicket.getQrCodePath() : null);
 
         result.setBookingId(booking.getBookingId());
-        result.setEventTitle(booking.getEvent() != null ? booking.getEvent().getTitle() : null);
-        result.setVenueName(
-                booking.getEvent() != null && booking.getEvent().getVenue() != null
-                        ? booking.getEvent().getVenue().getVenueName()
-                        : null
-        );
+        
+        Event e = booking.getEvent();
+        if (e != null) {
+            result.setEventTitle(e.getTitle());
+            if (e.getVenue() != null) {
+                result.setVenueName(e.getVenue().getVenueName());
+                result.setVenueAddress(e.getVenue().getAddress() + (e.getVenue().getCity() != null ? ", " + e.getVenue().getCity() : ""));
+            }
+            if (e.getEventStartDatetime() != null) {
+                result.setEventStartDatetime(e.getEventStartDatetime().toString());
+            }
+            if (e.getEventEndDatetime() != null) {
+                result.setEventEndDatetime(e.getEventEndDatetime().toString());
+            }
+        }
+        
+        result.setSeatNumbers(booking.getSeatNumbers());
+        result.setTotalAmount(booking.getTotalAmount());
         result.setQuantity(booking.getQuantity());
+        
         result.setTickets(
                 tickets.stream()
                         .map(t -> new PaymentResult.TicketSummary(t.getTicketNumber(), t.getQrCodePath()))

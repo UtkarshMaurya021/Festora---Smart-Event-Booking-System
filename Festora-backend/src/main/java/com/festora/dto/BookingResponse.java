@@ -18,6 +18,14 @@ public class BookingResponse {
 
     private String eventImageUrl;
 
+    private String venueName;
+
+    private String venueAddress;
+
+    private LocalDateTime eventStartDatetime;
+
+    private LocalDateTime eventEndDatetime;
+
     private Integer quantity;
 
     private String seatNumbers;
@@ -27,16 +35,4 @@ public class BookingResponse {
     private LocalDateTime bookingDate;
 
     private String status;
-
-    public BookingResponse(Long bookingId, Long eventId, String eventTitle, String eventImageUrl, Integer quantity, Double totalAmount, LocalDateTime bookingDate, String status) {
-        this.bookingId = bookingId;
-        this.eventId = eventId;
-        this.eventTitle = eventTitle;
-        this.eventImageUrl = eventImageUrl;
-        this.quantity = quantity;
-        this.seatNumbers = "General";
-        this.totalAmount = totalAmount;
-        this.bookingDate = bookingDate;
-        this.status = status;
-    }
 }

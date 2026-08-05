@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import api from "../services/api";
 import {
   FiTarget,
   FiEye,
@@ -10,11 +12,39 @@ import {
   FiMail,
   FiCreditCard,
   FiMapPin,
+  FiGrid,
+  FiAward,
 } from "react-icons/fi";
 import { MdConfirmationNumber } from "react-icons/md";
 import "./styles/about.css";
 
 function About() {
+  const [realtimeStats, setRealtimeStats] = useState({
+    activeEvents: 0,
+    organizers: 0,
+    venues: 0,
+    totalBookings: 0,
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    api.get("/public/stats")
+      .then((res) => {
+        if (res.data) {
+          setRealtimeStats({
+            activeEvents: res.data.activeEvents || 0,
+            organizers: res.data.organizers || 0,
+            venues: res.data.venues || 0,
+            totalBookings: res.data.totalBookings || 0,
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load realtime platform stats for About page:", err);
+      })
+      .finally(() => setLoadingStats(false));
+  }, []);
+
   return (
     <>
       <Navbar />
@@ -69,6 +99,53 @@ function About() {
               </div>
             </div>
 
+          </div>
+        </div>
+      </section>
+
+      {/* Real-time Platform Statistics */}
+      <section className="about-stats">
+        <div className="container">
+          <div className="text-center text-white mb-4">
+            <span className="badge bg-white text-dark px-3 py-2 fw-bold mb-2">
+              ⚡ LIVE PLATFORM METRICS
+            </span>
+            <h2 className="fw-bold text-white mb-1">Real-Time Platform Performance</h2>
+            <p className="text-white-50 small">
+              Live statistics updated directly from our database servers.
+            </p>
+          </div>
+
+          <div className="row text-center g-4 justify-content-center">
+            <div className="col-md-4">
+              <div className="p-4 rounded-4 bg-white text-dark shadow-sm h-100">
+                <FiCalendar className="text-primary mb-2" size={36} />
+                <h1 className="fw-bold text-primary mb-1">
+                  {loadingStats ? "..." : realtimeStats.activeEvents}
+                </h1>
+                <p className="fw-bold mb-0 text-muted">Active Platform Events</p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="p-4 rounded-4 bg-white text-dark shadow-sm h-100">
+                <FiUsers className="text-success mb-2" size={36} />
+                <h1 className="fw-bold text-success mb-1">
+                  {loadingStats ? "..." : realtimeStats.organizers}
+                </h1>
+                <p className="fw-bold mb-0 text-muted">Approved Event Hosts</p>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="p-4 rounded-4 bg-white text-dark shadow-sm h-100">
+                <FiMapPin className="text-info mb-2" size={36} />
+                <h1 className="fw-bold text-info mb-1">
+                  {loadingStats ? "..." : realtimeStats.venues}
+                </h1>
+                <p className="fw-bold mb-0 text-muted">Registered Hosting Venues</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -195,37 +272,6 @@ function About() {
             </div>
 
           </div>
-        </div>
-      </section>
-
-      {/* Statistics */}
-      <section className="about-stats">
-        <div className="container">
-
-          <div className="row text-center">
-
-            <div className="col-md-3">
-              <h2>500+</h2>
-              <p>Events</p>
-            </div>
-
-            <div className="col-md-3">
-              <h2>10K+</h2>
-              <p>Bookings</p>
-            </div>
-
-            <div className="col-md-3">
-              <h2>200+</h2>
-              <p>Organizers</p>
-            </div>
-
-            <div className="col-md-3">
-              <h2>99%</h2>
-              <p>Happy Users</p>
-            </div>
-
-          </div>
-
         </div>
       </section>
 

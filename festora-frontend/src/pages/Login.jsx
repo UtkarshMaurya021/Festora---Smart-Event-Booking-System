@@ -78,6 +78,12 @@ function Login() {
     e.preventDefault();
     setForgotError("");
     setForgotMsg("");
+
+    if (!newPassword || newPassword.length < 8) {
+      setForgotError("New password must contain at least 8 characters.");
+      return;
+    }
+
     setForgotLoading(true);
 
     try {
@@ -268,7 +274,7 @@ function Login() {
                   <input
                     type="password"
                     required
-                    placeholder="Minimum 6 characters"
+                    placeholder="Minimum 8 characters"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #334155", background: "#1e293b", color: "#fff", outline: "none" }}
