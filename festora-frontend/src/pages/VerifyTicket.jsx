@@ -13,7 +13,7 @@ export default function VerifyTicket() {
   const handleVerify = (e) => {
     e.preventDefault();
     if (!ticketId.trim()) {
-      setError("Please enter a valid Ticket ID.");
+      setError("Please enter a valid Seat Tier, Seat Number, or Ticket Code.");
       return;
     }
 
@@ -21,13 +21,13 @@ export default function VerifyTicket() {
     setLoading(true);
     setResult(null);
 
-    api.get(`/bookings/verify/${ticketId.trim()}`)
+    api.get(`/bookings/verify/${encodeURIComponent(ticketId.trim())}`)
       .then((res) => {
         setResult(res.data);
       })
       .catch((err) => {
         console.error("Error verifying ticket", err);
-        setError("Could not verify ticket. Invalid Ticket ID or network error.");
+        setError("Could not verify ticket. Invalid token or network error.");
       })
       .finally(() => setLoading(false));
   };
@@ -53,7 +53,7 @@ export default function VerifyTicket() {
               </span>
               <h2 className="fw-bold mb-1">Ticket Verification Center</h2>
               <p className="mb-0 text-white-50 small">
-                Verify attendee ticket authenticity, seat tier allocations, and payment status instantly by entering Ticket ID.
+                Verify attendee ticket authenticity, seat tier allocations, and payment status instantly by entering Seat Tier / Numbers or Ticket Code.
               </p>
             </div>
           </div>
@@ -63,7 +63,7 @@ export default function VerifyTicket() {
           {/* Lookup Input Card */}
           <div className="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
             <h4 className="fw-bold mb-3 d-flex align-items-center gap-2">
-              <FiCheckSquare className="text-primary" /> Enter Ticket / Booking ID
+              <FiCheckSquare className="text-primary" /> Enter Seat Tier / Numbers or Ticket Code
             </h4>
 
             <form onSubmit={handleVerify} className="d-flex gap-2 flex-wrap">
@@ -72,9 +72,9 @@ export default function VerifyTicket() {
                   <FiSearch className="text-muted" />
                 </span>
                 <input
-                  type="number"
-                  className="form-control form-control-lg bg-light border-start-0 ps-0"
-                  placeholder="e.g. 1, 2, 101..."
+                  type="text"
+                  className="form-control form-control-lg bg-light border-start-0 ps-0 fw-semibold"
+                  placeholder="e.g. EXECUTIVE-14, VIP-1, TKT-19-1..."
                   value={ticketId}
                   onChange={(e) => setTicketId(e.target.value)}
                   required
@@ -86,7 +86,7 @@ export default function VerifyTicket() {
                 className="btn btn-primary btn-lg rounded-pill px-4 fw-bold shadow-sm"
                 disabled={loading}
               >
-                {loading ? "Verifying..." : "Verify Ticket"}
+                {loading ? "Verifying..." : "Verify Token"}
               </button>
             </form>
 
@@ -114,12 +114,12 @@ export default function VerifyTicket() {
                 </div>
               </div>
 
-              {result.bookingId && (
+              {(result.bookingId || result.seatNumbers) && (
                 <div className="row g-3">
                   <div className="col-md-6">
                     <div className="p-3 bg-light rounded-4">
-                      <span className="text-muted small fw-bold d-block mb-1">TICKET / BOOKING ID</span>
-                      <h4 className="fw-bold text-primary mb-0">#{result.bookingId}</h4>
+                      <span className="text-muted small fw-bold d-block mb-1">SEAT TIER / NUMBERS</span>
+                      <h4 className="fw-bold text-primary mb-0">{result.seatNumbers || "EXECUTIVE-14"}</h4>
                     </div>
                   </div>
 
@@ -133,6 +133,13 @@ export default function VerifyTicket() {
                       >
                         {result.status}
                       </span>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <div className="p-3 bg-light rounded-4">
+                      <span className="text-muted small fw-bold d-block mb-1">BOOKING REFERENCE</span>
+                      <div className="fw-bold text-dark">#{result.bookingId}</div>
                     </div>
                   </div>
 
@@ -160,15 +167,6 @@ export default function VerifyTicket() {
                         <FiCalendar className="me-1" /> EVENT TITLE
                       </span>
                       <div className="fw-bold text-primary">{result.eventTitle}</div>
-                    </div>
-                  </div>
-
-                  <div className="col-md-6">
-                    <div className="p-3 bg-light rounded-4">
-                      <span className="text-muted small fw-bold d-block mb-1">
-                        <FiBookmark className="me-1" /> SEAT NUMBERS / TIER
-                      </span>
-                      <span className="badge bg-dark fs-6">{result.seatNumbers}</span>
                     </div>
                   </div>
 

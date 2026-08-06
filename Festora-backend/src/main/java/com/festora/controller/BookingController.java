@@ -22,9 +22,9 @@ public class BookingController {
         this.bookingService = bookingService;
     }
 
-    @GetMapping("/verify/{id}")
-    public TicketVerificationResponse verifyTicket(@PathVariable Long id) {
-        return bookingService.verifyTicket(id);
+    @GetMapping("/verify/{token}")
+    public TicketVerificationResponse verifyTicket(@PathVariable String token) {
+        return bookingService.verifyTicket(token);
     }
 
     @GetMapping("/{id}")

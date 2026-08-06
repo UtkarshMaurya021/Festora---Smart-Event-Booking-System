@@ -25,6 +25,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
 	List<Booking> findAllByOrderByBookingDateDesc();
 
+	List<Booking> findBySeatNumbersContainingIgnoreCase(String seatNumbers);
+
 	@Query("""
 			SELECT COALESCE(SUM(b.totalAmount),0)
 			FROM Booking b

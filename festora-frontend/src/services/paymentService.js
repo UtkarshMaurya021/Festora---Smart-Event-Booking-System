@@ -7,7 +7,7 @@ export const createOrder = (bookingId) => {
     });
 };
 
-// Submit the checkout form (method + mock card/UPI details) and get back
+// Submit the checkout form (method + card/UPI/netbanking details) and get back
 // a SUCCESS/FAILED result
 export const confirmPayment = (data) => {
     return api.post("/payments/confirm", data);
@@ -16,4 +16,14 @@ export const confirmPayment = (data) => {
 // Called if the user backs out of checkout without submitting
 export const markPaymentFailed = (bookingId) => {
     return api.post("/payments/fail", { bookingId });
+};
+
+// --- Razorpay Gateway Microservice Integration ---
+
+export const createRazorpayOrder = (bookingId) => {
+    return api.post("/payments/razorpay/create-order", { bookingId });
+};
+
+export const verifyRazorpayPayment = (data) => {
+    return api.post("/payments/razorpay/verify", data);
 };

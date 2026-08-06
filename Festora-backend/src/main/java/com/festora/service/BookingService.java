@@ -17,11 +17,13 @@ import com.festora.entity.Organizer;
 import com.festora.entity.Payment;
 import com.festora.entity.PaymentStatus;
 import com.festora.entity.Status;
+import com.festora.entity.Ticket;
 import com.festora.entity.User;
 import com.festora.repository.BookingRepository;
 import com.festora.repository.EventRepository;
 import com.festora.repository.OrganizerRepository;
 import com.festora.repository.PaymentRepository;
+import com.festora.repository.TicketRepository;
 import com.festora.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -34,6 +36,7 @@ public class BookingService {
 	private final UserRepository userRepository;
 	private final PaymentRepository paymentRepository;
 	private final OrganizerRepository organizerRepository;
+	private final TicketRepository ticketRepository;
 
 	private String firstImageUrl(Event event) {
 		if (event.getImages() == null || event.getImages().isEmpty()) {
@@ -44,12 +47,13 @@ public class BookingService {
 
 	public BookingService(BookingRepository bookingRepository, EventRepository eventRepository,
 			UserRepository userRepository, PaymentRepository paymentRepository,
-			OrganizerRepository organizerRepository) {
+			OrganizerRepository organizerRepository, TicketRepository ticketRepository) {
 		this.bookingRepository = bookingRepository;
 		this.eventRepository = eventRepository;
 		this.userRepository = userRepository;
 		this.paymentRepository = paymentRepository;
 		this.organizerRepository = organizerRepository;
+		this.ticketRepository = ticketRepository;
 	}
 
 	public List<String> getBookedSeatsForEvent(Long eventId) {
@@ -185,12 +189,61 @@ public class BookingService {
 		return bookingRepository.findByEventOrganizer(organizer);
 	}
 
-	public TicketVerificationResponse verifyTicket(Long id) {
-		Booking booking = bookingRepository.findById(id).orElse(null);
+	public TicketVerificationResponse verifyTicket(String token) {
+		if (token == null || token.trim().isEmpty()) {
+			return new TicketVerificationResponse(
+					null, "N/A", "N/A", null, "N/A", null, 0, "N/A", 0.0, null,
+					"INVALID", false, "❌ INVALID SEARCH: Verification token/code is empty."
+			);
+		}
+
+		String cleanToken = token.trim();
+		Booking booking = null;
+
+		// 1. Try finding by raw numeric ID
+		try {
+			Long id = Long.parseLong(cleanToken);
+			booking = bookingRepository.findById(id).orElse(null);
+		} catch (NumberFormatException ignored) {
+		}
+
+		// 2. Try finding by Ticket Number (e.g. TKT-19-1)
+		if (booking == null) {
+			Ticket ticket = ticketRepository.findByTicketNumber(cleanToken).orElse(null);
+			if (ticket != null) {
+				booking = ticket.getBooking();
+			}
+		}
+
+		// 3. Try finding by Seat Tier / Numbers (e.g. Executive-9, executive -9, Executive 9)
+		if (booking == null) {
+			List<Booking> matches = bookingRepository.findBySeatNumbersContainingIgnoreCase(cleanToken);
+			if (!matches.isEmpty()) {
+				booking = matches.get(0);
+			} else {
+				String normalizedToken = cleanToken.replaceAll("\\s*-\\s*", "-");
+				List<Booking> normMatches = bookingRepository.findBySeatNumbersContainingIgnoreCase(normalizedToken);
+				if (!normMatches.isEmpty()) {
+					booking = normMatches.get(0);
+				} else {
+					String compactToken = cleanToken.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+					for (Booking b : bookingRepository.findAll()) {
+						if (b.getSeatNumbers() != null) {
+							String compactSeat = b.getSeatNumbers().replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+							if (compactSeat.contains(compactToken) || compactToken.contains(compactSeat)) {
+								booking = b;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+
 		if (booking == null) {
 			return new TicketVerificationResponse(
-					id, "N/A", "N/A", null, "N/A", null, 0, "N/A", 0.0, null,
-					"INVALID", false, "❌ INVALID TICKET: No booking record found with Ticket ID #" + id
+					null, "N/A", "N/A", null, "N/A", null, 0, "N/A", 0.0, null,
+					"INVALID", false, "❌ INVALID TICKET: No booking record found matching '" + token + "'"
 			);
 		}
 

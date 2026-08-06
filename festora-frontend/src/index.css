@@ -47,12 +47,23 @@
   -webkit-font-smoothing: antialiased;
 }
 
+html {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scroll-behavior: smooth;
+  height: auto !important;
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
   background-color: var(--bg-main);
   color: var(--text-dark);
-  overflow-x: hidden;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  min-height: 100vh;
+  touch-action: manipulation;
 }
 
 #root {
@@ -63,6 +74,7 @@ body {
   text-align: left;
   display: flex;
   flex-direction: column;
+  overflow: visible !important;
 }
 
 /* 👁️ High Contrast & 100% Visibility Rules */

@@ -32,6 +32,12 @@ function Navbar() {
     return "/user/dashboard";
   };
 
+  const isBookingOrPaymentOrEventPage =
+    location.pathname.startsWith("/payment") ||
+    location.pathname.startsWith("/userbookings") ||
+    location.pathname.startsWith("/my-bookings") ||
+    location.pathname.startsWith("/event/");
+
   return (
     <nav className="navbar navbar-expand-lg festora-navbar">
       <div className="container">
@@ -99,12 +105,14 @@ function Navbar() {
                   <span className="badge bg-white text-dark fw-bold px-3 py-2 rounded-pill shadow-sm d-none d-lg-inline-flex align-items-center gap-1">
                     <FiUser className="text-primary" /> {name || "Account"}
                   </span>
-                  <button
-                    className="btn btn-outline-light festora-logout-btn rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-1"
-                    onClick={handleLogout}
-                  >
-                    <FiLogOut /> Logout
-                  </button>
+                  {!isBookingOrPaymentOrEventPage && (
+                    <button
+                      className="btn btn-outline-light festora-logout-btn rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-1"
+                      onClick={handleLogout}
+                    >
+                      <FiLogOut /> Logout
+                    </button>
+                  )}
                 </li>
               </>
             ) : (
