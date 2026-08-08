@@ -1,0 +1,10 @@
+target/
+.mvn/
+.classpath
+.project
+.factorypath
+.settings/
+.idea/
+.vscode/
+.env
+*.env
