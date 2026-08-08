@@ -53,7 +53,6 @@ export default function OrganizerVenues() {
       <div className="dashboard-main bg-light min-vh-100">
         <DashboardNavbar />
 
-        {/* Hero Header Banner */}
         <div
           className="rounded-4 p-4 text-white shadow-sm mb-4 mx-3"
           style={{
@@ -75,7 +74,7 @@ export default function OrganizerVenues() {
         </div>
 
         <div className="mx-3 mb-5">
-          {/* Search bar */}
+
           <div className="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
             <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
               <h5 className="fw-bold mb-0 d-flex align-items-center gap-2">

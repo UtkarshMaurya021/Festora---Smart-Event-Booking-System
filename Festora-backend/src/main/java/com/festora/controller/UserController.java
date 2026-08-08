@@ -33,8 +33,7 @@ public class UserController {
 	public Map<String, Object> dashboard(Authentication authentication) {
 
 		User user = userRepository.findByEmail(authentication.getName()).orElseThrow();
-		
-		// Fetch the list of active events from your service layer
+
 		List<Event> activeEvents = eventService.getAllActiveEvents();
 
 		Map<String, Object> map = new HashMap<>();
@@ -43,12 +42,10 @@ public class UserController {
 		map.put("email", user.getEmail());
 		map.put("bookings", bookingRepository.countByUser(user));
 		map.put("tickets", bookingRepository.countByUser(user));
-		
-		// ADD THIS: Calculate total active events count dynamically
-		map.put("upcoming", activeEvents.size()); 
 
-		// ADD THIS: Attach the list using the exact hyphenated key name your React app expects [1]
-		map.put("active-events", activeEvents); 
+		map.put("upcoming", activeEvents.size());
+
+		map.put("active-events", activeEvents);
 
 		return map;
 	}
@@ -57,7 +54,7 @@ public class UserController {
 	public List<Event> getAllEvents() {
 		return eventService.getAllActiveEvents();
 	}
-	
+
 	@GetMapping("/profile")
 	public UserProfileResponse getProfile(Authentication authentication) {
 		User user = userRepository.findByEmail(authentication.getName()).orElseThrow();

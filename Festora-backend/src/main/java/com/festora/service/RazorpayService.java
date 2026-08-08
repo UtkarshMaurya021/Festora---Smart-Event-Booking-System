@@ -33,7 +33,6 @@ public class RazorpayService {
         long amountInPaise = Math.round(booking.getTotalAmount() * 100);
         String razorpayOrderId = "order_" + System.currentTimeMillis() + String.format("%04d", random.nextInt(10000));
 
-        // Call official Razorpay Cloud API to create a real Order ID on Razorpay Sandbox servers
         try {
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
@@ -55,7 +54,7 @@ public class RazorpayService {
                 }
             }
         } catch (Exception e) {
-            // Log & fallback to mock ID if API call fails
+
             System.err.println("Fallback order ID created: " + e.getMessage());
         }
 

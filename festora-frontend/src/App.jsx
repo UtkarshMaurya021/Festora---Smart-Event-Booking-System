@@ -32,7 +32,7 @@ import About from "./pages/About";
 import PublicEvents from "./pages/PublicEvents";
 
 function App() {
-  // Clear any residual login session on fresh app launch
+
   if (!sessionStorage.getItem("appStarted")) {
     localStorage.clear();
     sessionStorage.setItem("appStarted", "true");

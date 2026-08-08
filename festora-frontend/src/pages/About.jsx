@@ -49,7 +49,6 @@ function About() {
     <>
       <Navbar />
 
-      {/* Hero */}
       <section className="about-hero">
         <div className="container text-center">
           <div className="about-logo">
@@ -66,7 +65,6 @@ function About() {
         </div>
       </section>
 
-      {/* Mission & Vision */}
       <section className="about-section">
         <div className="container">
           <div className="row g-4">
@@ -103,7 +101,6 @@ function About() {
         </div>
       </section>
 
-      {/* Real-time Platform Statistics */}
       <section className="about-stats">
         <div className="container">
           <div className="text-center text-white mb-4">
@@ -150,7 +147,6 @@ function About() {
         </div>
       </section>
 
-      {/* Features */}
       <section className="about-features">
         <div className="container">
 
@@ -229,7 +225,6 @@ function About() {
         </div>
       </section>
 
-      {/* How It Works */}
       <section className="about-section bg-light">
         <div className="container">
 
@@ -275,7 +270,6 @@ function About() {
         </div>
       </section>
 
-      {/* Technologies */}
       <section className="about-section">
         <div className="container">
 
@@ -314,7 +308,6 @@ function About() {
         </div>
       </section>
 
-      {/* Contact */}
       <section className="about-contact">
         <div className="container text-center">
 

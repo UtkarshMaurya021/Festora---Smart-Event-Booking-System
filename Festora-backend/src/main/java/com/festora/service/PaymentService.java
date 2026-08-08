@@ -51,9 +51,6 @@ public class PaymentService {
         this.razorpayService = razorpayService;
     }
 
-    /**
-     * Razorpay Microservice Integration: Delegates order creation to Port 8081 with fallback
-     */
     @Transactional
     public RazorpayOrderResponse createRazorpayOrder(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -96,9 +93,6 @@ public class PaymentService {
         return response;
     }
 
-    /**
-     * Razorpay Microservice Integration: Delegates HMAC signature verification to Port 8081 with fallback
-     */
     @Transactional
     public PaymentResult verifyRazorpayPayment(PaymentConfirmRequest request) throws Exception {
         Booking booking = bookingRepository.findById(request.getBookingId())
@@ -262,7 +256,7 @@ public class PaymentService {
         result.setQrCodePath(firstTicket != null ? firstTicket.getQrCodePath() : null);
 
         result.setBookingId(booking.getBookingId());
-        
+
         Event e = booking.getEvent();
         if (e != null) {
             result.setEventTitle(e.getTitle());
@@ -277,11 +271,11 @@ public class PaymentService {
                 result.setEventEndDatetime(e.getEventEndDatetime().toString());
             }
         }
-        
+
         result.setSeatNumbers(booking.getSeatNumbers());
         result.setTotalAmount(booking.getTotalAmount());
         result.setQuantity(booking.getQuantity());
-        
+
         result.setTickets(
                 tickets.stream()
                         .map(t -> new PaymentResult.TicketSummary(t.getTicketNumber(), t.getQrCodePath()))

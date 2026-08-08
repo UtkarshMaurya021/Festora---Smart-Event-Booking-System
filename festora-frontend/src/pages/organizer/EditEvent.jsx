@@ -20,7 +20,6 @@ function EditEvent() {
   const [categories, setCategories] = useState([]);
   const [venues, setVenues] = useState([]);
 
-  // Image URLs: pre-populated from the event's existing images
   const [imageUrls, setImageUrls] = useState([""]);
 
   useEffect(() => {
@@ -38,7 +37,6 @@ function EditEvent() {
         setCategoryId(ev.category?.categoryId || "");
         setVenueId(ev.venue?.venueId || "");
 
-        // Populate image URL inputs from the event's stored images
         if (ev.images && ev.images.length > 0) {
           setImageUrls(ev.images.map((img) => img.imageUrl));
         } else {
@@ -59,7 +57,6 @@ function EditEvent() {
     load();
   }, [id]);
 
-  // ---- image URL list helpers ----
   const handleImageUrlChange = (index, value) => {
     setImageUrls((prev) => prev.map((u, i) => (i === index ? value : u)));
   };
@@ -71,7 +68,7 @@ function EditEvent() {
   const removeImageUrl = (index) => {
     setImageUrls((prev) => prev.filter((_, i) => i !== index));
   };
-  // Called when an image is uploaded from ImageDropzone
+
   const handleImageUploaded = (url) => {
     setImageUrls((prev) => {
       const emptyIndex = prev.findIndex((u) => u.trim() === "");
@@ -87,7 +84,6 @@ function EditEvent() {
     try {
       const token = localStorage.getItem("token");
 
-      // Filter out blank URL entries before sending
       const filteredUrls = imageUrls
         .map((u) => u.trim())
         .filter((u) => u.length > 0);
@@ -208,12 +204,9 @@ function EditEvent() {
             ))}
           </select>
 
-          {/* ---- Image URLs ---- */}
-          {/* Drag & Drop Upload */}
           <label className="form-label fw-bold">Event Images</label>
           <ImageDropzone onUploaded={handleImageUploaded} />
 
-          {/* Manual URL Entry */}
           <label className="form-label fw-bold mt-3">Or paste image URLs</label>
           {imageUrls.map((url, index) => (
             <div key={index} className="d-flex gap-2 mb-2 align-items-center">
@@ -224,7 +217,7 @@ function EditEvent() {
                 value={url}
                 onChange={(e) => handleImageUrlChange(index, e.target.value)}
               />
-              {/* Live thumbnail preview */}
+
               {url.startsWith("http") && (
                 <img
                   src={url}

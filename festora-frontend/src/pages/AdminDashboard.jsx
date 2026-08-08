@@ -159,7 +159,7 @@ function AdminDashboard() {
         <DashboardNavbar />
 
         <div className="container-fluid px-3 py-2">
-          {/* Bulletproof Dark Hero Banner with Explicit Fallback */}
+
           <div
             className="dashboard-hero-banner mb-4"
             style={{
@@ -185,7 +185,6 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* Inline Feedback Banner */}
           {feedback && (
             <div className={`alert alert-${feedback.type} alert-dismissible fade show rounded-4 shadow-sm mb-4`} role="alert">
               {feedback.message}
@@ -193,7 +192,6 @@ function AdminDashboard() {
             </div>
           )}
 
-          {/* Top Metric Cards */}
           <div className="row g-4 mb-4">
             <div className="col-md-3">
               <div className="dashboard-card-surface card border-0 p-4 h-100 text-center">
@@ -236,7 +234,6 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* Navigation Tabs */}
           <div className="mb-4">
             <div className="btn-group w-100 shadow-sm rounded-4 overflow-hidden bg-white p-1 flex-wrap border">
               <button
@@ -278,7 +275,6 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* Tab 1: Organizer Requests */}
           {activeTab === "ORGANIZER_REQUESTS" && (
             <div className="dashboard-card-surface card border-0 p-4 mb-4">
               <h4 className="fw-bold mb-3 text-dark d-flex align-items-center gap-2">
@@ -342,7 +338,6 @@ function AdminDashboard() {
             </div>
           )}
 
-          {/* Tab 2: Event Requests */}
           {activeTab === "EVENT_REQUESTS" && (
             <div className="dashboard-card-surface card border-0 p-4 mb-4">
               <h4 className="fw-bold mb-3 text-dark d-flex align-items-center gap-2">
@@ -406,7 +401,6 @@ function AdminDashboard() {
             </div>
           )}
 
-          {/* Tab 3: Event Lifecycle Controls */}
           {activeTab === "EVENT_ACTIONS" && (
             <div className="dashboard-card-surface card border-0 p-4 mb-4">
               <h4 className="fw-bold mb-2 text-dark">Event Status & Lifecycle Email Triggers</h4>
@@ -461,7 +455,6 @@ function AdminDashboard() {
             </div>
           )}
 
-          {/* Tab 4: All Platform Bookings History */}
           {activeTab === "BOOKING_HISTORY" && (
             <div className="dashboard-card-surface card border-0 p-4 mb-4">
               <h4 className="fw-bold mb-3 text-dark d-flex align-items-center gap-2">
@@ -518,7 +511,6 @@ function AdminDashboard() {
             </div>
           )}
 
-          {/* Tab 5: All Platform Payment History */}
           {activeTab === "PAYMENT_HISTORY" && (
             <div className="dashboard-card-surface card border-0 p-4 mb-4">
               <h4 className="fw-bold mb-3 text-dark d-flex align-items-center gap-2">
@@ -568,7 +560,6 @@ function AdminDashboard() {
             </div>
           )}
 
-          {/* Tab 6: Email Logs */}
           {activeTab === "EMAIL_LOGS" && (
             <div className="dashboard-card-surface card border-0 p-4 mb-4">
               <div className="d-flex justify-content-between align-items-center mb-3">

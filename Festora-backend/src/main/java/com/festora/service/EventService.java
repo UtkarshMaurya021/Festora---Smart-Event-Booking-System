@@ -57,9 +57,6 @@ this.eventImageRepository = eventImageRepository;
 this.emailService = emailService;
 }
 
-// ===========================
-// CREATE EVENT (Requires Admin Approval)
-// ===========================
 public Event create(EventRequest request, String email) {
 
 User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
@@ -88,7 +85,6 @@ event.setPrice(request.getPrice() != null ? request.getPrice() : 0.0);
 event.setTotalSeats(request.getTotalSeats() != null ? request.getTotalSeats() : 100);
 event.setAvailableSeats(request.getTotalSeats() != null ? request.getTotalSeats() : 100);
 
-// Status is created as PENDING (Pending Admin Approval)
 event.setStatus(Status.PENDING);
 
 event.setCreatedAt(LocalDateTime.now());
@@ -102,10 +98,8 @@ Event saved = eventRepository.save(event);
 
 saveImages(saved, request.getImageUrls());
 
-// 1. Send Email Notification to Organizer (Request Submitted / Pending Approval)
 emailService.sendEventSubmittedToOrganizerEmail(user, saved);
 
-// 2. Send Real-Time Email Alert to Admin about the new event creation request
 try {
     List<User> admins = userRepository.findByRoleAndStatus(Role.ROLE_ADMIN, Status.ACTIVE);
     if (!admins.isEmpty()) {
@@ -125,9 +119,6 @@ try {
 return saved;
 }
 
-// ===========================
-// MY EVENTS
-// ===========================
 public List<Event> getMyEvents(String email) {
 
 User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
@@ -141,17 +132,11 @@ return organizerRepository.save(newOrganizer);
 return eventRepository.findByOrganizer(organizer);
 }
 
-// ===========================
-// GET SINGLE EVENT
-// ===========================
 public Event getEvent(Long id) {
 
 return eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
 }
 
-// ===========================
-// UPDATE EVENT
-// ===========================
 public Event updateEvent(Long id, EventRequest request, String email) {
 
 User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
@@ -199,9 +184,6 @@ replaceImages(saved, request.getImageUrls());
 return saved;
 }
 
-// ===========================
-// DELETE EVENT
-// ===========================
 public void deleteEvent(Long id, String email) {
 
 User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
@@ -225,7 +207,6 @@ if (bookingService != null) {
     bookingService.processAutoRefundsForInactivatedEvent(event);
 }
 
-// Send Email Notification to Organizer & Booked Attendees about event deletion
 emailService.sendEventCancelledEmail(user, event);
 }
 
@@ -276,9 +257,6 @@ public List<Event> getAllActiveEvents() {
 return eventRepository.findByStatus(Status.ACTIVE);
 }
 
-// ===========================
-// GET AND UPDATE ALL MY EVENTS
-// ===========================
 public List<Event> getAndUpdateOrganizerEvents(String email) {
 User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class RazorpayOrderResponse {
     private String razorpayOrderId;
     private String keyId;
-    private Long amount; // in paise
+    private Long amount;
     private String currency;
     private Long bookingId;
     private String eventTitle;

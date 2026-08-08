@@ -45,7 +45,6 @@ public class RazorpayMicroservice {
         long amountInPaise = Math.round(price * 100);
         String razorpayOrderId = "order_" + System.currentTimeMillis() + String.format("%04d", random.nextInt(10000));
 
-        // Call official Razorpay Cloud API to create a real Order ID on Razorpay Sandbox servers
         try {
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();

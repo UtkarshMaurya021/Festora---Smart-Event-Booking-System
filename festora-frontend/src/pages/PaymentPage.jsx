@@ -194,7 +194,6 @@ function PaymentPage() {
         return;
       }
 
-      // Open Official Razorpay Gateway Modal UI
       const options = {
         key: rzpOrder.keyId || "rzp_test_TIuNseQI3AsTL4",
         amount: rzpOrder.amount,
@@ -325,7 +324,6 @@ function PaymentPage() {
 
         if (i > 0) doc.addPage();
 
-        // Dark Banner Header
         doc.setFillColor(15, 23, 42);
         doc.rect(0, 0, pageWidth, 90, "F");
         doc.setTextColor(255, 255, 255);
@@ -370,12 +368,12 @@ function PaymentPage() {
 
         detailRow("Ticket Number", ticket.ticketNumber || `TKT-${bookingId}-${i+1}`);
         detailRow("Seat / Tier No", seatTierText);
-        
+
         const startText = formatDateTime(result.eventStartDatetime || booking?.eventStartDatetime);
         const endText = formatDateTime(result.eventEndDatetime || booking?.eventEndDatetime);
         if (startText) detailRow("Event Starts", startText);
         if (endText) detailRow("Event Ends", endText);
-        
+
         const amountVal = result.totalAmount || booking?.totalAmount;
         if (amountVal) detailRow("Total Amount Paid", `₹${amountVal}`);
 
@@ -440,10 +438,9 @@ function PaymentPage() {
       <div className="container my-4">
         <div className="row justify-content-center">
           <div className="col-lg-8 col-xl-7">
-            {/* Elevated Main Card Container */}
+
             <div className="card border-0 rounded-4 shadow-sm overflow-hidden bg-white">
-              
-              {/* Dark Indigo Hero Header */}
+
               <div
                 className="dashboard-hero-banner"
                 style={{
@@ -483,10 +480,8 @@ function PaymentPage() {
                 )}
               </div>
 
-              {/* Card Body */}
               <div className="p-4 p-md-5">
-                
-                {/* STEP 1: SUMMARY */}
+
                 {step === "summary" && (
                   <>
                     <h4 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
@@ -514,7 +509,6 @@ function PaymentPage() {
 
                     {error && <div className="alert alert-danger rounded-4 fw-semibold mb-4">{error}</div>}
 
-                    {/* MAIN PRIMARY BUTTON: Razorpay Gateway */}
                     <button
                       className="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow mb-3 d-flex align-items-center justify-content-center gap-2"
                       style={{ background: "linear-gradient(135deg, #4f46e5 0%, #312e81 100%)", border: "none" }}
@@ -525,7 +519,6 @@ function PaymentPage() {
                       {starting ? "Launching Payment Gateway…" : `Pay ₹${booking.totalAmount} via Razorpay Gateway`}
                     </button>
 
-                    {/* SECONDARY BUTTON: FestoraPay Modal Gateway */}
                     <button
                       className="btn btn-outline-primary btn-lg w-100 rounded-pill py-3 fw-bold mb-3 d-flex align-items-center justify-content-center gap-2"
                       onClick={() => setShowFestoraPayModal(true)}
@@ -541,7 +534,6 @@ function PaymentPage() {
                   </>
                 )}
 
-                {/* STEP 2: DIRECT TEST CHECKOUT FORM */}
                 {step === "checkout" && order && (
                   <>
                     <div className="d-flex justify-content-between align-items-center mb-4">
@@ -556,7 +548,6 @@ function PaymentPage() {
                       <h2 className="fw-bold text-success mb-0">₹{order.amount}</h2>
                     </div>
 
-                    {/* Method Selector Tabs */}
                     <div className="row g-2 mb-4">
                       {METHODS.map((m) => {
                         const Icon = m.icon;
@@ -578,7 +569,6 @@ function PaymentPage() {
                       })}
                     </div>
 
-                    {/* Checkout Inputs */}
                     <form onSubmit={handlePay}>
                       {method === "RAZORPAY" && (
                         <div className="bg-light rounded-4 p-4 text-center border mb-4">
@@ -687,7 +677,6 @@ function PaymentPage() {
                   </>
                 )}
 
-                {/* STEP 3: PROCESSING */}
                 {step === "processing" && (
                   <div className="text-center py-5">
                     <div className="spinner-border text-primary mb-3" style={{ width: "3.5rem", height: "3.5rem" }} role="status">
@@ -698,7 +687,6 @@ function PaymentPage() {
                   </div>
                 )}
 
-                {/* STEP 4: SUCCESS WITH E-TICKET PASS */}
                 {step === "success" && result && (
                   <div>
                     {(() => {
@@ -715,7 +703,7 @@ function PaymentPage() {
                           {tickets.map((ticket, idx) => (
                             <div className={tickets.length > 1 ? "col-md-6" : "col-12"} key={ticket.ticketNumber || idx}>
                               <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white text-center" style={{ border: "2px dashed #cbd5e1" }}>
-                                {/* Ticket Dark Header */}
+
                                 <div className="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
                                   <span className="fw-bold tracking-wide">FESTORA E-TICKET</span>
                                   <span className="badge bg-primary text-white">{ticket.ticketNumber}</span>
@@ -725,7 +713,6 @@ function PaymentPage() {
                                   <h4 className="fw-bold text-dark mb-1">{result.eventTitle || booking?.eventTitle}</h4>
                                   <p className="text-muted small mb-3">{result.venueName || booking?.venueName || "Central Convention Hall"}</p>
 
-                                  {/* QR Code */}
                                   <div className="d-inline-block p-3 bg-light rounded-4 border mb-3">
                                     <img
                                       src={`${API_HOST}/${ticket.qrCodePath}`}
@@ -777,7 +764,6 @@ function PaymentPage() {
                   </div>
                 )}
 
-                {/* STEP 5: FAILED */}
                 {step === "failed" && result && (
                   <div className="text-center py-4">
                     <FiXCircle className="text-danger mb-3" size={64} />
@@ -795,7 +781,6 @@ function PaymentPage() {
         </div>
       </div>
 
-      {/* 💳 SECONDARY FESTORAPAY CHECKOUT MODAL UI */}
       {showFestoraPayModal && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
@@ -810,7 +795,7 @@ function PaymentPage() {
             className="card border-0 rounded-4 shadow-lg overflow-hidden bg-white w-100"
             style={{ maxWidth: "520px" }}
           >
-            {/* Modal Hero Header */}
+
             <div
               className="p-4 text-white position-relative"
               style={{
@@ -838,11 +823,9 @@ function PaymentPage() {
               </div>
             </div>
 
-            {/* Modal Body */}
             <div className="p-4">
               <div className="text-muted small fw-bold text-uppercase mb-3">Select Preferred Payment Mode</div>
 
-              {/* Method Selector Tabs */}
               <div className="row g-2 mb-4">
                 {METHODS.filter((m) => m.id !== "RAZORPAY").map((m) => {
                   const Icon = m.icon;
@@ -951,7 +934,6 @@ function PaymentPage() {
                   </div>
                 )}
 
-                {/* Primary FestoraPay Checkout Submit Button */}
                 <button
                   type="submit"
                   className="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow d-flex align-items-center justify-content-center gap-2"

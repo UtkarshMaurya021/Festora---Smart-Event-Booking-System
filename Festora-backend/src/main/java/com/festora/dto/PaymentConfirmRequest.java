@@ -11,7 +11,6 @@ public class PaymentConfirmRequest {
     private String cardNumber;
     private String upiId;
 
-    // Razorpay Gateway Verification parameters
     private String razorpayOrderId;
     private String razorpayPaymentId;
     private String razorpaySignature;

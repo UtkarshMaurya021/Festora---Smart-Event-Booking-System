@@ -1,19 +1,19 @@
 package com.festora.entity;
 
 public enum Status {
-	ACTIVE,           // Approved & open for booking
+	ACTIVE,
 
-	FULL,             // Available seats = 0
+	FULL,
 
-	STARTED,          // Current time >= eventStartDatetime
+	STARTED,
 
-	COMPLETED,        // Current time > eventEndDatetime
+	COMPLETED,
 
-	INACTIVE,         // Cancelled / Rejected by organizer/admin
+	INACTIVE,
 
-	PENDING,          // Pending Admin approval
+	PENDING,
 
-	PENDING_APPROVAL, // Pending Admin approval (alias for clarity)
+	PENDING_APPROVAL,
 
-	CANCELLED         // Cancelled reservation
+	CANCELLED
 }

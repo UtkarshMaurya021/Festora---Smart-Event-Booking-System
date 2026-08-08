@@ -1,33 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* 🎨 Premium Design System Tokens */
+
   --font-primary: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
 
-  /* Landing Page Brand Colors */
   --brand-dark: #0f172a;
   --brand-deep: #1e1b4b;
   --primary: #4f46e5;
   --primary-hover: #4338ca;
   --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
   --hero-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
-  
-  /* Accent Palettes */
+
   --accent-indigo: #6366f1;
   --accent-emerald: #10b981;
   --accent-amber: #f59e0b;
   --accent-rose: #f43f5e;
   --accent-cyan: #0ea5e9;
-  
-  /* Surfaces */
+
   --bg-main: #f8fafc;
   --card-bg: #ffffff;
   --border-color: #e2e8f0;
   --text-dark: #0f172a;
   --text-muted: #64748b;
-  
-  /* Shadows & Radius */
+
   --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 8px 20px -4px rgba(15, 23, 42, 0.08);
   --shadow-lg: 0 20px 30px -10px rgba(15, 23, 42, 0.12);
@@ -36,7 +32,6 @@
   --radius-lg: 16px;
   --radius-pill: 9999px;
 
-  /* Force Light Color Scheme for 100% High Contrast Visibility */
   color-scheme: light;
   font-family: var(--font-primary);
   font-size: 15px;
@@ -77,7 +72,6 @@ body {
   overflow: visible !important;
 }
 
-/* 👁️ High Contrast & 100% Visibility Rules */
 input, select, textarea {
   color: #0f172a !important;
 }
@@ -92,7 +86,6 @@ input::placeholder, textarea::placeholder {
   opacity: 1 !important;
 }
 
-/* 🚀 High-Specificity Bulletproof Hero Banner Component */
 div.dashboard-hero-banner {
   background: #0f172a !important;
   background-image: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #312e81 100%) !important;
@@ -127,7 +120,6 @@ div.dashboard-hero-banner p {
   padding: 6px 16px !important;
 }
 
-/* Card Surfaces */
 div.dashboard-card-surface {
   background: #ffffff !important;
   border-radius: 16px !important;
@@ -141,7 +133,6 @@ div.dashboard-card-surface:hover {
   box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.12) !important;
 }
 
-/* Stat Badge Boxes */
 .stat-box-indigo {
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
   color: #ffffff !important;
@@ -166,7 +157,6 @@ div.dashboard-card-surface:hover {
   box-shadow: 0 8px 16px rgba(236, 72, 153, 0.3) !important;
 }
 
-/* Table Styling */
 .table {
   color: #0f172a !important;
   margin-bottom: 0 !important;
@@ -194,7 +184,6 @@ div.dashboard-card-surface:hover {
   background-color: #f8fafc !important;
 }
 
-/* Glassmorphism Utility */
 .glass-card {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
@@ -203,7 +192,6 @@ div.dashboard-card-surface:hover {
   box-shadow: var(--shadow-md);
 }
 
-/* Card Elevations & Micro-Interactions */
 .card {
   border-radius: var(--radius-lg) !important;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
@@ -214,7 +202,6 @@ div.dashboard-card-surface:hover {
   box-shadow: var(--shadow-lg) !important;
 }
 
-/* Buttons */
 .btn {
   font-family: var(--font-primary);
   font-weight: 600;
@@ -248,14 +235,12 @@ div.dashboard-card-surface:hover {
   color: #ffffff !important;
 }
 
-/* Badges */
 .badge {
   font-family: var(--font-primary);
   letter-spacing: 0.3px;
   border-radius: var(--radius-pill);
 }
 
-/* Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

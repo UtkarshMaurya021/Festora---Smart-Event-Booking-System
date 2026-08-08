@@ -49,12 +49,10 @@ public class AuthController {
         User user = repo.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid Credentials"));
 
-        // Blocked / Inactive account check
         if (user.getStatus() == Status.INACTIVE) {
             throw new RuntimeException("Your account has been blocked or disabled by the Administrator. Access denied.");
         }
 
-        // Pending organizer check
         if (user.getStatus() == Status.PENDING) {
             throw new RuntimeException("Your account is currently PENDING approval by the Administrator. Please wait for activation.");
         }

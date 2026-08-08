@@ -48,7 +48,7 @@ function UserProfile() {
         <DashboardNavbar />
 
         <div className="container-fluid px-4 py-4">
-          {/* Header Banner */}
+
           <div
             className="rounded-4 p-5 text-white shadow-lg mb-4"
             style={{

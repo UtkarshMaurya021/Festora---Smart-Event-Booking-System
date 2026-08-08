@@ -47,7 +47,7 @@ public class EventController {
             return ResponseEntity.status(401).body("User is not authenticated");
         }
 
-        service.deleteEvent(id, authentication.getName());  
+        service.deleteEvent(id, authentication.getName());
         return ResponseEntity.ok("Event deleted successfully");
     }
 }

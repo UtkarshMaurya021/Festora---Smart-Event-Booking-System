@@ -104,7 +104,6 @@ export default function CategoryManagement() {
       <div className="dashboard-main bg-light min-vh-100">
         <DashboardNavbar />
 
-        {/* Hero Header Banner */}
         <div
           className="rounded-4 p-4 text-white shadow-sm mb-4 mx-3"
           style={{
@@ -129,7 +128,6 @@ export default function CategoryManagement() {
           {error && <div className="alert alert-danger rounded-4">{error}</div>}
           {successMsg && <div className="alert alert-success rounded-4">{successMsg}</div>}
 
-          {/* Create Category Card */}
           <div className="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
             <h5 className="fw-bold mb-3 d-flex align-items-center gap-2">
               <FiPlusCircle className="text-success" /> Add New Category
@@ -156,7 +154,6 @@ export default function CategoryManagement() {
             </form>
           </div>
 
-          {/* Categories Table View Card */}
           <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
             <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
               <h4 className="fw-bold mb-0 d-flex align-items-center gap-2">

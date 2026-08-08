@@ -45,7 +45,6 @@ public class UserService {
         Role role = request.getRole() != null ? request.getRole() : Role.ROLE_USER;
         user.setRole(role);
 
-        // Organizers need admin approval before they can log in
         user.setStatus(role == Role.ROLE_ORGANIZER ? Status.PENDING : Status.ACTIVE);
         user.setCreatedAt(LocalDateTime.now());
 

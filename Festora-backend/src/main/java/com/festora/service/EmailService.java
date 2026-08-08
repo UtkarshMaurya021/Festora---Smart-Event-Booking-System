@@ -20,10 +20,6 @@ import com.festora.repository.EmailLogRepository;
 
 import jakarta.mail.internet.MimeMessage;
 
-/**
- * Real-Time Email Notification Service
- * Dispatches HTML emails instantly in the main thread with dual-port fallback (Port 587 -> Port 465 SSL).
- */
 @Service
 public class EmailService {
 
@@ -106,9 +102,6 @@ public class EmailService {
         );
     }
 
-    /**
-     * Dispatches HTML email synchronously in real-time.
-     */
     public void sendAndLogHtml(String recipient, String subject, String contentHtml, String plainBody, String notificationType) {
         String status = "SIMULATED";
 

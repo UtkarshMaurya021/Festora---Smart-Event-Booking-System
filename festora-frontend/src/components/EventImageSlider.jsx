@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
 
-/**
- * Shows an event's image. If there is more than one image, auto-slides
- * through them on an interval. Falls back to a placeholder block when the
- * event has no images.
- */
 function EventImageSlider({ images = [], height = 180, interval = 3000 }) {
   const [activeIndex, setActiveIndex] = useState(0);
 

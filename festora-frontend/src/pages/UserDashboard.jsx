@@ -52,7 +52,7 @@ function UserDashboard() {
         <DashboardNavbar />
 
         <div className="container-fluid px-3 py-2">
-          {/* Bulletproof Dark Hero Banner with Explicit Fallback */}
+
           <div
             className="dashboard-hero-banner mb-4"
             style={{
@@ -81,7 +81,6 @@ function UserDashboard() {
             </div>
           </div>
 
-          {/* Stats Cards */}
           <div className="row g-4 mb-4">
             <div className="col-lg-4">
               <div className="dashboard-card-surface card border-0 p-4 h-100 text-center">
@@ -114,7 +113,6 @@ function UserDashboard() {
             </div>
           </div>
 
-          {/* Events Catalog */}
           <div className="dashboard-card-surface card border-0 p-4">
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
               <h4 className="fw-bold mb-0 text-dark">Approved Live Events</h4>

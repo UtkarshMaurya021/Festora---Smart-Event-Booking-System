@@ -70,8 +70,8 @@ public class TicketService {
             ticket.setIssueDate(LocalDateTime.now());
             ticket.setStatus(TicketStatus.VALID);
 
-            String assignedSeat = (seatsArray != null && seatIndex < seatsArray.length) 
-                ? seatsArray[seatIndex] 
+            String assignedSeat = (seatsArray != null && seatIndex < seatsArray.length)
+                ? seatsArray[seatIndex]
                 : "Seat " + (seatIndex + 1);
             ticket.setSeatNumber(assignedSeat);
 

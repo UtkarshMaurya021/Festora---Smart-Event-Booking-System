@@ -33,8 +33,6 @@ function Sidebar() {
 
       <hr className="sidebar-divider" />
 
-      {/* USER */}
-
       {role === "ROLE_USER" && (
         <nav className="sidebar-menu">
 
@@ -65,8 +63,6 @@ function Sidebar() {
 
         </nav>
       )}
-
-      {/* ORGANIZER */}
 
       {role === "ROLE_ORGANIZER" && (
         <nav className="sidebar-menu">
@@ -108,8 +104,6 @@ function Sidebar() {
 
         </nav>
       )}
-
-      {/* ADMIN */}
 
       {role === "ROLE_ADMIN" && (
         <nav className="sidebar-menu">

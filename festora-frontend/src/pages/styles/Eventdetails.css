@@ -1,8 +1,3 @@
-/* ===================== Event Details Page ===================== */
-/* Reuses the app's existing tokens (--primary, --secondary, --accent,
-   --background, --card, --text, --gray) defined in App.css, so this
-   page stays visually consistent with Auth/Payment/Dashboard rather
-   than introducing an unrelated palette. */
 
 .eventdetail-page {
   min-height: 100vh;
@@ -63,8 +58,6 @@
   font-size: 14.5px;
 }
 
-/* ---- Grid: main content + sticky booking card ---- */
-
 .eventdetail-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -78,16 +71,12 @@
   }
 }
 
-/* ---- Gallery ---- */
-
 .eventdetail-gallery {
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(15, 23, 42, .08);
   margin-bottom: 24px;
 }
-
-/* ---- Heading ---- */
 
 .eventdetail-eyebrow {
   display: inline-flex;
@@ -123,11 +112,6 @@
 .eventdetail-subline svg {
   flex-shrink: 0;
 }
-
-/* ---- Ticket-stub facts strip ----
-   Deliberately echoes the QR ticket card the buyer receives after
-   payment (see .ticket-card in App.css): the same dashed perforation
-   and stub rhythm here, previewing what the ticket will look like. */
 
 .eventdetail-stub {
   position: relative;
@@ -188,8 +172,6 @@
   }
 }
 
-/* ---- About ---- */
-
 .eventdetail-about h2 {
   font-size: 19px;
   font-weight: 800;
@@ -203,8 +185,6 @@
   color: #475569;
   white-space: pre-line;
 }
-
-/* ---- Booking card ---- */
 
 .eventdetail-book-card {
   background: var(--card);

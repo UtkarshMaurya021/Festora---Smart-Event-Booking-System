@@ -159,7 +159,6 @@ function CreateEvent() {
             </span>
           </div>
 
-          {/* Inline Feedback Messages (No Alert Popups) */}
           {errorMsg && <div className="alert alert-danger rounded-3 mb-3">{errorMsg}</div>}
           {successMsg && <div className="alert alert-success rounded-3 mb-3">{successMsg}</div>}
 
@@ -269,7 +268,6 @@ function CreateEvent() {
             </div>
           </div>
 
-          {/* Image Upload */}
           <div className="mb-4">
             <label className="form-label fw-bold">Event Banner / Images</label>
             <ImageDropzone onUploaded={handleImageUploaded} />

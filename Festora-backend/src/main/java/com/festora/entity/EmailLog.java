@@ -27,9 +27,9 @@ public class EmailLog {
     @Column(length = 4000)
     private String body;
 
-    private String notificationType; // ORGANIZER_APPROVED, EVENT_APPROVED, TICKET_BOOKED, EVENT_CANCELLED, EVENT_STARTED, EVENT_COMPLETED, FORGOT_PASSWORD
+    private String notificationType;
 
-    private String status; // SENT, FAILED, SIMULATED
+    private String status;
 
     private LocalDateTime sentAt;
 }

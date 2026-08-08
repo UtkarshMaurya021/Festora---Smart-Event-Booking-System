@@ -15,12 +15,11 @@ function Login() {
   const location = useLocation();
   const infoMessage = location.state?.message;
 
-  // Forgot password modal state
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [otpToken, setOtpToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [forgotStep, setForgotStep] = useState(1); // 1: Email, 2: Reset
+  const [forgotStep, setForgotStep] = useState(1);
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotMsg, setForgotMsg] = useState("");
   const [forgotError, setForgotError] = useState("");
@@ -175,7 +174,6 @@ function Login() {
         </p>
       </form>
 
-      {/* Forgot Password Modal */}
       {showForgotModal && (
         <div style={{
           position: "fixed",

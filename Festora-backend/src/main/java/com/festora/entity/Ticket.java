@@ -43,7 +43,6 @@ public class Ticket {
     @Column(columnDefinition = "VARCHAR(50)")
     private TicketStatus status;
 
-    // Set when the ticket is scanned/checked in at the venue; null until then.
     private LocalDateTime verifiedAt;
 
 }

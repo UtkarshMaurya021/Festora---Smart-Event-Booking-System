@@ -43,7 +43,6 @@ function Signup() {
       err.email = "Enter a valid email";
     }
 
-    // Phone is optional, but if provided it must be valid
     if (phone.trim() && !/^[0-9]{10}$/.test(phone)) {
       err.phone = "Phone number must contain exactly 10 digits";
     }

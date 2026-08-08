@@ -158,7 +158,6 @@ background:white;
 box-shadow:0 10px 25px rgba(0,0,0,.08);
 
 }
-/* ===================== Auth Pages (Login / Signup) ===================== */
 
 .auth-page{
     display:flex;
@@ -169,7 +168,6 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
     text-align:left;
 }
 
-/* ---- Left brand panel ---- */
 .auth-left{
     position:relative;
     flex:0 0 44%;
@@ -241,7 +239,6 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
     margin:0;
 }
 
-/* ---- Right form panel ---- */
 .auth-right{
     flex:1;
     display:flex;
@@ -421,7 +418,6 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
     text-decoration:underline;
 }
 
-/* ---- Role toggle (signup) ---- */
 .auth-role-toggle{
     display:flex;
     gap:10px;
@@ -454,7 +450,6 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
     box-shadow:0 2px 6px rgba(15,23,42,.08);
 }
 
-/* ---- Responsive ---- */
 @media (max-width: 900px){
     .auth-page{
         flex-direction:column;
@@ -475,8 +470,6 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
         padding:36px 24px;
     }
 }
-
-/* ===================== Payment Page (FestoraPay) ===================== */
 
 .payment-page{
     min-height:100vh;
@@ -637,8 +630,6 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
     margin:18px 0 0 0;
 }
 
-/* ---- FestoraPay checkout (method tabs + form) ---- */
-
 .payment-back-btn{
     display:inline-flex;
     align-items:center;
@@ -751,8 +742,6 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
     color:#475569;
 }
 
-/* ---- Processing / Success / Failed screens ---- */
-
 .payment-status-screen{
     display:flex;
     flex-direction:column;
@@ -804,7 +793,6 @@ box-shadow:0 10px 25px rgba(0,0,0,.08);
 .payment-status-screen .payment-pay-btn{
     max-width:260px;
 }
-/* ---- QR ticket card (post-payment) ---- */
 
 .ticket-card-list{
     display:flex;

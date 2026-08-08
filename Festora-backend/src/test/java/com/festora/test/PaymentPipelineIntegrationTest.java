@@ -170,7 +170,7 @@ public class PaymentPipelineIntegrationTest {
 
         Assertions.assertNotNull(orderResponse);
         Assertions.assertNotNull(orderResponse.getRazorpayOrderId());
-        Assertions.assertEquals(100000L, orderResponse.getAmount()); // 1000 INR = 100000 paise
+        Assertions.assertEquals(100000L, orderResponse.getAmount());
 
         PaymentConfirmRequest confirmReq = new PaymentConfirmRequest();
         confirmReq.setBookingId(booking.getBookingId());

@@ -16,11 +16,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// --- Automatic access-token refresh on 401 ---
-//
-// Plain axios instance (not `api`) so this call never gets caught by the
-// interceptors below and doesn't carry a (possibly expired) Authorization
-// header.
 const refreshClient = axios.create({ baseURL: BASE_URL });
 
 let isRefreshing = false;

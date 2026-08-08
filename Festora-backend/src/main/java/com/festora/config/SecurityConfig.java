@@ -46,7 +46,7 @@ public class SecurityConfig {
 				.sessionManagement(session ->
 				session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-				        // Public APIs
+
 				        .requestMatchers(
 				                "/api/auth/**",
 				                "/api/public/**",
@@ -56,23 +56,18 @@ public class SecurityConfig {
 				                "/uploads/**"
 				        ).permitAll()
 
-				        // Admin only
 				        .requestMatchers("/api/admin/**")
 				        .hasRole("ADMIN")
 
-				        // Organizer only
 				        .requestMatchers("/api/organizer/**")
 				        .hasRole("ORGANIZER")
 
-				        // Bookings (Accessible by USER, ORGANIZER, ADMIN)
 				        .requestMatchers("/api/bookings/**")
 				        .hasAnyRole("USER", "ORGANIZER", "ADMIN")
 
-				        // Payments
 				        .requestMatchers("/api/payments/**")
 				        .hasAnyRole("USER", "ADMIN")
 
-				        // Common authenticated APIs
 				        .requestMatchers("/api/user/**")
 				        .hasAnyRole("USER", "ADMIN", "ORGANIZER")
 

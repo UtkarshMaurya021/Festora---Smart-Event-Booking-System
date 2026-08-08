@@ -67,7 +67,6 @@ function LandingPage() {
     <>
       <Navbar />
 
-      {/* Hero Section */}
       <section className="landing-hero py-5">
         <div className="landing-hero-texture" />
 
@@ -86,7 +85,6 @@ function LandingPage() {
                 Music festivals, workshops, hackathons, sports and college fests — discovered in minutes, booked in seconds with instant gate QR tickets.
               </p>
 
-              {/* Action Buttons */}
               <div className="d-flex align-items-center gap-3 mb-4 flex-wrap">
                 <Link
                   to="/events"
@@ -112,7 +110,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Multi-Colored Trust Strip */}
       <section className="landing-stats-strip py-4 bg-white border-bottom">
         <div className="container">
           <div className="row text-center g-4">
@@ -191,7 +188,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Dynamic Active Events Section */}
       <section className="py-5 bg-light">
         <div className="container py-3">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
@@ -285,7 +281,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Why Choose Festora */}
       <section className="landing-why-section py-5">
         <div className="container">
           <div className="text-center mb-5">
@@ -386,7 +381,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works */}
       <section className="landing-how-section py-5">
         <div className="container">
           <div className="text-center mb-5">

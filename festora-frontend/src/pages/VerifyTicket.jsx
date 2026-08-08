@@ -38,7 +38,6 @@ export default function VerifyTicket() {
       <div className="dashboard-main bg-light min-vh-100">
         <DashboardNavbar />
 
-        {/* Hero Header Banner */}
         <div
           className="rounded-4 p-4 text-white shadow-sm mb-4 mx-3"
           style={{
@@ -60,7 +59,7 @@ export default function VerifyTicket() {
         </div>
 
         <div className="mx-3 mb-5" style={{ maxWidth: 800 }}>
-          {/* Lookup Input Card */}
+
           <div className="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
             <h4 className="fw-bold mb-3 d-flex align-items-center gap-2">
               <FiCheckSquare className="text-primary" /> Enter Seat Tier / Numbers or Ticket Code
@@ -93,7 +92,6 @@ export default function VerifyTicket() {
             {error && <div className="alert alert-danger rounded-4 mt-3 mb-0">{error}</div>}
           </div>
 
-          {/* Verification Result Card */}
           {result && (
             <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
               <div

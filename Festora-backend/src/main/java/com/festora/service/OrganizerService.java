@@ -67,7 +67,6 @@ public class OrganizerService {
 
 		);
 
-		// New event requests require Admin approval before going live
 		event.setStatus(Status.PENDING);
 
 		return eventRepository.save(event);

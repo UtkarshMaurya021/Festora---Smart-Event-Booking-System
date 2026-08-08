@@ -68,7 +68,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (UsernameNotFoundException | JwtException | IllegalArgumentException e) {
 
-            // Ignore invalid/expired tokens and continue the request.
             SecurityContextHolder.clearContext();
 
         }

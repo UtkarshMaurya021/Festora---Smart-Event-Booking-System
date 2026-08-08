@@ -22,7 +22,6 @@ function ImageDropzone({ onUploaded }) {
       const formData = new FormData();
       formData.append("file", file);
 
-      // Do NOT set explicit Content-Type header so browser/Axios sets correct multipart boundary
       const res = await api.post("/organizer/upload-image", formData);
 
       if (res.data?.url) {

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RazorpayVerifyResponse {
     private boolean verified;
-    private String status; // SUCCESS or FAILED
+    private String status;
     private String message;
     private String razorpayOrderId;
     private String razorpayPaymentId;

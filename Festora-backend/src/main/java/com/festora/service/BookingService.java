@@ -84,7 +84,7 @@ public class BookingService {
 	private BookingResponse mapToBookingResponse(Booking b) {
 		Event e = b.getEvent();
 		String vName = (e != null && e.getVenue() != null) ? e.getVenue().getVenueName() : "N/A";
-		String vAddr = (e != null && e.getVenue() != null) 
+		String vAddr = (e != null && e.getVenue() != null)
 				? (e.getVenue().getAddress() + (e.getVenue().getCity() != null ? ", " + e.getVenue().getCity() : ""))
 				: "N/A";
 		LocalDateTime startDt = (e != null) ? e.getEventStartDatetime() : null;
@@ -273,14 +273,12 @@ public class BookingService {
 		String cleanToken = token.trim();
 		Booking booking = null;
 
-		// 1. Try finding by raw numeric ID
 		try {
 			Long id = Long.parseLong(cleanToken);
 			booking = bookingRepository.findById(id).orElse(null);
 		} catch (NumberFormatException ignored) {
 		}
 
-		// 2. Try finding by Ticket Number (e.g. TKT-19-1)
 		if (booking == null) {
 			Ticket ticket = ticketRepository.findByTicketNumber(cleanToken).orElse(null);
 			if (ticket != null) {
@@ -288,7 +286,6 @@ public class BookingService {
 			}
 		}
 
-		// 3. Try finding by Seat Tier / Numbers (e.g. Executive-9, executive -9, Executive 9)
 		if (booking == null) {
 			List<Booking> matches = bookingRepository.findBySeatNumbersContainingIgnoreCase(cleanToken);
 			if (!matches.isEmpty()) {

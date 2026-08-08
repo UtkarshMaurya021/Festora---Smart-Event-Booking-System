@@ -36,8 +36,6 @@ public class PaymentController {
 		return "Payment marked as failed";
 	}
 
-	// --- Razorpay Payment Microservice Endpoints ---
-
 	@PostMapping("/razorpay/create-order")
 	public RazorpayOrderResponse createRazorpayOrder(@RequestBody MapRequest request) {
 		return paymentService.createRazorpayOrder(request.getBookingId());

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PaymentResult {
 
-    private String status;   // SUCCESS or FAILED
+    private String status;
 
     private String message;
 

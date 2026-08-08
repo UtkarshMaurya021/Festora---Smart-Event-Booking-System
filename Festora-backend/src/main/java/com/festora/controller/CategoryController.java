@@ -22,13 +22,12 @@ public class CategoryController {
     public List<Category> getAllForAdmin() {
         return service.getAll();
     }
-    // Accessible to all users for dropdown lists
+
     @GetMapping("/api/categories")
     public List<Category> getAll() {
         return service.getAll();
     }
 
-    // Administrative modification routes remain restricted
     @PostMapping("/api/admin/categories")
     public Category save(@Valid @RequestBody Category category) {
         return service.save(category);

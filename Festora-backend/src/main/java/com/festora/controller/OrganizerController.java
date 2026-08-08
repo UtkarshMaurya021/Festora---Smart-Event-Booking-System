@@ -51,7 +51,6 @@ public class OrganizerController {
         eventService.deleteEvent(id, authentication.getName());
     }
 
-    // NEW ENDPOINT
     @GetMapping("/events/summary")
     public List<EventSummaryResponse> myEventsSummary(Authentication authentication) {
         return eventService.getMyEventsSummary(authentication.getName());
@@ -77,11 +76,6 @@ public class OrganizerController {
         return eventService.getMyActiveEvents(authentication.getName());
     }
 
-    // Drag-and-drop / browse image upload for event images. Saves the file
-    // under uploads/events (served statically via WebConfig -> "/uploads/**",
-    // same convention as the QR code images in TicketService) and hands back
-    // a full URL that the frontend can drop straight into imageUrls, exactly
-    // like a pasted image URL would work today.
     @PostMapping("/upload-image")
     public Map<String, String> uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
         if (file.isEmpty()) {
@@ -108,9 +102,6 @@ public class OrganizerController {
         Path filePath = new File(folder, fileName).toPath();
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Same host/port convention already used throughout the frontend
-        // (e.g. ticket QR codes) for turning a relative uploads path into a
-        // full URL.
         String url = "http://localhost:8080/uploads/events/" + fileName;
         return Map.of("url", url);
     }

@@ -116,20 +116,19 @@ function EventDetails() {
       <Navbar />
 
       <div className="container mt-4">
-        {/* Back Link */}
+
         <div className="mb-3">
           <button onClick={() => navigate(-1)} className="btn btn-outline-secondary btn-sm rounded-pill fw-bold border-0 bg-white shadow-sm px-3">
             <FiArrowLeft className="me-1" /> Back to Events
           </button>
         </div>
 
-        {/* Main Clean Elevated Event Card Surface */}
         <div className="card border-0 rounded-4 shadow-sm overflow-hidden bg-white">
-          {/* Media Header Slider */}
+
           <EventImageSlider images={event.images} height={360} />
 
           <div className="p-4 p-md-5">
-            {/* Event Title Banner */}
+
             <div className="dashboard-hero-banner mb-4" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #312e81 100%)", borderRadius: "16px", padding: "28px 32px" }}>
               <div className="d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <div>
@@ -152,7 +151,6 @@ function EventDetails() {
               </div>
             </div>
 
-            {/* Quick Metadata Info Grid */}
             <div className="row g-3 mb-5">
               <div className="col-sm-6 col-md-3">
                 <div className="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white" style={{ border: "1px solid #e2e8f0" }}>
@@ -201,13 +199,11 @@ function EventDetails() {
               </div>
             </div>
 
-            {/* Seat Tier Selection Box */}
             <div className="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light" style={{ border: "1px solid #e2e8f0" }}>
               <h4 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
                 🎟️ Select Seat Tier & Ticket Quantity
               </h4>
 
-              {/* 1. Choose Tier */}
               <div className="mb-4">
                 <label className="form-label fw-bold text-dark mb-3">1. Select Your Preferred Viewing Tier:</label>
                 <div className="row g-3">
@@ -241,7 +237,6 @@ function EventDetails() {
                 </div>
               </div>
 
-              {/* 2. Quantity & Order Summary */}
               <div className="row align-items-center g-3 p-3 bg-white rounded-4 border">
                 <div className="col-sm-6">
                   <label className="form-label fw-bold text-dark mb-2">2. Number of Tickets:</label>
@@ -267,14 +262,12 @@ function EventDetails() {
               </div>
             </div>
 
-            {/* Inline Error Message */}
             {bookingError && (
               <div className="alert alert-danger rounded-4 fw-semibold mb-3">
                 {bookingError}
               </div>
             )}
 
-            {/* Submit Action Button */}
             <button
               className="btn btn-primary btn-lg px-5 py-3 fw-bold w-100 rounded-pill shadow"
               onClick={book}

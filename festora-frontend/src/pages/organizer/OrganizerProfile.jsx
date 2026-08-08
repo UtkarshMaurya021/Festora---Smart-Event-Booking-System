@@ -48,7 +48,6 @@ export default function OrganizerProfile() {
       <div className="dashboard-main bg-light min-vh-100">
         <DashboardNavbar />
 
-        {/* Hero Header Banner */}
         <div
           className="rounded-4 p-4 text-white shadow-sm mb-4 mx-3"
           style={{
@@ -77,7 +76,7 @@ export default function OrganizerProfile() {
           )}
 
           <div className="row g-4">
-            {/* Left Card: Account Summary */}
+
             <div className="col-md-4">
               <div className="card border-0 shadow-sm rounded-4 p-4 bg-white text-center h-100">
                 <div className="mb-3">
@@ -113,7 +112,6 @@ export default function OrganizerProfile() {
               </div>
             </div>
 
-            {/* Right Card: Profile Form */}
             <div className="col-md-8">
               <div className="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
                 <h4 className="fw-bold mb-3 d-flex align-items-center gap-2">

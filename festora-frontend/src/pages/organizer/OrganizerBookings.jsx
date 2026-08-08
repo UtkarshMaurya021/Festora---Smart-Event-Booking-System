@@ -63,7 +63,6 @@ export default function OrganizerBookings() {
       <div className="dashboard-main bg-light min-vh-100">
         <DashboardNavbar />
 
-        {/* Hero Header Banner */}
         <div
           className="rounded-4 p-4 text-white shadow-sm mb-4 mx-3"
           style={{
@@ -84,7 +83,6 @@ export default function OrganizerBookings() {
           </div>
         </div>
 
-        {/* Summary Metric Cards */}
         <div className="row g-3 px-3 mb-4">
           <div className="col-md-4">
             <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
@@ -108,14 +106,12 @@ export default function OrganizerBookings() {
           </div>
         </div>
 
-        {/* Main Table Card */}
         <div className="card border-0 shadow-sm rounded-4 mx-3 mb-5 p-4 bg-white">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
             <h4 className="fw-bold mb-0 d-flex align-items-center gap-2">
               <FiBookmark className="text-primary" /> Ticket Sales Audit Log ({filteredBookings.length})
             </h4>
 
-            {/* Filter controls */}
             <div className="d-flex align-items-center gap-2 flex-wrap">
               <div className="input-group" style={{ maxWidth: 280 }}>
                 <span className="input-group-text bg-light border-end-0">

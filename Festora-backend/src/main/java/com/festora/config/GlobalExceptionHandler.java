@@ -15,10 +15,6 @@ import jakarta.validation.ConstraintViolationException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Fires when a @Valid @RequestBody entity/DTO (e.g. Category, Venue,
-     * RegisterRequest) fails validation.
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
 
@@ -30,11 +26,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errorBody("Validation failed", fieldErrors));
     }
 
-    /**
-     * Fires from Hibernate's automatic Bean Validation check, which runs
-     * before every entity save even without @Valid on the controller
-     * (e.g. saving a Booking/Event/Payment straight from a service).
-     */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
 
@@ -46,11 +37,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errorBody("Validation failed", fieldErrors));
     }
 
-    /**
-     * Fires for plain RuntimeExceptions thrown from services/controllers
-     * (invalid login, pending/blocked account, not-found lookups, etc.)
-     * that don't have a more specific handler above.
-     */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
 

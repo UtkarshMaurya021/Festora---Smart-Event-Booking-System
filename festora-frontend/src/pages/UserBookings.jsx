@@ -79,7 +79,6 @@ export default function UserBookings() {
       <div className="dashboard-main bg-light min-vh-100">
         <DashboardNavbar />
 
-        {/* Dashboard Hero Header */}
         <div
           className="dashboard-hero-banner mx-3 mb-4"
           style={{

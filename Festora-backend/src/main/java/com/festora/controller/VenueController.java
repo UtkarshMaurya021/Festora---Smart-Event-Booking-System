@@ -18,13 +18,11 @@ public class VenueController {
         this.service = service;
     }
 
-    // Accessible to all users for dropdown lists
     @GetMapping("/api/venues")
     public List<Venue> getAll() {
         return service.getAll();
     }
 
-    // Administrative modification routes remain restricted
     @PostMapping("/api/admin/venues")
     public Venue save(@Valid @RequestBody Venue venue) {
         return service.save(venue);

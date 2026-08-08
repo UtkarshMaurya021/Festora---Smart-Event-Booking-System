@@ -5,7 +5,7 @@ function Footer() {
     <footer className="footer bg-dark text-white py-5 border-top border-secondary-subtle">
       <div className="container">
         <div className="row g-4 justify-content-between">
-          {/* Brand Info */}
+
           <div className="col-lg-4 col-md-6">
             <h3 className="fw-bold text-white mb-2 tracking-wide">
               Festora
@@ -18,7 +18,6 @@ function Footer() {
             </div>
           </div>
 
-          {/* Support & Contact Us Section */}
           <div className="col-lg-5 col-md-6">
             <h5 className="fw-bold text-white mb-3">Support & Contact Us</h5>
             <ul className="list-unstyled text-white-50 small mb-0">
@@ -36,7 +35,6 @@ function Footer() {
             </ul>
           </div>
 
-          {/* Copyright */}
           <div className="col-lg-3 col-md-12 text-lg-end">
             <h5 className="fw-bold text-white mb-3">Festora Platform</h5>
             <p className="text-white-50 small mb-2">

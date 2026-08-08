@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./SeatPicker.css";
 
-/**
- * 5-TIER SEAT SELECTION WITH REAL-TIME DOUBLE BOOKING PREVENTION
- * Percentage Allocations:
- * Tier 1: VVIP (10% | 2.5x)
- * Tier 2: VIP (15% | 2.0x)
- * Tier 3: Premium (20% | 1.5x)
- * Tier 4: Executive (25% | 1.2x)
- * Tier 5: Standard (30% | 1.0x)
- */
-
 export const TIER_CONFIG = [
   { row: "A", name: "VVIP / Diamond", percentage: 10, multiplier: 2.5, cssClass: "tier-1-vvip", tag: "VVIP (10% | 2.5x)" },
   { row: "B", name: "VIP / Platinum", percentage: 15, multiplier: 2.0, cssClass: "tier-2-vip", tag: "VIP (15% | 2.0x)" },
@@ -29,7 +19,6 @@ export const SeatPicker = ({
 }) => {
   const [selectedSeats, setSelectedSeats] = useState(initialSeats);
 
-  // Combine default reserved seats with real-time DB occupied seats to prevent double booking
   const allReserved = Array.from(new Set(["A-3", "B-5", "C-2", "D-6", "E-4", ...occupiedSeats]));
 
   const getSeatMultiplier = (seatCode) => {
@@ -109,7 +98,6 @@ export const SeatPicker = ({
         <div className="screen-curve">🎬 SCREEN / STAGE STAGE FRONT</div>
       </div>
 
-      {/* Fixed Percentage Legend & Quick Select */}
       <div className="tier-legend-bar">
         <button
           type="button"
@@ -157,7 +145,6 @@ export const SeatPicker = ({
         </button>
       </div>
 
-      {/* Grid of 5 Tiers */}
       <div className="seat-grid">
         {TIER_CONFIG.map((tier) => (
           <div key={tier.row} className={`seat-row ${tier.cssClass}`}>
@@ -191,7 +178,6 @@ export const SeatPicker = ({
         ))}
       </div>
 
-      {/* Dynamic Multi-Ticket Summary */}
       <div className="seat-summary-box">
         <div className="summary-info">
           <div>

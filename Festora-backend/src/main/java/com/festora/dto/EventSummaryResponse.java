@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import com.festora.entity.Status;
 @Getter
 @Setter
-@NoArgsConstructor  // Added: Crucial for JSON deserialization by Jackson
+@NoArgsConstructor
 @AllArgsConstructor
 public class EventSummaryResponse {
 
@@ -28,7 +28,7 @@ public class EventSummaryResponse {
 
     private Long totalBookings;
 
-    private BigDecimal revenue; // Corrected: Changed from Double to BigDecimal to prevent financial rounding errors
+    private BigDecimal revenue;
 
     private Status status;
 }
