@@ -91,12 +91,13 @@ function PaymentPage() {
   const [error, setError] = useState("");
 
   const [step, setStep] = useState("summary");
+  const [showFestoraPayModal, setShowFestoraPayModal] = useState(false);
   const [order, setOrder] = useState(null);
-  const [method, setMethod] = useState("RAZORPAY");
-  const [cardNumber, setCardNumber] = useState("4111 1111 1111 1111");
-  const [expiry, setExpiry] = useState("12/28");
-  const [cvv, setCvv] = useState("123");
-  const [upiId, setUpiId] = useState("success@razorpay");
+  const [method, setMethod] = useState("CARD");
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [upiId, setUpiId] = useState("");
   const [bank, setBank] = useState("State Bank of India");
   const [wallet, setWallet] = useState("FestoraWallet");
   const [result, setResult] = useState(null);
@@ -105,6 +106,11 @@ function PaymentPage() {
   const [downloadError, setDownloadError] = useState("");
 
   useEffect(() => {
+    document.body.style.overflowY = "auto";
+    document.body.style.overflowX = "hidden";
+    document.documentElement.style.overflowY = "auto";
+    document.documentElement.style.overflowX = "hidden";
+
     const fetchBooking = async () => {
       try {
         const res = await getBooking(bookingId);
@@ -118,7 +124,14 @@ function PaymentPage() {
     };
     fetchBooking();
     loadRazorpayScript();
-  }, [bookingId]);
+
+    return () => {
+      document.body.style.overflowY = "auto";
+      document.body.style.overflowX = "hidden";
+      document.documentElement.style.overflowY = "auto";
+      document.documentElement.style.overflowX = "hidden";
+    };
+  }, [bookingId, step]);
 
   const executeVerification = async (razorpayOrderId, razorpayPaymentId, razorpaySignature) => {
     setStep("processing");
@@ -135,6 +148,31 @@ function PaymentPage() {
       console.error("Razorpay verification error:", err);
       setResult({ status: "FAILED", message: "Razorpay signature verification failed." });
       setStep("failed");
+    }
+  };
+
+  const handleFestoraPaySubmit = async (e) => {
+    if (e) e.preventDefault();
+    setShowFestoraPayModal(false);
+    setError("");
+    setStarting(true);
+    setStep("processing");
+    try {
+      const res = await confirmPayment({
+        bookingId: Number(bookingId),
+        transactionId: "FPAY" + Date.now(),
+        paymentMethod: method,
+        cardNumber: method === "CARD" && cardNumber.trim() ? cardNumber : undefined,
+        upiId: method === "UPI" && upiId.trim() ? upiId : undefined,
+      });
+      setResult(res.data);
+      setStep(res.data.status === "SUCCESS" ? "success" : "failed");
+    } catch (err) {
+      console.error("FestoraPay checkout failed:", err);
+      setError(err.response?.data?.message || "FestoraPay payment failed. Please try again.");
+      setStep("failed");
+    } finally {
+      setStarting(false);
     }
   };
 
@@ -156,11 +194,12 @@ function PaymentPage() {
         return;
       }
 
-      // Open Official Razorpay Checkout Modal UI
+      // Open Official Razorpay Gateway Modal UI
       const options = {
         key: rzpOrder.keyId || "rzp_test_TIuNseQI3AsTL4",
         amount: rzpOrder.amount,
         currency: rzpOrder.currency || "INR",
+        order_id: rzpOrder.razorpayOrderId,
         name: "Festora Payment Gateway",
         description: `Seat/Tier: ${booking?.seatNumbers || "General Entry"} - ${rzpOrder.eventTitle || "Event Ticket"}`,
         handler: async function (response) {
@@ -173,6 +212,8 @@ function PaymentPage() {
         modal: {
           ondismiss: function () {
             console.log("Razorpay modal dismissed by user");
+            document.body.style.overflowY = "auto";
+            document.documentElement.style.overflowY = "auto";
             setStarting(false);
           },
         },
@@ -188,6 +229,8 @@ function PaymentPage() {
 
       rzp.on("payment.failed", function (resp) {
         console.warn("Razorpay payment attempt event:", resp.error);
+        document.body.style.overflowY = "auto";
+        document.documentElement.style.overflowY = "auto";
         setStarting(false);
       });
 
@@ -471,7 +514,7 @@ function PaymentPage() {
 
                     {error && <div className="alert alert-danger rounded-4 fw-semibold mb-4">{error}</div>}
 
-                    {/* Primary Razorpay Microservice Button */}
+                    {/* MAIN PRIMARY BUTTON: Razorpay Gateway */}
                     <button
                       className="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow mb-3 d-flex align-items-center justify-content-center gap-2"
                       style={{ background: "linear-gradient(135deg, #4f46e5 0%, #312e81 100%)", border: "none" }}
@@ -482,9 +525,165 @@ function PaymentPage() {
                       {starting ? "Launching Payment Gateway…" : `Pay ₹${booking.totalAmount} via Razorpay Gateway`}
                     </button>
 
+                    {/* SECONDARY BUTTON: FestoraPay Modal Gateway */}
+                    <button
+                      className="btn btn-outline-primary btn-lg w-100 rounded-pill py-3 fw-bold mb-3 d-flex align-items-center justify-content-center gap-2"
+                      onClick={() => setShowFestoraPayModal(true)}
+                      disabled={starting}
+                    >
+                      <FiShield size={20} />
+                      Pay ₹{booking.totalAmount} via FestoraPay Gateway
+                    </button>
+
                     <div className="text-center text-muted small d-flex align-items-center justify-content-center gap-1 mt-3">
-                      <FiCheckCircle className="text-success" /> Razorpay HMAC Cryptography & Instant Gate Pass QR Code Generation
+                      <FiCheckCircle className="text-success" /> Razorpay & FestoraPay HMAC Cryptography & Instant Gate Pass QR Code Generation
                     </div>
+                  </>
+                )}
+
+                {/* STEP 2: DIRECT TEST CHECKOUT FORM */}
+                {step === "checkout" && order && (
+                  <>
+                    <div className="d-flex justify-content-between align-items-center mb-4">
+                      <button className="btn btn-outline-secondary btn-sm rounded-pill fw-bold" onClick={closeCheckout}>
+                        <FiChevronLeft className="me-1" /> Back
+                      </button>
+                      <span className="text-muted small">Txn ID: <strong className="text-dark">{order.transactionId}</strong></span>
+                    </div>
+
+                    <div className="bg-light rounded-4 p-4 mb-4 text-center border">
+                      <div className="text-muted small text-uppercase fw-bold mb-1">Amount to Pay</div>
+                      <h2 className="fw-bold text-success mb-0">₹{order.amount}</h2>
+                    </div>
+
+                    {/* Method Selector Tabs */}
+                    <div className="row g-2 mb-4">
+                      {METHODS.map((m) => {
+                        const Icon = m.icon;
+                        const isSelected = method === m.id;
+                        return (
+                          <div className="col" key={m.id}>
+                            <button
+                              type="button"
+                              className={`btn w-100 py-3 rounded-4 d-flex flex-column align-items-center gap-1 fw-bold ${
+                                isSelected ? "btn-primary shadow" : "btn-outline-secondary border-secondary-subtle bg-white text-dark"
+                              }`}
+                              onClick={() => setMethod(m.id)}
+                            >
+                              <Icon size={20} />
+                              <span style={{ fontSize: "0.75rem" }}>{m.label}</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Checkout Inputs */}
+                    <form onSubmit={handlePay}>
+                      {method === "RAZORPAY" && (
+                        <div className="bg-light rounded-4 p-4 text-center border mb-4">
+                          <FiZap className="text-warning mb-2" size={36} />
+                          <h5 className="fw-bold text-dark">Razorpay Payment Gateway</h5>
+                          <p className="text-muted small mb-3">
+                            Click below to open the Razorpay payment modal with support for UPI, Cards, Netbanking, and Wallets.
+                          </p>
+                          <button
+                            type="button"
+                            className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow"
+                            onClick={handleRazorpayPay}
+                            disabled={starting}
+                          >
+                            Open Razorpay Checkout Popup
+                          </button>
+                        </div>
+                      )}
+
+                      {method === "CARD" && (
+                        <div className="bg-white rounded-4 p-3 border mb-4">
+                          <div className="mb-3">
+                            <label className="form-label fw-bold text-dark small">Card Number</label>
+                            <input
+                              type="text"
+                              placeholder="4111 1111 1111 1111"
+                              value={cardNumber}
+                              onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                              className="form-control rounded-3 py-2 fw-semibold"
+                              required
+                            />
+                          </div>
+                          <div className="row g-3">
+                            <div className="col-6">
+                              <label className="form-label fw-bold text-dark small">Expiry (MM/YY)</label>
+                              <input
+                                type="text"
+                                placeholder="12/28"
+                                maxLength={5}
+                                value={expiry}
+                                onChange={(e) => setExpiry(e.target.value)}
+                                className="form-control rounded-3 py-2 fw-semibold"
+                                required
+                              />
+                            </div>
+                            <div className="col-6">
+                              <label className="form-label fw-bold text-dark small">CVV</label>
+                              <input
+                                type="password"
+                                placeholder="123"
+                                maxLength={3}
+                                value={cvv}
+                                onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
+                                className="form-control rounded-3 py-2 fw-semibold"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {method === "UPI" && (
+                        <div className="bg-white rounded-4 p-3 border mb-4">
+                          <label className="form-label fw-bold text-dark small">UPI ID Address</label>
+                          <input
+                            type="text"
+                            placeholder="yourname@bank / mobile@upi"
+                            value={upiId}
+                            onChange={(e) => setUpiId(e.target.value)}
+                            className="form-control rounded-3 py-2 fw-semibold"
+                            required
+                          />
+                        </div>
+                      )}
+
+                      {method === "NETBANKING" && (
+                        <div className="bg-white rounded-4 p-3 border mb-4">
+                          <label className="form-label fw-bold text-dark small">Select Banking Institution</label>
+                          <select value={bank} onChange={(e) => setBank(e.target.value)} className="form-select rounded-3 py-2 fw-semibold">
+                            <option>State Bank of India</option>
+                            <option>HDFC Bank</option>
+                            <option>ICICI Bank</option>
+                            <option>Axis Bank</option>
+                            <option>Punjab National Bank</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {method === "WALLET" && (
+                        <div className="bg-white rounded-4 p-3 border mb-4">
+                          <label className="form-label fw-bold text-dark small">Select Wallet Partner</label>
+                          <select value={wallet} onChange={(e) => setWallet(e.target.value)} className="form-select rounded-3 py-2 fw-semibold">
+                            <option>FestoraWallet</option>
+                            <option>PayZone</option>
+                            <option>QuickPay</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {method !== "RAZORPAY" && (
+                        <button className="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow" type="submit">
+                          Confirm & Pay ₹{order.amount}
+                        </button>
+                      )}
+                    </form>
                   </>
                 )}
 
@@ -494,7 +693,7 @@ function PaymentPage() {
                     <div className="spinner-border text-primary mb-3" style={{ width: "3.5rem", height: "3.5rem" }} role="status">
                       <span className="visually-hidden">Processing payment...</span>
                     </div>
-                    <h3 className="fw-bold text-dark">Verifying Payment Signature...</h3>
+                    <h3 className="fw-bold text-dark">Verifying Signature & Authenticating Token...</h3>
                     <p className="text-muted small">Cryptographically validating HMAC SHA-256 token and generating digital QR tickets. Please wait.</p>
                   </div>
                 )}
@@ -595,6 +794,182 @@ function PaymentPage() {
           </div>
         </div>
       </div>
+
+      {/* 💳 SECONDARY FESTORAPAY CHECKOUT MODAL UI */}
+      {showFestoraPayModal && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{
+            backgroundColor: "rgba(15, 23, 42, 0.75)",
+            backdropFilter: "blur(8px)",
+            zIndex: 99999,
+            padding: "20px",
+          }}
+        >
+          <div
+            className="card border-0 rounded-4 shadow-lg overflow-hidden bg-white w-100"
+            style={{ maxWidth: "520px" }}
+          >
+            {/* Modal Hero Header */}
+            <div
+              className="p-4 text-white position-relative"
+              style={{
+                background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #312e81 100%)",
+              }}
+            >
+              <button
+                type="button"
+                className="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                onClick={() => setShowFestoraPayModal(false)}
+                aria-label="Close"
+              />
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <FiZap className="text-warning" size={24} />
+                <span className="fw-bold tracking-wider fs-5">FestoraPay</span>
+                <span className="badge bg-white text-dark small fw-bold px-2 py-1">CHECKOUT GATEWAY</span>
+              </div>
+              <h4 className="fw-bold mb-1 text-white">{booking.eventTitle}</h4>
+              <div className="d-flex justify-content-between align-items-end mt-3">
+                <span className="text-light small">Seat / Tier: {currentSeatTier}</span>
+                <div className="text-end">
+                  <div className="text-uppercase text-light small fw-bold">Total Amount</div>
+                  <h2 className="fw-bold text-success mb-0">₹{booking.totalAmount}</h2>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4">
+              <div className="text-muted small fw-bold text-uppercase mb-3">Select Preferred Payment Mode</div>
+
+              {/* Method Selector Tabs */}
+              <div className="row g-2 mb-4">
+                {METHODS.filter((m) => m.id !== "RAZORPAY").map((m) => {
+                  const Icon = m.icon;
+                  const isSelected = method === m.id;
+                  return (
+                    <div className="col-3" key={m.id}>
+                      <button
+                        type="button"
+                        className={`btn w-100 py-3 rounded-4 d-flex flex-column align-items-center gap-1 fw-bold ${
+                          isSelected
+                            ? "btn-primary shadow"
+                            : "btn-outline-secondary border-secondary-subtle bg-white text-dark"
+                        }`}
+                        onClick={() => setMethod(m.id)}
+                      >
+                        <Icon size={20} />
+                        <span style={{ fontSize: "0.75rem" }}>{m.label}</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <form onSubmit={handleFestoraPaySubmit}>
+                {method === "CARD" && (
+                  <div className="bg-light rounded-4 p-3 border mb-4">
+                    <div className="mb-3">
+                      <label className="form-label fw-bold text-dark small">Card Number</label>
+                      <input
+                        type="text"
+                        placeholder="Enter Card Number (e.g. 4111 1111 1111 1111)"
+                        value={cardNumber}
+                        onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                        className="form-control rounded-3 py-2 fw-semibold"
+                      />
+                    </div>
+                    <div className="row g-3">
+                      <div className="col-6">
+                        <label className="form-label fw-bold text-dark small">Expiry (MM/YY)</label>
+                        <input
+                          type="text"
+                          placeholder="MM/YY"
+                          maxLength={5}
+                          value={expiry}
+                          onChange={(e) => setExpiry(e.target.value)}
+                          className="form-control rounded-3 py-2 fw-semibold"
+                        />
+                      </div>
+                      <div className="col-6">
+                        <label className="form-label fw-bold text-dark small">CVV</label>
+                        <input
+                          type="password"
+                          placeholder="CVV"
+                          maxLength={3}
+                          value={cvv}
+                          onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
+                          className="form-control rounded-3 py-2 fw-semibold"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {method === "UPI" && (
+                  <div className="bg-light rounded-4 p-3 border mb-4">
+                    <label className="form-label fw-bold text-dark small">UPI ID / VPA</label>
+                    <input
+                      type="text"
+                      placeholder="Enter UPI ID (e.g. yourname@upi)"
+                      value={upiId}
+                      onChange={(e) => setUpiId(e.target.value)}
+                      className="form-control rounded-3 py-2 fw-semibold mb-2"
+                    />
+                  </div>
+                )}
+
+                {method === "NETBANKING" && (
+                  <div className="bg-light rounded-4 p-3 border mb-4">
+                    <label className="form-label fw-bold text-dark small">Select Bank</label>
+                    <select
+                      value={bank}
+                      onChange={(e) => setBank(e.target.value)}
+                      className="form-select rounded-3 py-2 fw-semibold"
+                    >
+                      <option>State Bank of India</option>
+                      <option>HDFC Bank</option>
+                      <option>ICICI Bank</option>
+                      <option>Axis Bank</option>
+                      <option>Punjab National Bank</option>
+                    </select>
+                  </div>
+                )}
+
+                {method === "WALLET" && (
+                  <div className="bg-light rounded-4 p-3 border mb-4">
+                    <label className="form-label fw-bold text-dark small">Select Wallet Partner</label>
+                    <select
+                      value={wallet}
+                      onChange={(e) => setWallet(e.target.value)}
+                      className="form-select rounded-3 py-2 fw-semibold"
+                    >
+                      <option>FestoraWallet</option>
+                      <option>PayZone</option>
+                      <option>QuickPay</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Primary FestoraPay Checkout Submit Button */}
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow d-flex align-items-center justify-content-center gap-2"
+                  style={{ background: "linear-gradient(135deg, #4f46e5 0%, #312e81 100%)", border: "none" }}
+                  disabled={starting}
+                >
+                  <FiZap className="text-warning" size={22} />
+                  Pay ₹{booking.totalAmount} via FestoraPay
+                </button>
+              </form>
+
+              <div className="text-center text-muted small mt-3">
+                <FiCheckCircle className="text-success me-1" /> Encrypted HMAC Signature Verification & Instant Gate Pass
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

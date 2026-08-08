@@ -1,12 +1,19 @@
 package com.festora.payment.service;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.festora.payment.dto.RazorpayOrderRequest;
 import com.festora.payment.dto.RazorpayOrderResponse;
@@ -19,10 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class RazorpayMicroservice {
 
-    @Value("${razorpay.key.id:rzp_test_festora_demo}")
+    @Value("${razorpay.key.id:rzp_test_TIuNseQI3AsTL4}")
     private String keyId;
 
-    @Value("${razorpay.key.secret:festora_secret_key_demo}")
+    @Value("${razorpay.key.secret:7adHuxgXMcT0mkCAESNrUYmc}")
     private String keySecret;
 
     private final Random random = new Random();
@@ -34,9 +41,35 @@ public class RazorpayMicroservice {
             throw new IllegalArgumentException("Booking ID cannot be null when creating a Razorpay order");
         }
 
-        String razorpayOrderId = "order_" + System.currentTimeMillis() + String.format("%04d", random.nextInt(10000));
         double price = request.getAmount() != null ? request.getAmount() : 500.0;
         long amountInPaise = Math.round(price * 100);
+        String razorpayOrderId = "order_" + System.currentTimeMillis() + String.format("%04d", random.nextInt(10000));
+
+        // Call official Razorpay Cloud API to create a real Order ID on Razorpay Sandbox servers
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBasicAuth(keyId, keySecret);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("amount", amountInPaise);
+            body.put("currency", "INR");
+            body.put("receipt", "rcpt_" + request.getBookingId() + "_" + System.currentTimeMillis());
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            ResponseEntity<Map> responseEntity = restTemplate.postForEntity("https://api.razorpay.com/v1/orders", entity, Map.class);
+
+            if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
+                String fetchedId = (String) responseEntity.getBody().get("id");
+                if (fetchedId != null && !fetchedId.isBlank()) {
+                    razorpayOrderId = fetchedId;
+                    log.info("🎉 Microservice: Successfully created REAL Razorpay Order on Razorpay Cloud [OrderID: {}]", razorpayOrderId);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ Microservice: Could not connect to Razorpay Cloud API (using fallback OrderID: {}). Error: {}", razorpayOrderId, e.getMessage());
+        }
 
         RazorpayOrderResponse response = new RazorpayOrderResponse(
                 razorpayOrderId,
@@ -50,7 +83,7 @@ public class RazorpayMicroservice {
                 request.getUserPhone() != null ? request.getUserPhone() : "9999999999"
         );
 
-        log.info("✅ Microservice: Successfully generated Razorpay Order [OrderID: {}, Amount: {} paise]", razorpayOrderId, amountInPaise);
+        log.info("✅ Microservice: Order payload prepared [OrderID: {}, Amount: {} paise]", razorpayOrderId, amountInPaise);
         return response;
     }
 

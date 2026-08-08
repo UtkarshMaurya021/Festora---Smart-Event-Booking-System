@@ -1,12 +1,19 @@
 package com.festora.service;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.festora.dto.RazorpayOrderResponse;
 import com.festora.entity.Booking;
@@ -14,17 +21,43 @@ import com.festora.entity.Booking;
 @Service
 public class RazorpayService {
 
-    @Value("${razorpay.key.id:rzp_test_festora_demo}")
+    @Value("${razorpay.key.id:rzp_test_TIuNseQI3AsTL4}")
     private String keyId;
 
-    @Value("${razorpay.key.secret:festora_secret_key_demo}")
+    @Value("${razorpay.key.secret:7adHuxgXMcT0mkCAESNrUYmc}")
     private String keySecret;
 
     private final Random random = new Random();
 
     public RazorpayOrderResponse createRazorpayOrder(Booking booking) {
-        String razorpayOrderId = "order_" + System.currentTimeMillis() + String.format("%04d", random.nextInt(10000));
         long amountInPaise = Math.round(booking.getTotalAmount() * 100);
+        String razorpayOrderId = "order_" + System.currentTimeMillis() + String.format("%04d", random.nextInt(10000));
+
+        // Call official Razorpay Cloud API to create a real Order ID on Razorpay Sandbox servers
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBasicAuth(keyId, keySecret);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("amount", amountInPaise);
+            body.put("currency", "INR");
+            body.put("receipt", "rcpt_" + booking.getBookingId() + "_" + System.currentTimeMillis());
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            ResponseEntity<Map> responseEntity = restTemplate.postForEntity("https://api.razorpay.com/v1/orders", entity, Map.class);
+
+            if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
+                String fetchedId = (String) responseEntity.getBody().get("id");
+                if (fetchedId != null && !fetchedId.isBlank()) {
+                    razorpayOrderId = fetchedId;
+                }
+            }
+        } catch (Exception e) {
+            // Log & fallback to mock ID if API call fails
+            System.err.println("Fallback order ID created: " + e.getMessage());
+        }
 
         return new RazorpayOrderResponse(
                 razorpayOrderId,
