@@ -37,6 +37,7 @@ public class BookingService {
 	private final PaymentRepository paymentRepository;
 	private final OrganizerRepository organizerRepository;
 	private final TicketRepository ticketRepository;
+	private final EmailService emailService;
 
 	private String firstImageUrl(Event event) {
 		if (event.getImages() == null || event.getImages().isEmpty()) {
@@ -47,13 +48,15 @@ public class BookingService {
 
 	public BookingService(BookingRepository bookingRepository, EventRepository eventRepository,
 			UserRepository userRepository, PaymentRepository paymentRepository,
-			OrganizerRepository organizerRepository, TicketRepository ticketRepository) {
+			OrganizerRepository organizerRepository, TicketRepository ticketRepository,
+			EmailService emailService) {
 		this.bookingRepository = bookingRepository;
 		this.eventRepository = eventRepository;
 		this.userRepository = userRepository;
 		this.paymentRepository = paymentRepository;
 		this.organizerRepository = organizerRepository;
 		this.ticketRepository = ticketRepository;
+		this.emailService = emailService;
 	}
 
 	public List<String> getBookedSeatsForEvent(Long eventId) {
@@ -166,6 +169,76 @@ public class BookingService {
 		paymentRepository.save(payment);
 
 		return mapToBookingResponse(saved);
+	}
+
+	@Transactional
+	public BookingResponse cancelBooking(Long bookingId, String email) {
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+		Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new RuntimeException("Booking not found"));
+
+		if (!booking.getUser().getUserId().equals(user.getUserId())) {
+			throw new RuntimeException("Unauthorized: You can only cancel your own bookings.");
+		}
+
+		if (booking.getStatus() == Status.CANCELLED) {
+			throw new RuntimeException("Booking is already cancelled.");
+		}
+
+		Event event = booking.getEvent();
+		if (event != null && event.getEventStartDatetime() != null) {
+			if (!LocalDateTime.now().isBefore(event.getEventStartDatetime())) {
+				throw new RuntimeException("Cannot cancel booking because the event has already started.");
+			}
+		}
+
+		booking.setStatus(Status.CANCELLED);
+		Booking updated = bookingRepository.save(booking);
+
+		if (event != null) {
+			event.setAvailableSeats(event.getAvailableSeats() + booking.getQuantity());
+			if (event.getStatus() == Status.FULL) {
+				event.setStatus(Status.ACTIVE);
+			}
+			eventRepository.save(event);
+		}
+
+		paymentRepository.findByBooking(booking).ifPresent(p -> {
+			p.setStatus(PaymentStatus.REFUNDED);
+			paymentRepository.save(p);
+		});
+
+		try {
+			emailService.sendBookingCancelledByUserEmail(user, booking);
+		} catch (Exception ex) {
+			System.err.println("Email dispatch error on user booking cancel: " + ex.getMessage());
+		}
+
+		return mapToBookingResponse(updated);
+	}
+
+	@Transactional
+	public void processAutoRefundsForInactivatedEvent(Event event) {
+		if (event == null) return;
+		List<Booking> bookings = bookingRepository.findByEvent(event);
+		for (Booking b : bookings) {
+			if (b.getStatus() != Status.CANCELLED) {
+				b.setStatus(Status.CANCELLED);
+				bookingRepository.save(b);
+
+				paymentRepository.findByBooking(b).ifPresent(p -> {
+					p.setStatus(PaymentStatus.REFUNDED);
+					paymentRepository.save(p);
+				});
+
+				if (b.getUser() != null) {
+					try {
+						emailService.sendAutoRefundEmail(b.getUser(), b, event);
+					} catch (Exception ex) {
+						System.err.println("Auto-refund email dispatch error: " + ex.getMessage());
+					}
+				}
+			}
+		}
 	}
 
 	public List<BookingResponse> myBookings(String email) {

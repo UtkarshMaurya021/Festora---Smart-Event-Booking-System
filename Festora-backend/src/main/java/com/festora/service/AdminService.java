@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,9 @@ public class AdminService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final EmailService emailService;
+
+    @Autowired(required = false)
+    private BookingService bookingService;
 
     public AdminService(UserRepository userRepository, EventRepository eventRepository,
             PaymentRepository paymentRepository, BookingRepository bookingRepository,
@@ -152,6 +156,10 @@ public class AdminService {
         event.setUpdatedAt(LocalDateTime.now());
         Event saved = eventRepository.save(event);
 
+        if (bookingService != null) {
+            bookingService.processAutoRefundsForInactivatedEvent(saved);
+        }
+
         try {
             if (saved.getOrganizer() != null && saved.getOrganizer().getUser() != null) {
                 emailService.sendEventRejectedEmail(saved.getOrganizer().getUser(), saved);
@@ -187,6 +195,10 @@ public class AdminService {
         event.setUpdatedAt(LocalDateTime.now());
         eventRepository.save(event);
 
+        if (bookingService != null) {
+            bookingService.processAutoRefundsForInactivatedEvent(event);
+        }
+
         try {
             if (event.getOrganizer() != null && event.getOrganizer().getUser() != null) {
                 emailService.sendEventCancelledEmail(event.getOrganizer().getUser(), event);
@@ -205,6 +217,10 @@ public class AdminService {
         event.setStatus(newStatus);
         event.setUpdatedAt(LocalDateTime.now());
         Event saved = eventRepository.save(event);
+
+        if (newStatus == Status.INACTIVE && bookingService != null) {
+            bookingService.processAutoRefundsForInactivatedEvent(saved);
+        }
 
         try {
             if (newStatus == Status.STARTED) {

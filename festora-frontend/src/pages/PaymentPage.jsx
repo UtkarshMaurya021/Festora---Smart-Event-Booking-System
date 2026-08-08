@@ -93,10 +93,10 @@ function PaymentPage() {
   const [step, setStep] = useState("summary");
   const [order, setOrder] = useState(null);
   const [method, setMethod] = useState("RAZORPAY");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [upiId, setUpiId] = useState("");
+  const [cardNumber, setCardNumber] = useState("4111 1111 1111 1111");
+  const [expiry, setExpiry] = useState("12/28");
+  const [cvv, setCvv] = useState("123");
+  const [upiId, setUpiId] = useState("success@razorpay");
   const [bank, setBank] = useState("State Bank of India");
   const [wallet, setWallet] = useState("FestoraWallet");
   const [result, setResult] = useState(null);
@@ -158,7 +158,7 @@ function PaymentPage() {
 
       // Open Official Razorpay Checkout Modal UI
       const options = {
-        key: rzpOrder.keyId || "rzp_test_1DP5A4644B2779",
+        key: rzpOrder.keyId || "rzp_test_TIuNseQI3AsTL4",
         amount: rzpOrder.amount,
         currency: rzpOrder.currency || "INR",
         name: "Festora Payment Gateway",
@@ -173,6 +173,7 @@ function PaymentPage() {
         modal: {
           ondismiss: function () {
             console.log("Razorpay modal dismissed by user");
+            setStarting(false);
           },
         },
         prefill: {
@@ -186,12 +187,8 @@ function PaymentPage() {
       const rzp = new window.Razorpay(options);
 
       rzp.on("payment.failed", function (resp) {
-        console.error("Razorpay official popup event:", resp.error);
-        executeVerification(
-          rzpOrder.razorpayOrderId,
-          "pay_" + Date.now(),
-          "test_signature_valid"
-        );
+        console.warn("Razorpay payment attempt event:", resp.error);
+        setStarting(false);
       });
 
       rzp.open();
@@ -485,165 +482,9 @@ function PaymentPage() {
                       {starting ? "Launching Payment Gateway…" : `Pay ₹${booking.totalAmount} via Razorpay Gateway`}
                     </button>
 
-                    {/* Secondary Custom Checkout Option */}
-                    <div className="text-center">
-                      <button
-                        className="btn btn-link text-decoration-none text-muted small fw-semibold"
-                        onClick={startCheckout}
-                      >
-                        Or use alternative checkout modes →
-                      </button>
-                    </div>
-
                     <div className="text-center text-muted small d-flex align-items-center justify-content-center gap-1 mt-3">
                       <FiCheckCircle className="text-success" /> Razorpay HMAC Cryptography & Instant Gate Pass QR Code Generation
                     </div>
-                  </>
-                )}
-
-                {/* STEP 2: ALTERNATIVE CHECKOUT FORM */}
-                {step === "checkout" && order && (
-                  <>
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                      <button className="btn btn-outline-secondary btn-sm rounded-pill fw-bold" onClick={closeCheckout}>
-                        <FiChevronLeft className="me-1" /> Back
-                      </button>
-                      <span className="text-muted small">Txn ID: <strong className="text-dark">{order.transactionId}</strong></span>
-                    </div>
-
-                    <div className="bg-light rounded-4 p-4 mb-4 text-center border">
-                      <div className="text-muted small text-uppercase fw-bold mb-1">Amount to Pay</div>
-                      <h2 className="fw-bold text-success mb-0">₹{order.amount}</h2>
-                    </div>
-
-                    {/* Method Selector Tabs */}
-                    <div className="row g-2 mb-4">
-                      {METHODS.map((m) => {
-                        const Icon = m.icon;
-                        const isSelected = method === m.id;
-                        return (
-                          <div className="col" key={m.id}>
-                            <button
-                              type="button"
-                              className={`btn w-100 py-3 rounded-4 d-flex flex-column align-items-center gap-1 fw-bold ${
-                                isSelected ? "btn-primary shadow" : "btn-outline-secondary border-secondary-subtle bg-white text-dark"
-                              }`}
-                              onClick={() => setMethod(m.id)}
-                            >
-                              <Icon size={20} />
-                              <span style={{ fontSize: "0.75rem" }}>{m.label}</span>
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Checkout Inputs */}
-                    <form onSubmit={handlePay}>
-                      {method === "RAZORPAY" && (
-                        <div className="bg-light rounded-4 p-4 text-center border mb-4">
-                          <FiZap className="text-warning mb-2" size={36} />
-                          <h5 className="fw-bold text-dark">Razorpay Payment Gateway</h5>
-                          <p className="text-muted small mb-3">
-                            Click below to open the Razorpay payment modal with support for UPI, Cards, Netbanking, and Wallets.
-                          </p>
-                          <button
-                            type="button"
-                            className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow"
-                            onClick={handleRazorpayPay}
-                            disabled={starting}
-                          >
-                            Open Razorpay Checkout Popup
-                          </button>
-                        </div>
-                      )}
-
-                      {method === "CARD" && (
-                        <div className="bg-white rounded-4 p-3 border mb-4">
-                          <div className="mb-3">
-                            <label className="form-label fw-bold text-dark small">Card Number</label>
-                            <input
-                              type="text"
-                              placeholder="4111 1111 1111 1111"
-                              value={cardNumber}
-                              onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                              className="form-control rounded-3 py-2 fw-semibold"
-                              required
-                            />
-                          </div>
-                          <div className="row g-3">
-                            <div className="col-6">
-                              <label className="form-label fw-bold text-dark small">Expiry (MM/YY)</label>
-                              <input
-                                type="text"
-                                placeholder="12/28"
-                                maxLength={5}
-                                value={expiry}
-                                onChange={(e) => setExpiry(e.target.value)}
-                                className="form-control rounded-3 py-2 fw-semibold"
-                                required
-                              />
-                            </div>
-                            <div className="col-6">
-                              <label className="form-label fw-bold text-dark small">CVV</label>
-                              <input
-                                type="password"
-                                placeholder="123"
-                                maxLength={3}
-                                value={cvv}
-                                onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
-                                className="form-control rounded-3 py-2 fw-semibold"
-                                required
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {method === "UPI" && (
-                        <div className="bg-white rounded-4 p-3 border mb-4">
-                          <label className="form-label fw-bold text-dark small">UPI ID Address</label>
-                          <input
-                            type="text"
-                            placeholder="yourname@bank / mobile@upi"
-                            value={upiId}
-                            onChange={(e) => setUpiId(e.target.value)}
-                            className="form-control rounded-3 py-2 fw-semibold"
-                            required
-                          />
-                        </div>
-                      )}
-
-                      {method === "NETBANKING" && (
-                        <div className="bg-white rounded-4 p-3 border mb-4">
-                          <label className="form-label fw-bold text-dark small">Select Banking Institution</label>
-                          <select value={bank} onChange={(e) => setBank(e.target.value)} className="form-select rounded-3 py-2 fw-semibold">
-                            <option>State Bank of India</option>
-                            <option>HDFC Bank</option>
-                            <option>ICICI Bank</option>
-                            <option>Axis Bank</option>
-                            <option>Punjab National Bank</option>
-                          </select>
-                        </div>
-                      )}
-
-                      {method === "WALLET" && (
-                        <div className="bg-white rounded-4 p-3 border mb-4">
-                          <label className="form-label fw-bold text-dark small">Select Wallet Partner</label>
-                          <select value={wallet} onChange={(e) => setWallet(e.target.value)} className="form-select rounded-3 py-2 fw-semibold">
-                            <option>FestoraWallet</option>
-                            <option>PayZone</option>
-                            <option>QuickPay</option>
-                          </select>
-                        </div>
-                      )}
-
-                      {method !== "RAZORPAY" && (
-                        <button className="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow" type="submit">
-                          Confirm & Pay ₹{order.amount}
-                        </button>
-                      )}
-                    </form>
                   </>
                 )}
 

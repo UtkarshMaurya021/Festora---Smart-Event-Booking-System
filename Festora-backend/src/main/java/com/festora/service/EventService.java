@@ -33,6 +33,9 @@ public class EventService {
 @Autowired
 private BookingRepository bookingRepository;
 
+@Autowired(required = false)
+private BookingService bookingService;
+
 private final EventRepository eventRepository;
 private final OrganizerRepository organizerRepository;
 private final UserRepository userRepository;
@@ -217,6 +220,10 @@ throw new RuntimeException("Unauthorized");
 event.setStatus(Status.INACTIVE);
 event.setUpdatedAt(LocalDateTime.now());
 eventRepository.save(event);
+
+if (bookingService != null) {
+    bookingService.processAutoRefundsForInactivatedEvent(event);
+}
 
 // Send Email Notification to Organizer & Booked Attendees about event deletion
 emailService.sendEventCancelledEmail(user, event);

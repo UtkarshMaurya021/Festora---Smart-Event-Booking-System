@@ -298,6 +298,52 @@ public class EmailService {
         sendAndLogHtml(user.getEmail(), subject, htmlContent, "Booking Confirmed: #" + booking.getBookingId(), "TICKET_BOOKED");
     }
 
+    public void sendBookingCancelledByUserEmail(User user, Booking booking) {
+        String subject = "Booking Cancellation & Refund Confirmation - " + booking.getEvent().getTitle() + " ❌";
+        String htmlContent = String.format(
+            "<h2>Booking Cancelled & Refund Initiated ❌</h2>" +
+            "<p>Hello <strong>%s</strong>, your ticket reservation for <strong>'%s'</strong> has been cancelled as requested.</p>" +
+            "<table class='info-table'>" +
+            "  <tr><td class='info-label'>Event Title</td><td class='info-value'>%s</td></tr>" +
+            "  <tr><td class='info-label'>Seats / Tier</td><td class='info-value'>%s</td></tr>" +
+            "  <tr><td class='info-label'>Tickets Cancelled</td><td class='info-value'>%d Ticket(s)</td></tr>" +
+            "  <tr><td class='info-label'>Refund Amount</td><td class='info-value' style='color:#10b981;'>₹%.2f</td></tr>" +
+            "  <tr><td class='info-label'>Refund Status</td><td class='info-value' style='color:#10b981;'>REFUNDED</td></tr>" +
+            "</table>" +
+            "<p>The full refund of <strong>₹%.2f</strong> has been processed to your payment method.</p>",
+            user.getName(),
+            booking.getEvent().getTitle(),
+            booking.getEvent().getTitle(),
+            booking.getSeatNumbers() != null ? booking.getSeatNumbers() : "General Entry",
+            booking.getQuantity(),
+            booking.getTotalAmount(),
+            booking.getTotalAmount()
+        );
+        sendAndLogHtml(user.getEmail(), subject, htmlContent, "Booking Cancelled by User: #" + booking.getBookingId(), "USER_BOOKING_CANCELLED");
+    }
+
+    public void sendAutoRefundEmail(User user, Booking booking, Event event) {
+        String subject = "Event Update & Automatic Full Refund - " + event.getTitle() + " 💸";
+        String htmlContent = String.format(
+            "<h2>Event Status Update & Automatic Refund 💸</h2>" +
+            "<p>Hello <strong>%s</strong>, the event <strong>'%s'</strong> has been deactivated/cancelled by the organizer or platform administrator.</p>" +
+            "<p>Your reservation has been cancelled automatically, and a <strong>100%% full refund</strong> of <strong>₹%.2f</strong> has been processed to your account.</p>" +
+            "<table class='info-table'>" +
+            "  <tr><td class='info-label'>Event Title</td><td class='info-value'>%s</td></tr>" +
+            "  <tr><td class='info-label'>Seats / Tier</td><td class='info-value'>%s</td></tr>" +
+            "  <tr><td class='info-label'>Refund Amount</td><td class='info-value' style='color:#10b981;'>₹%.2f</td></tr>" +
+            "  <tr><td class='info-label'>Payment Status</td><td class='info-value' style='color:#10b981;'>AUTO-REFUNDED</td></tr>" +
+            "</table>",
+            user.getName(),
+            event.getTitle(),
+            booking.getTotalAmount(),
+            event.getTitle(),
+            booking.getSeatNumbers() != null ? booking.getSeatNumbers() : "General Entry",
+            booking.getTotalAmount()
+        );
+        sendAndLogHtml(user.getEmail(), subject, htmlContent, "Auto Refund for Event #" + event.getEventId(), "AUTO_REFUND_EVENT_INACTIVE");
+    }
+
     public void sendEventCancelledEmail(User user, Event event) {
         String subject = "Event Cancelled Notice - " + event.getTitle();
         String htmlContent = String.format(

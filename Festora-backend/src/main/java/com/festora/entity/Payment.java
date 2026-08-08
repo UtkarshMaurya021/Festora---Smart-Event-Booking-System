@@ -18,14 +18,11 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long paymentId;
 
-    // NOTE: not @NotBlank -- a Payment row is created (PENDING, no
-    // transactionId yet) as soon as a booking is made; the transaction id is
-    // only minted later when checkout starts (see PaymentService.createOrder).
     @Column(unique = true)
     private String transactionId;
 
-    // NOTE: not @NotNull -- unset until the user picks a method at checkout.
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(50)")
     private PaymentMethod paymentMethod;
 
     @NotNull(message = "Amount is required")
@@ -37,6 +34,7 @@ public class Payment {
 
     @NotNull(message = "Status is required")
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(50)")
     private PaymentStatus status;
 
     @NotNull(message = "Booking is required")

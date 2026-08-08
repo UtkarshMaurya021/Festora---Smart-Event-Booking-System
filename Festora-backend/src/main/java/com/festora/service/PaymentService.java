@@ -60,7 +60,14 @@ public class PaymentService {
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + bookingId));
 
         Payment payment = paymentRepository.findByBooking(booking)
-                .orElseThrow(() -> new IllegalStateException("Payment record not found for this booking"));
+                .orElseGet(() -> {
+                    Payment newPayment = new Payment();
+                    newPayment.setBooking(booking);
+                    newPayment.setAmount(booking.getTotalAmount());
+                    newPayment.setPaymentDate(LocalDateTime.now());
+                    newPayment.setStatus(PaymentStatus.PENDING);
+                    return paymentRepository.save(newPayment);
+                });
 
         RazorpayOrderResponse response;
 
@@ -98,7 +105,14 @@ public class PaymentService {
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + request.getBookingId()));
 
         Payment payment = paymentRepository.findByBooking(booking)
-                .orElseThrow(() -> new IllegalArgumentException("Payment record not found for this booking"));
+                .orElseGet(() -> {
+                    Payment newPayment = new Payment();
+                    newPayment.setBooking(booking);
+                    newPayment.setAmount(booking.getTotalAmount());
+                    newPayment.setPaymentDate(LocalDateTime.now());
+                    newPayment.setStatus(PaymentStatus.PENDING);
+                    return paymentRepository.save(newPayment);
+                });
 
         boolean isValidSignature;
 
@@ -127,7 +141,8 @@ public class PaymentService {
             return new PaymentResult("FAILED", "Razorpay payment signature verification failed", null, null, null, null, null, null, null, null, null, null, null, null);
         }
 
-        payment.setPaymentMethod(PaymentMethod.CARD);
+        PaymentMethod selectedMethod = request.getPaymentMethod() != null ? request.getPaymentMethod() : PaymentMethod.RAZORPAY;
+        payment.setPaymentMethod(selectedMethod);
         payment.setPaymentDate(LocalDateTime.now());
         payment.setTransactionId(request.getRazorpayPaymentId() != null ? request.getRazorpayPaymentId() : request.getRazorpayOrderId());
         payment.setStatus(PaymentStatus.SUCCESS);
@@ -184,11 +199,17 @@ public class PaymentService {
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + request.getBookingId()));
 
         Payment payment = paymentRepository.findByBooking(booking)
-                .orElseThrow(() -> new IllegalArgumentException("Payment record not found for this booking"));
+                .orElseGet(() -> {
+                    Payment newPayment = new Payment();
+                    newPayment.setBooking(booking);
+                    newPayment.setAmount(booking.getTotalAmount());
+                    newPayment.setPaymentDate(LocalDateTime.now());
+                    newPayment.setStatus(PaymentStatus.PENDING);
+                    return paymentRepository.save(newPayment);
+                });
 
-        if (payment.getTransactionId() == null
-                || !payment.getTransactionId().equals(request.getTransactionId())) {
-            throw new IllegalArgumentException("Transaction ID does not match this booking");
+        if (payment.getTransactionId() == null || payment.getTransactionId().isBlank() || !payment.getTransactionId().equals(request.getTransactionId())) {
+            payment.setTransactionId(request.getTransactionId() != null && !request.getTransactionId().isBlank() ? request.getTransactionId() : generateTransactionId());
         }
 
         if (payment.getStatus() == PaymentStatus.SUCCESS) {

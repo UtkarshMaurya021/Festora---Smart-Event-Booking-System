@@ -8,6 +8,12 @@ public enum PaymentMethod {
 
     NETBANKING,
 
-    WALLET
+    WALLET,
+
+    RAZORPAY,
+
+    EMI,
+
+    PAYLATER
 
 }

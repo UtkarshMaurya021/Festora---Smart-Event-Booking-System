@@ -72,8 +72,8 @@ function LandingPage() {
         <div className="landing-hero-texture" />
 
         <div className="container position-relative py-4">
-          <div className="row align-items-center g-5">
-            <div className="col-lg-7 text-start">
+          <div className="row align-items-center">
+            <div className="col-lg-9 text-start">
               <span className="landing-eyebrow mb-3">
                 <FiZap className="landing-eyebrow-icon" /> Live events, real seats
               </span>
@@ -107,52 +107,6 @@ function LandingPage() {
                 <MdConfirmationNumber className="landing-hero-caption-icon text-warning" />
                 Festora — Smart Event Booking Platform
               </p>
-            </div>
-
-            {/* Right Side Glassmorphic Widget */}
-            <div className="col-lg-5 d-none d-lg-block">
-              <div
-                className="rounded-4 p-4 shadow-lg text-white"
-                style={{
-                  background: "rgba(255, 255, 255, 0.12)",
-                  backdropFilter: "blur(16px)",
-                  WebkitBackdropFilter: "blur(16px)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-                }}
-              >
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <span className="badge bg-warning text-dark px-3 py-2 fw-bold">
-                    🔥 POPULAR CATEGORY
-                  </span>
-                  <span className="badge bg-success text-white px-2 py-1 small d-flex align-items-center gap-1">
-                    <FiCheck size={12} /> Instant QR Ticket
-                  </span>
-                </div>
-
-                <h4 className="fw-bold text-white mb-2">Grand Music & Tech Festival 2026</h4>
-                <p className="text-white-50 small mb-3">
-                  Experience seamless seat selection, live gate validation, and instant email confirmations.
-                </p>
-
-                <div className="p-3 rounded-3 bg-dark bg-opacity-50 mb-3 border border-white border-opacity-10">
-                  <div className="d-flex justify-content-between align-items-center mb-1">
-                    <span className="text-white-50 small">5 Seat Tiers Available</span>
-                    <span className="fw-bold text-emerald text-success">VVIP, VIP, Premium</span>
-                  </div>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <span className="text-white-50 small">Ticket Price</span>
-                    <span className="fw-bold text-warning fs-5">Starting at ₹499</span>
-                  </div>
-                </div>
-
-                <Link
-                  to="/events"
-                  className="btn btn-light w-100 rounded-pill fw-bold py-2 text-dark shadow-sm"
-                >
-                  Browse Approved Shows
-                </Link>
-              </div>
             </div>
           </div>
         </div>

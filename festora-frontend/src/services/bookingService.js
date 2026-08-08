@@ -9,3 +9,6 @@ export const getBooking = (id) => {
 export const getMyBookings = () => {
   return api.get("/bookings/userbooking");
 };
+export const cancelBooking = (id) => {
+  return api.put(`/bookings/cancel/${id}`);
+};

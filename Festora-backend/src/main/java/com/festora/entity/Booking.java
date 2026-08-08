@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -34,6 +35,7 @@ public class Booking {
 
 	@NotNull(message = "Status is required")
 	@Enumerated(EnumType.STRING)
+	@Column(columnDefinition = "VARCHAR(50)")
 	private Status status;
 
 	@NotNull(message = "User is required")

@@ -45,6 +45,15 @@ public class BookingController {
                 authentication.getName());
     }
 
+    @PutMapping("/cancel/{bookingId}")
+    public BookingResponse cancelBooking(
+            @PathVariable Long bookingId,
+            Authentication authentication) {
+        return bookingService.cancelBooking(
+                bookingId,
+                authentication.getName());
+    }
+
     @GetMapping("/userbooking")
     public List<BookingResponse> myBookings(
             Authentication authentication) {

@@ -40,6 +40,7 @@ public class Ticket {
 
     @NotNull(message = "Status is required")
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(50)")
     private TicketStatus status;
 
     // Set when the ticket is scanned/checked in at the venue; null until then.

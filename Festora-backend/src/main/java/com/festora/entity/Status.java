@@ -13,5 +13,7 @@ public enum Status {
 
 	PENDING,          // Pending Admin approval
 
-	PENDING_APPROVAL  // Pending Admin approval (alias for clarity)
+	PENDING_APPROVAL, // Pending Admin approval (alias for clarity)
+
+	CANCELLED         // Cancelled reservation
 }
